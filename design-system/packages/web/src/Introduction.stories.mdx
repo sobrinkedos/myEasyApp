@@ -1,0 +1,70 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Introdução/Bem-vindo" />
+
+# Restaurant Design System
+
+Bem-vindo ao Design System do sistema integrado de gestão de restaurantes!
+
+## 🎨 O que é este Design System?
+
+Este é um sistema de design completo que fornece componentes visuais, padrões de interação, tipografia, cores, espaçamentos e guidelines para garantir consistência visual e funcional em todas as aplicações do ecossistema.
+
+## 📱 Aplicações Suportadas
+
+- **Web App de Autoatendimento (PWA)**: Interface para clientes fazerem pedidos via QR Code
+- **Mobile App de Garçom**: App nativo para garçons gerenciarem mesas e pedidos
+- **Web Admin Dashboard**: Interface administrativa para gestão completa
+- **Futuras aplicações**: Delivery, Kitchen Display, etc.
+
+## 🎯 Princípios de Design
+
+1. **Apetitoso e Convidativo**: Uso de cores quentes, imagens de alta qualidade e tipografia que transmite confiança
+2. **Simplicidade e Clareza**: Interfaces limpas com hierarquia visual clara e ações óbvias
+3. **Performance First**: Componentes otimizados, lazy loading e feedback imediato
+4. **Mobile-First**: Design pensado primeiro para mobile, expandindo progressivamente para desktop
+5. **Acessível por Padrão**: Contraste adequado, navegação por teclado e suporte a screen readers
+
+## 🚀 Como Usar
+
+### Instalação
+
+```bash
+npm install @restaurant-system/web @restaurant-system/tokens
+```
+
+### Uso Básico
+
+```tsx
+import { Button } from '@restaurant-system/web';
+import { colors } from '@restaurant-system/tokens';
+
+function App() {
+  return (
+    <Button variant="primary" size="medium">
+      Fazer Pedido
+    </Button>
+  );
+}
+```
+
+## 📚 Navegação
+
+Use o menu lateral para explorar:
+
+- **Design Tokens**: Cores, tipografia, espaçamentos e outros valores fundamentais
+- **Componentes**: Todos os componentes disponíveis organizados por categoria
+- **Templates**: Exemplos de páginas completas
+
+## 🛠️ Tecnologias
+
+- React 18
+- TypeScript (strict mode)
+- Styled Components
+- Vite
+- Jest + React Testing Library
+- Storybook 7
+
+## 📖 Documentação Adicional
+
+Para mais informações sobre arquitetura, guidelines e melhores práticas, consulte o repositório do projeto.

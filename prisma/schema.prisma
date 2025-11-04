@@ -1,0 +1,235 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stockTransactions  StockTransaction[]
+  auditLogs          AuditLog[]
+  commands           Command[]
+  orders             Order[]
+  orderModifications OrderModification[]
+
+  @@index([email])
+  @@index([isActive])
+}
+
+model Category {
+  id           String    @id @default(uuid())
+  name         String    @unique
+  displayOrder Int
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  products Product[]
+
+  @@index([displayOrder])
+  @@index([isActive])
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  categoryId  String
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category    Category            @relation(fields: [categoryId], references: [id])
+  ingredients ProductIngredient[]
+  orderItems  OrderItem[]
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+model Ingredient {
+  id              String   @id @default(uuid())
+  name            String
+  unit            String
+  currentQuantity Decimal  @db.Decimal(10, 3)
+  minimumQuantity Decimal  @db.Decimal(10, 3)
+  averageCost     Decimal  @db.Decimal(10, 2)
+  status          String   @default("normal")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  products     ProductIngredient[]
+  transactions StockTransaction[]
+
+  @@index([status])
+}
+
+model ProductIngredient {
+  productId    String
+  ingredientId String
+  quantity     Decimal @db.Decimal(10, 3)
+
+  product    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@id([productId, ingredientId])
+  @@index([ingredientId])
+}
+
+model StockTransaction {
+  id           String   @id @default(uuid())
+  ingredientId String
+  type         String
+  quantity     Decimal  @db.Decimal(10, 3)
+  reason       String?
+  userId       String
+  createdAt    DateTime @default(now())
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@index([ingredientId, createdAt])
+  @@index([type])
+}
+
+model Establishment {
+  id          String   @id @default(uuid())
+  name        String
+  cnpj        String   @unique
+  address     Json
+  phone       String
+  email       String
+  logoUrl     String?
+  taxSettings Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([cnpj])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String
+  changes   Json
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model Table {
+  id        String   @id @default(uuid())
+  number    Int      @unique
+  capacity  Int
+  status    String   @default("available")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  commands Command[]
+
+  @@index([status, isActive])
+}
+
+model Command {
+  id             String    @id @default(uuid())
+  code           String    @unique
+  tableId        String?
+  type           String    @default("table")
+  waiterId       String
+  numberOfPeople Int
+  status         String    @default("open")
+  subtotal       Decimal   @db.Decimal(10, 2) @default(0)
+  serviceCharge  Decimal   @db.Decimal(10, 2) @default(0)
+  total          Decimal   @db.Decimal(10, 2) @default(0)
+  openedAt       DateTime  @default(now())
+  closedAt       DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  table  Table? @relation(fields: [tableId], references: [id])
+  waiter User   @relation(fields: [waiterId], references: [id])
+  orders Order[]
+
+  @@index([status, openedAt])
+  @@index([waiterId])
+  @@index([tableId])
+}
+
+model Order {
+  id                 String    @id @default(uuid())
+  commandId          String
+  orderNumber        Int
+  status             String    @default("pending")
+  subtotal           Decimal   @db.Decimal(10, 2)
+  createdBy          String
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  preparedAt         DateTime?
+  readyAt            DateTime?
+  deliveredAt        DateTime?
+  cancelledAt        DateTime?
+  cancellationReason String?
+
+  command       Command             @relation(fields: [commandId], references: [id])
+  creator       User                @relation(fields: [createdBy], references: [id])
+  items         OrderItem[]
+  modifications OrderModification[]
+
+  @@unique([commandId, orderNumber])
+  @@index([status, createdAt])
+  @@index([commandId])
+}
+
+model OrderItem {
+  id           String   @id @default(uuid())
+  orderId      String
+  productId    String
+  quantity     Int
+  unitPrice    Decimal  @db.Decimal(10, 2)
+  subtotal     Decimal  @db.Decimal(10, 2)
+  observations String?
+  createdAt    DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+}
+
+model OrderModification {
+  id          String   @id @default(uuid())
+  orderId     String
+  userId      String
+  action      String
+  description String
+  createdAt   DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@index([orderId, createdAt])
+}

@@ -1,0 +1,6 @@
+{
+  "extends": ["../../.eslintrc.json", "plugin:storybook/recommended"],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  }
+}

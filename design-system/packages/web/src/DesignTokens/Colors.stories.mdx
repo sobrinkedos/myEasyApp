@@ -1,0 +1,151 @@
+import { Meta, ColorPalette, ColorItem } from '@storybook/blocks';
+import { colors } from '@restaurant-system/tokens';
+
+<Meta title="Design Tokens/Cores" />
+
+# Cores
+
+Sistema de cores do Restaurant Design System, focado em criar uma experiência apetitosa e convidativa.
+
+## Cores Primárias
+
+Paleta laranja/vermelho que transmite calor, apetite e energia.
+
+<ColorPalette>
+  <ColorItem
+    title="Primary"
+    subtitle="Cor principal do sistema"
+    colors={{
+      50: colors.primary[50],
+      100: colors.primary[100],
+      200: colors.primary[200],
+      300: colors.primary[300],
+      400: colors.primary[400],
+      500: colors.primary[500],
+      600: colors.primary[600],
+      700: colors.primary[700],
+      800: colors.primary[800],
+      900: colors.primary[900],
+    }}
+  />
+</ColorPalette>
+
+## Cores Secundárias
+
+Paleta verde usada para indicar sucesso, disponibilidade e ações positivas.
+
+<ColorPalette>
+  <ColorItem
+    title="Secondary"
+    subtitle="Cor secundária"
+    colors={{
+      50: colors.secondary[50],
+      100: colors.secondary[100],
+      200: colors.secondary[200],
+      300: colors.secondary[300],
+      400: colors.secondary[400],
+      500: colors.secondary[500],
+      600: colors.secondary[600],
+      700: colors.secondary[700],
+      800: colors.secondary[800],
+      900: colors.secondary[900],
+    }}
+  />
+</ColorPalette>
+
+## Cores Neutras
+
+Escala de cinzas para textos, backgrounds e bordas.
+
+<ColorPalette>
+  <ColorItem
+    title="Neutral"
+    subtitle="Escala de cinzas"
+    colors={{
+      0: colors.neutral[0],
+      50: colors.neutral[50],
+      100: colors.neutral[100],
+      200: colors.neutral[200],
+      300: colors.neutral[300],
+      400: colors.neutral[400],
+      500: colors.neutral[500],
+      600: colors.neutral[600],
+      700: colors.neutral[700],
+      800: colors.neutral[800],
+      900: colors.neutral[900],
+      950: colors.neutral[950],
+    }}
+  />
+</ColorPalette>
+
+## Cores de Feedback
+
+Cores para comunicar estados e mensagens ao usuário.
+
+<ColorPalette>
+  <ColorItem
+    title="Success"
+    subtitle="Sucesso e confirmação"
+    colors={{ Success: colors.feedback.success }}
+  />
+  <ColorItem
+    title="Error"
+    subtitle="Erros e ações destrutivas"
+    colors={{ Error: colors.feedback.error }}
+  />
+  <ColorItem
+    title="Warning"
+    subtitle="Avisos e atenção"
+    colors={{ Warning: colors.feedback.warning }}
+  />
+  <ColorItem
+    title="Info"
+    subtitle="Informações e dicas"
+    colors={{ Info: colors.feedback.info }}
+  />
+</ColorPalette>
+
+## Cores de Status de Pedido
+
+<ColorPalette>
+  <ColorItem
+    title="Order Status"
+    subtitle="Status de pedidos"
+    colors={{
+      Pending: colors.orderStatus.pending,
+      Preparing: colors.orderStatus.preparing,
+      Ready: colors.orderStatus.ready,
+      Delivered: colors.orderStatus.delivered,
+      Cancelled: colors.orderStatus.cancelled,
+    }}
+  />
+</ColorPalette>
+
+## Cores de Status de Mesa
+
+<ColorPalette>
+  <ColorItem
+    title="Table Status"
+    subtitle="Status de mesas"
+    colors={{
+      Available: colors.tableStatus.available,
+      Occupied: colors.tableStatus.occupied,
+      Reserved: colors.tableStatus.reserved,
+    }}
+  />
+</ColorPalette>
+
+## Uso
+
+```typescript
+import { colors } from '@restaurant-system/tokens';
+
+// Usar cor primária
+const primaryColor = colors.primary[500]; // #FF7A4D
+
+// Usar cor de feedback
+const successColor = colors.feedback.success; // #22C55E
+
+// Usar cor de status
+const pendingColor = colors.orderStatus.pending; // #F59E0B
+```
