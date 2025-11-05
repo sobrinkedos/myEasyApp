@@ -1,174 +1,299 @@
-# 🚀 Guia de Início Rápido
+# 🚀 Guia Rápido de Teste - Restaurant API
 
-## Pré-requisitos
+## Passo 1: Verificar Pré-requisitos
 
-- Node.js >= 20.0.0
-- Docker e Docker Compose
-- npm >= 10.0.0
+Certifique-se de ter instalado:
+- Docker Desktop (rodando)
+- Node.js 20+ 
+- npm 10+
 
-## Passos para Iniciar
+```bash
+# Verificar versões
+docker --version
+docker-compose --version
+node --version
+npm --version
+```
 
-### 1. Instalar Dependências
+## Passo 2: Configurar Ambiente
+
+```bash
+# 1. Copiar arquivo de ambiente
+copy .env.development.example .env.development
+
+# 2. (Opcional) Editar .env.development se necessário
+# As configurações padrão já funcionam para desenvolvimento local
+```
+
+## Passo 3: Instalar Dependências
 
 ```bash
 npm install
 ```
 
-### 2. Configurar Variáveis de Ambiente
+## Passo 4: Iniciar Serviços Docker
 
 ```bash
-cp .env.development.example .env.development
-```
-
-### 3. Iniciar Serviços Docker
-
-```bash
+# Iniciar PostgreSQL e Redis
 docker-compose up -d
+
+# Verificar se os containers estão rodando
+docker-compose ps
 ```
 
-Isso iniciará:
-- PostgreSQL na porta 5432
-- Redis na porta 6379
+Você deve ver:
+- `restaurant-db-dev` (PostgreSQL) - healthy
+- `restaurant-redis-dev` (Redis) - healthy
 
-### 4. Gerar Cliente Prisma
+## Passo 5: Configurar Banco de Dados
 
 ```bash
+# Gerar cliente Prisma
 npm run prisma:generate
-```
 
-### 5. Executar Migrations
-
-```bash
+# Executar migrations (criar tabelas)
 npm run prisma:migrate
-```
 
-Quando solicitado, dê um nome para a migration (ex: "init")
-
-### 6. Popular Banco de Dados
-
-```bash
+# Popular banco com dados iniciais
 npm run prisma:seed
 ```
 
-Isso criará:
-- Usuário admin (email: admin@restaurant.com, senha: admin123)
-- Categorias básicas
-- Insumos de exemplo
-- Estabelecimento exemplo
-
-### 7. Iniciar Servidor de Desenvolvimento
+## Passo 6: Iniciar API
 
 ```bash
 npm run dev
 ```
 
-O servidor estará rodando em: http://localhost:3000
+Você deve ver:
+```
+✅ Redis connected
+🚀 Server running on port 3000
+📚 API Documentation: http://localhost:3000/api/docs
+🏥 Health check: http://localhost:3000/health
+```
 
-## 📚 Acessar Documentação
+## Passo 7: Testar a API
 
-Abra no navegador: http://localhost:3000/api/docs
+### 7.1 Health Check
 
-## 🧪 Testar a API
+Abra o navegador ou use curl:
 
-### 1. Fazer Login
+```bash
+curl http://localhost:3000/health
+```
 
+Resposta esperada:
+```json
+{
+  "status": "ok",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "uptime": 5.123,
+  "services": {
+    "database": "healthy",
+    "redis": "healthy"
+  }
+}
+```
+
+### 7.2 Documentação Swagger
+
+Abra no navegador:
+```
+http://localhost:3000/api/docs
+```
+
+Aqui você pode testar todos os endpoints interativamente!
+
+### 7.3 Fazer Login
+
+**Via Swagger:**
+1. Acesse http://localhost:3000/api/docs
+2. Expanda `POST /api/v1/auth/login`
+3. Clique em "Try it out"
+4. Use as credenciais do seed:
+```json
+{
+  "email": "admin@restaurant.com",
+  "password": "admin123"
+}
+```
+5. Clique em "Execute"
+6. Copie o token da resposta
+
+**Via curl:**
 ```bash
 curl -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{
-    "email": "admin@restaurant.com",
-    "password": "admin123"
-  }'
+  -d "{\"email\":\"admin@restaurant.com\",\"password\":\"admin123\"}"
 ```
 
-Copie o `token` retornado.
+### 7.4 Testar Endpoints Protegidos
 
-### 2. Listar Categorias
+**Listar Categorias:**
 
+Via Swagger:
+1. Clique no botão "Authorize" no topo
+2. Cole o token (sem "Bearer")
+3. Teste `GET /api/v1/categories`
+
+Via curl:
 ```bash
-curl -X GET http://localhost:3000/api/v1/categories \
+curl http://localhost:3000/api/v1/categories \
   -H "Authorization: Bearer SEU_TOKEN_AQUI"
 ```
 
-### 3. Criar Nova Categoria
-
+**Listar Produtos:**
 ```bash
-curl -X POST http://localhost:3000/api/v1/categories \
+curl http://localhost:3000/api/v1/products \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI"
+```
+
+**Criar Produto:**
+```bash
+curl -X POST http://localhost:3000/api/v1/products \
   -H "Authorization: Bearer SEU_TOKEN_AQUI" \
   -H "Content-Type: application/json" \
-  -d '{
-    "name": "Pizzas",
-    "displayOrder": 6
-  }'
+  -d "{
+    \"name\": \"Pizza Margherita\",
+    \"description\": \"Molho de tomate, mussarela e manjericão\",
+    \"price\": 45.90,
+    \"categoryId\": \"CATEGORIA_ID_AQUI\"
+  }"
 ```
 
-## 🛠️ Comandos Úteis
+## Passo 8: Explorar Prisma Studio (Opcional)
 
-### Ver Logs do Docker
-
-```bash
-docker-compose logs -f
-```
-
-### Acessar Prisma Studio
+Para visualizar os dados no banco:
 
 ```bash
 npm run prisma:studio
 ```
 
-Abre interface visual do banco em: http://localhost:5555
+Abre em: http://localhost:5555
 
-### Executar Testes
+## Passo 9: Ver Logs
 
 ```bash
-npm test
+# Logs da API (se rodando via Docker)
+docker-compose logs -f api
+
+# Logs do PostgreSQL
+docker-compose logs -f postgres
+
+# Logs do Redis
+docker-compose logs -f redis
 ```
 
-### Parar Serviços Docker
+## Passo 10: Parar Tudo
 
 ```bash
+# Parar API (Ctrl+C no terminal onde está rodando)
+
+# Parar containers Docker
 docker-compose down
+
+# Parar e remover volumes (CUIDADO: apaga dados)
+docker-compose down -v
 ```
 
-### Limpar Tudo e Recomeçar
+## 🧪 Testes Automatizados
 
 ```bash
+# Executar todos os testes
+npm test
+
+# Testes em modo watch
+npm run test:watch
+
+# Testes com cobertura
+npm test -- --coverage
+```
+
+## 🐛 Troubleshooting
+
+### Erro: "Port 3000 already in use"
+```bash
+# Windows
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
+
+# Ou mude a porta no .env.development
+PORT=3001
+```
+
+### Erro: "Cannot connect to database"
+```bash
+# Verificar se PostgreSQL está rodando
+docker-compose ps
+
+# Reiniciar containers
+docker-compose restart postgres
+
+# Ver logs
+docker-compose logs postgres
+```
+
+### Erro: "Redis connection failed"
+```bash
+# Verificar Redis
+docker-compose ps
+
+# Reiniciar
+docker-compose restart redis
+
+# Ver logs
+docker-compose logs redis
+```
+
+### Limpar tudo e recomeçar
+```bash
+# Parar containers
 docker-compose down -v
+
+# Remover node_modules
+rmdir /s /q node_modules
+
+# Reinstalar
+npm install
+
+# Recriar containers
 docker-compose up -d
+
+# Recriar banco
 npm run prisma:migrate
 npm run prisma:seed
-npm run dev
 ```
 
-## 📝 Próximos Passos
+## 📊 Endpoints Principais
 
-1. Explore a documentação Swagger em `/api/docs`
-2. Implemente novos módulos seguindo o padrão existente
-3. Adicione testes para suas funcionalidades
-4. Configure CI/CD para deploy automático
+| Método | Endpoint | Descrição | Auth |
+|--------|----------|-----------|------|
+| POST | /api/v1/auth/login | Login | ❌ |
+| GET | /health | Health check | ❌ |
+| GET | /api/v1/categories | Listar categorias | ✅ |
+| POST | /api/v1/categories | Criar categoria | ✅ |
+| GET | /api/v1/products | Listar produtos | ✅ |
+| POST | /api/v1/products | Criar produto | ✅ |
+| GET | /api/v1/ingredients | Listar insumos | ✅ |
+| POST | /api/v1/stock/transactions | Registrar movimentação | ✅ |
+| GET | /api/v1/stock/report | Relatório de estoque | ✅ |
 
-## ❓ Problemas Comuns
+## 🎯 Próximos Passos
 
-### Erro de Conexão com PostgreSQL
+1. ✅ Testar todos os endpoints via Swagger
+2. ✅ Criar alguns produtos e categorias
+3. ✅ Registrar movimentações de estoque
+4. ✅ Gerar relatórios
+5. 🚀 Partir para o desenvolvimento do frontend!
 
-Verifique se o Docker está rodando:
-```bash
-docker ps
-```
+## 💡 Dicas
 
-### Erro "Port already in use"
+- Use o Swagger para explorar a API de forma interativa
+- Use o Prisma Studio para visualizar os dados
+- Mantenha os logs abertos para debug
+- O token JWT expira em 24h
+- Cache Redis tem TTL de 5 minutos
 
-Algum serviço já está usando a porta. Pare o serviço ou mude a porta no docker-compose.yml
+---
 
-### Erro no Prisma Generate
-
-Limpe e reinstale:
-```bash
-rm -rf node_modules
-npm install
-npm run prisma:generate
-```
-
-## 🎉 Pronto!
-
-Seu backend está rodando e pronto para desenvolvimento!
+**Pronto para começar? Execute os comandos acima em sequência!** 🚀

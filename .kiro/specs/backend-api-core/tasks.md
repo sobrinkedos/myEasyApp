@@ -37,7 +37,8 @@
 
 
 
-- [ ] 4. Implementar sistema de autenticação
+- [x] 4. Implementar sistema de autenticação
+
 - [x] 4.1 Criar módulo de autenticação base
 
   - Implementar AuthService com métodos login, validateToken e hashPassword usando bcrypt
@@ -64,7 +65,8 @@
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
 
-- [ ] 5. Implementar gestão de categorias
+- [x] 5. Implementar gestão de categorias
+
 - [x] 5.1 Criar módulo de categorias
 
   - Implementar CategoryRepository com métodos CRUD usando Prisma
@@ -86,7 +88,8 @@
 
 
 
-- [ ] 6. Implementar gestão de produtos
+- [x] 6. Implementar gestão de produtos
+
 - [x] 6.1 Criar módulo de produtos base
 
   - Implementar ProductRepository com métodos CRUD e paginação
@@ -122,7 +125,8 @@
   - Testar upload de imagens com arquivos válidos e inválidos
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 7. Implementar gestão de insumos
+- [x] 7. Implementar gestão de insumos
+
 - [x] 7.1 Criar módulo de insumos
 
 
@@ -152,7 +156,8 @@
 
 
 
-- [ ] 8. Implementar controle de estoque
+- [x] 8. Implementar controle de estoque
+
 - [x] 8.1 Criar módulo de transações de estoque
 
   - Implementar StockRepository com métodos para criar transações e consultar histórico
@@ -182,6 +187,7 @@
 
 
 
+
 - [ ] 9. Implementar relatórios de estoque
 - [x] 9.1 Criar endpoints de relatórios
 
@@ -198,6 +204,7 @@
   - Testar cálculo de valor total do estoque
   - Testar exportação em diferentes formatos
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
+
 
 - [ ] 10. Implementar gestão de estabelecimento
 - [x] 10.1 Criar módulo de estabelecimento
@@ -229,6 +236,7 @@
   - Escrever testes de integração para endpoints
   - Testar upload de logotipo
   - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
+
 
 
 - [ ] 11. Implementar segurança e middlewares
@@ -278,7 +286,9 @@
 
 - [x] 12. Implementar documentação OpenAPI
 
-- [ ] 12.1 Configurar Swagger
+- [x] 12.1 Configurar Swagger
+
+
   - Instalar swagger-jsdoc e swagger-ui-express
   - Configurar definição OpenAPI 3.0 com informações da API
   - Adicionar configuração de segurança (bearerAuth)
@@ -295,7 +305,9 @@
 
 - [x] 13. Implementar otimizações de performance
 
-- [ ] 13.1 Configurar Redis e caching
+- [x] 13.1 Configurar Redis e caching
+
+
   - Configurar conexão com Redis usando ioredis
   - Implementar funções helper cacheGet e cacheSet
   - Adicionar cache em listagens de produtos e categorias
@@ -311,7 +323,9 @@
   - _Requirements: 10.3_
 
 
-- [ ] 13.3 Otimizar queries do banco
+- [x] 13.3 Otimizar queries do banco
+
+
   - Adicionar índices nos campos mais consultados
   - Usar select para buscar apenas campos necessários
   - Implementar eager loading com include onde apropriado
@@ -319,11 +333,14 @@
   - _Requirements: 10.1_
 
 
-- [ ] 13.4 Implementar compression
+- [x] 13.4 Implementar compression
+
+
   - Configurar middleware compression para respostas HTTP
   - Configurar nível de compressão adequado (6)
   - Adicionar filtro para não comprimir requisições específicas
   - _Requirements: 10.2_
+
 
 
 - [ ] 14. Implementar health check e graceful shutdown
@@ -347,7 +364,9 @@
 
 - [x] 15. Configurar rotas e aplicação principal
 
-- [ ] 15.1 Criar sistema de rotas
+- [x] 15.1 Criar sistema de rotas
+
+
   - Criar arquivos de rotas para cada módulo (auth, products, categories, ingredients, stock, establishment)
   - Implementar versionamento de API com prefixo /api/v1
   - Aplicar middleware de autenticação nas rotas protegidas
@@ -355,7 +374,8 @@
   - _Requirements: 6.1, 6.5_
 
 
-- [ ] 15.2 Configurar aplicação Express
+- [x] 15.2 Configurar aplicação Express
+
   - Criar arquivo app.ts com inicialização do Express
   - Configurar middlewares globais (helmet, compression, cors, rate-limit)
   - Configurar parsing de JSON e URL-encoded
@@ -366,7 +386,8 @@
 
 - [x] 16. Criar scripts e configurações finais
 
-- [ ] 16.1 Criar scripts npm
+- [x] 16.1 Criar scripts npm
+
   - Adicionar script "dev" para desenvolvimento com hot-reload (ts-node-dev)
   - Adicionar script "build" para compilar TypeScript
   - Adicionar script "start:prod" para executar versão compilada
@@ -390,11 +411,15 @@
   - Criar setup de testes E2E com banco de teste
   - Implementar testes de fluxos críticos (login → criar produto → registrar estoque)
   - Configurar limpeza de banco entre testes
+
+
   - Adicionar script "test:e2e" no package.json
   - _Requirements: 1.1, 2.1, 3.1, 4.1_
 
 - [ ] 17. Validação final e ajustes
-- [ ] 17.1 Testar aplicação completa
+- [x] 17.1 Testar aplicação completa
+
+
   - Executar aplicação com Docker Compose em ambiente de desenvolvimento
   - Testar todos os endpoints via Swagger UI
   - Verificar logs e tratamento de erros
@@ -402,7 +427,9 @@
   - Testar health check e graceful shutdown
   - _Requirements: 10.1, 10.2, 10.5, 11.7, 11.8_
 
-- [ ] 17.2 Revisar segurança e conformidade
+
+- [x] 17.2 Revisar segurança e conformidade
+
   - Verificar que todas as senhas estão sendo hasheadas
   - Confirmar que HTTPS está configurado para produção
   - Validar que não há secrets commitados no repositório
@@ -410,7 +437,9 @@
   - Revisar logs de auditoria
   - _Requirements: 1.5, 7.1, 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 17.3 Preparar para deploy
+- [x] 17.3 Preparar para deploy
+
+
   - Criar arquivo .env.production.example com todas as variáveis
   - Documentar processo de deploy em README
   - Testar build de imagem Docker para produção

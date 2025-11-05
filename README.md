@@ -175,6 +175,85 @@ Principais variáveis:
 - `npm run prisma:migrate` - Executa migrations
 - `npm run prisma:studio` - Abre Prisma Studio
 
+## 🚀 Deploy para Produção
+
+### Checklist de Deploy
+
+#### 1. Preparação
+
+- [ ] Criar arquivo `.env.production` baseado em `.env.production.example`
+- [ ] Gerar JWT_SECRET seguro (mínimo 32 caracteres)
+- [ ] Configurar senhas fortes para PostgreSQL e Redis
+- [ ] Configurar DATABASE_URL com credenciais de produção
+- [ ] Configurar REDIS_URL com credenciais de produção
+- [ ] Definir CORS_ORIGIN com domínio da aplicação
+- [ ] Configurar BCRYPT_ROUNDS=12 para produção
+
+#### 2. Build e Testes
+
+- [ ] Executar `npm run build` e verificar se compila sem erros
+- [ ] Executar `npm test` e garantir que todos os testes passam
+- [ ] Testar build da imagem Docker: `docker build -t restaurant-api .`
+
+#### 3. Banco de Dados
+
+- [ ] Criar banco de dados PostgreSQL em produção
+- [ ] Executar migrations: `npm run prisma:migrate:prod`
+- [ ] Executar seed (se necessário): `npm run prisma:seed`
+- [ ] Fazer backup do banco de dados
+
+#### 4. Deploy
+
+- [ ] Fazer upload do código para servidor
+- [ ] Copiar arquivo `.env.production` para o servidor
+- [ ] Executar `docker-compose -f docker-compose.prod.yml up -d`
+- [ ] Verificar logs: `docker-compose -f docker-compose.prod.yml logs -f api`
+- [ ] Testar health check: `curl https://api.yourdomain.com/health`
+
+#### 5. Pós-Deploy
+
+- [ ] Verificar que todos os serviços estão rodando
+- [ ] Testar endpoints principais via Swagger
+- [ ] Configurar monitoramento e alertas
+- [ ] Configurar backup automático do banco de dados
+- [ ] Documentar processo de rollback
+
+### Comandos Úteis de Produção
+
+```bash
+# Build da imagem Docker
+docker build -t restaurant-api:latest .
+
+# Iniciar serviços em produção
+docker-compose -f docker-compose.prod.yml up -d
+
+# Ver logs
+docker-compose -f docker-compose.prod.yml logs -f
+
+# Parar serviços
+docker-compose -f docker-compose.prod.yml down
+
+# Executar migrations em produção
+docker-compose -f docker-compose.prod.yml exec api npm run prisma:migrate:prod
+
+# Backup do banco de dados
+docker-compose -f docker-compose.prod.yml exec postgres pg_dump -U $DB_USER $DB_NAME > backup.sql
+
+# Restaurar backup
+docker-compose -f docker-compose.prod.yml exec -T postgres psql -U $DB_USER $DB_NAME < backup.sql
+```
+
+### Segurança em Produção
+
+- ✅ HTTPS obrigatório (configurar certificado SSL/TLS)
+- ✅ Rate limiting configurado (100 req/min por IP)
+- ✅ Helmet configurado com headers de segurança
+- ✅ CORS configurado com origem específica
+- ✅ Senhas hasheadas com bcrypt (rounds=12)
+- ✅ JWT com expiração de 24h
+- ✅ Validação e sanitização de inputs
+- ✅ Logs de auditoria para operações críticas
+
 ## 🤝 Contribuindo
 
 1. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)

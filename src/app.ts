@@ -39,7 +39,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Compression
-app.use(compression());
+app.use(compression({
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  },
+  level: 6,
+}));
 
 // Serve static files (uploads)
 app.use('/uploads', express.static('uploads'));
@@ -52,11 +60,19 @@ const swaggerOptions = {
       title: 'Restaurant Management API',
       version: '1.0.0',
       description: 'API RESTful para sistema integrado de gestão de restaurantes',
+      contact: {
+        name: 'API Support',
+        email: 'support@restaurant-api.com',
+      },
     },
     servers: [
       {
         url: 'http://localhost:3000',
         description: 'Development server',
+      },
+      {
+        url: 'https://api.restaurant.com',
+        description: 'Production server',
       },
     ],
     components: {
@@ -68,20 +84,48 @@ const swaggerOptions = {
         },
       },
     },
+    security: [{
+      bearerAuth: [],
+    }],
   },
-  apis: ['./src/routes/*.ts'],
+  apis: ['./src/routes/*.ts', './src/controllers/*.ts'],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Health check
-app.get('/health', (req, res) => {
-  res.status(200).json({
+app.get('/health', async (req, res) => {
+  const health = {
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-  });
+    services: {
+      database: 'unknown',
+      redis: 'unknown',
+    },
+  };
+
+  try {
+    const prisma = (await import('@/config/database')).default;
+    await prisma.$queryRaw`SELECT 1`;
+    health.services.database = 'healthy';
+  } catch (error) {
+    health.services.database = 'unhealthy';
+    health.status = 'degraded';
+  }
+
+  try {
+    const redis = (await import('@/config/redis')).default;
+    await redis.ping();
+    health.services.redis = 'healthy';
+  } catch (error) {
+    health.services.redis = 'unhealthy';
+    health.status = 'degraded';
+  }
+
+  const statusCode = health.status === 'ok' ? 200 : 503;
+  res.status(statusCode).json(health);
 });
 
 // API routes

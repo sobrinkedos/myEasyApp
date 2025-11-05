@@ -1,16 +1,32 @@
 import { CategoryRepository, CreateCategoryDTO, UpdateCategoryDTO } from '@/repositories/category.repository';
 import { ConflictError, NotFoundError } from '@/utils/errors';
 import { Category } from '@prisma/client';
+import { cacheService } from '@/utils/cache';
 
 export class CategoryService {
   private repository: CategoryRepository;
+  private readonly CACHE_TTL = 300; // 5 minutes
+  private readonly CACHE_PREFIX = 'categories';
 
   constructor() {
     this.repository = new CategoryRepository();
   }
 
   async getAll(): Promise<Category[]> {
-    return this.repository.findAll();
+    // Try to get from cache
+    const cacheKey = `${this.CACHE_PREFIX}:list`;
+    const cached = await cacheService.get<Category[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Get from database
+    const categories = await this.repository.findAll();
+
+    // Cache result
+    await cacheService.set(cacheKey, categories, this.CACHE_TTL);
+
+    return categories;
   }
 
   async getById(id: string): Promise<Category> {
@@ -31,7 +47,12 @@ export class CategoryService {
       throw new ConflictError('Categoria já existe');
     }
 
-    return this.repository.create(data);
+    const category = await this.repository.create(data);
+
+    // Invalidate cache
+    await cacheService.delPattern(`${this.CACHE_PREFIX}:*`);
+
+    return category;
   }
 
   async update(id: string, data: UpdateCategoryDTO): Promise<Category> {
@@ -46,7 +67,12 @@ export class CategoryService {
       }
     }
 
-    return this.repository.update(id, data);
+    const category = await this.repository.update(id, data);
+
+    // Invalidate cache
+    await cacheService.delPattern(`${this.CACHE_PREFIX}:*`);
+
+    return category;
   }
 
   async delete(id: string): Promise<void> {
@@ -54,5 +80,8 @@ export class CategoryService {
     await this.getById(id);
 
     await this.repository.delete(id);
+
+    // Invalidate cache
+    await cacheService.delPattern(`${this.CACHE_PREFIX}:*`);
   }
 }
