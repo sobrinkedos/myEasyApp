@@ -233,7 +233,8 @@ Este plano de implementação detalha as tarefas necessárias para construir a a
     - Implementar response interceptor para tratar erros (401, 403, 500)
     - _Requirements: 13.1, 13.2, 13.3, 13.4_
   
-  - [x] 10.2 Criar services de recursos
+  - [ ] 10.2 Criar services de recursos
+
 
     - Implementar productsService (getAll, getById, create, update, delete, uploadImage)
     - Implementar categoriesService
