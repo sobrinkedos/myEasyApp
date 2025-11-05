@@ -188,7 +188,10 @@
 
 
 
-- [ ] 9. Implementar relatórios de estoque
+- [x] 9. Implementar relatórios de estoque
+
+
+
 - [x] 9.1 Criar endpoints de relatórios
 
   - Implementar endpoint GET /stock/report para relatório de estoque atual

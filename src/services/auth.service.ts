@@ -12,7 +12,8 @@ export interface LoginCredentials {
 export interface JWTPayload {
   userId: string;
   email: string;
-  role: string;
+  establishmentId: string;
+  roles: string[];
 }
 
 export interface LoginResponse {
@@ -22,7 +23,9 @@ export interface LoginResponse {
     id: string;
     email: string;
     name: string;
-    role: string;
+    establishmentId: string;
+    roles: string[];
+    permissions: string[];
   };
 }
 
@@ -30,17 +33,31 @@ export class AuthService {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     const { email, password } = credentials;
 
-    // Find user by email
-    const user = await prisma.user.findUnique({
-      where: { email },
+    // Find user by email with roles and permissions
+    const user = await prisma.user.findFirst({
+      where: { 
+        email,
+        isActive: true 
+      },
+      include: {
+        roles: {
+          include: {
+            role: {
+              include: {
+                permissions: {
+                  include: {
+                    permission: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     });
 
     if (!user) {
       throw new AuthenticationError('Credenciais inválidas');
-    }
-
-    if (!user.isActive) {
-      throw new AuthenticationError('Usuário inativo');
     }
 
     // Verify password
@@ -50,11 +67,18 @@ export class AuthService {
       throw new AuthenticationError('Credenciais inválidas');
     }
 
+    // Extract roles and permissions
+    const roles = user.roles.map(ur => ur.role.name);
+    const permissions = user.roles.flatMap(ur => 
+      ur.role.permissions.map(rp => `${rp.permission.resource}:${rp.permission.action}`)
+    );
+
     // Generate JWT token
     const payload: JWTPayload = {
       userId: user.id,
       email: user.email,
-      role: user.role,
+      establishmentId: user.establishmentId,
+      roles,
     };
 
     const token = jwt.sign(payload, jwtConfig.secret, {
@@ -68,7 +92,9 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
+        establishmentId: user.establishmentId,
+        roles,
+        permissions,
       },
     };
   }

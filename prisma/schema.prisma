@@ -11,23 +11,200 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      String   @default("admin")
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                     String    @id @default(uuid())
+  email                  String
+  password               String
+  name                   String
+  phone                  String?
+  photo                  String?
+  establishmentId        String
+  isActive               Boolean   @default(true)
+  emailVerified          Boolean   @default(false)
+  emailVerificationToken String?
+  
+  // 2FA fields
+  twoFactorEnabled       Boolean   @default(false)
+  twoFactorSecret        String?
+  backupCodes            String[]
+  
+  // Security fields
+  failedLoginAttempts    Int       @default(0)
+  lockedUntil            DateTime?
+  lastLoginAt            DateTime?
+  lastLoginIp            String?
+  lastLoginUserAgent     String?
+  
+  // Password reset fields
+  passwordResetToken     String?
+  passwordResetExpires   DateTime?
+  
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
-  stockTransactions  StockTransaction[]
-  auditLogs          AuditLog[]
-  commands           Command[]
-  orders             Order[]
-  orderModifications OrderModification[]
+  establishment          Establishment           @relation(fields: [establishmentId], references: [id])
+  roles                  UserRole[]
+  sessions               Session[]
+  stockTransactions      StockTransaction[]
+  auditLogs              AuditLog[]
+  commands               Command[]
+  orders                 Order[]
+  orderModifications     OrderModification[]
+  delegatedPermissions   DelegatedPermission[]
+  cashSessionsAsOperator CashSession[]           @relation("CashOperator")
+  cashSessionsAsTreasurer CashSession[]          @relation("CashTreasurer")
 
+  @@unique([email, establishmentId])
   @@index([email])
+  @@index([establishmentId])
   @@index([isActive])
+  @@map("users")
+}
+
+model Role {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  isSystem        Boolean  @default(false)
+  parentRoleId    String?
+  establishmentId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  parentRole      Role?              @relation("RoleHierarchy", fields: [parentRoleId], references: [id])
+  childRoles      Role[]             @relation("RoleHierarchy")
+  establishment   Establishment?     @relation(fields: [establishmentId], references: [id])
+  permissions     RolePermission[]
+  users           UserRole[]
+
+  @@unique([name, establishmentId])
+  @@index([establishmentId])
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  resource    String
+  action      String
+  description String?
+  conditions  Json?
+  createdAt   DateTime @default(now())
+
+  roles       RolePermission[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime   @default(now())
+
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model DelegatedPermission {
+  id           String     @id @default(uuid())
+  userId       String
+  permissionId String
+  delegatedBy  String
+  expiresAt    DateTime
+  reason       String?
+  createdAt    DateTime   @default(now())
+
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("delegated_permissions")
+}
+
+model Session {
+  id           String    @id @default(uuid())
+  userId       String
+  token        String    @unique
+  device       String?
+  browser      String?
+  os           String?
+  ipAddress    String
+  location     String?
+  expiresAt    DateTime
+  createdAt    DateTime  @default(now())
+  lastActiveAt DateTime  @default(now())
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model CashRegister {
+  id              String        @id @default(uuid())
+  number          Int
+  name            String
+  establishmentId String
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  sessions        CashSession[]
+  establishment   Establishment @relation(fields: [establishmentId], references: [id])
+
+  @@unique([number, establishmentId])
+  @@index([establishmentId])
+  @@map("cash_registers")
+}
+
+model CashSession {
+  id                String              @id @default(uuid())
+  cashRegisterId    String
+  operatorId        String
+  openingAmount     Decimal             @db.Decimal(10, 2)
+  expectedAmount    Decimal?            @db.Decimal(10, 2)
+  countedAmount     Decimal?            @db.Decimal(10, 2)
+  difference        Decimal?            @db.Decimal(10, 2)
+  status            String              @default("OPEN")
+  openedAt          DateTime            @default(now())
+  closedAt          DateTime?
+  transferredAt     DateTime?
+  receivedAt        DateTime?
+  treasurerUserId   String?
+  notes             String?             @db.Text
+  reopenReason      String?             @db.Text
+
+  cashRegister      CashRegister        @relation(fields: [cashRegisterId], references: [id])
+  operator          User                @relation("CashOperator", fields: [operatorId], references: [id])
+  treasurer         User?               @relation("CashTreasurer", fields: [treasurerUserId], references: [id])
+
+  @@index([cashRegisterId])
+  @@index([operatorId])
+  @@index([status])
+  @@index([openedAt])
+  @@map("cash_sessions")
 }
 
 model Category {
@@ -121,23 +298,32 @@ model Establishment {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  users       User[]
+  roles       Role[]
+  cashRegisters CashRegister[]
+
   @@index([cnpj])
+  @@map("establishments")
 }
 
 model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String
-  action    String
-  entity    String
-  entityId  String
-  changes   Json
-  createdAt DateTime @default(now())
+  id            String   @id @default(uuid())
+  userId        String?
+  action        String
+  resource      String
+  resourceId    String?
+  previousState Json?
+  newState      Json?
+  ipAddress     String
+  userAgent     String?
+  timestamp     DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  @@index([entity, entityId])
-  @@index([createdAt])
   @@index([userId])
+  @@index([resource, resourceId])
+  @@index([timestamp])
+  @@map("audit_logs")
 }
 
 model Table {
