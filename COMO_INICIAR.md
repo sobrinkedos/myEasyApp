@@ -1,131 +1,90 @@
 # 🚀 Como Iniciar o Sistema
 
-## Opção 1: Script Automático (Recomendado) ⚡
+## Problema com PowerShell
 
-### Windows
-```bash
-# Clique duas vezes no arquivo:
-INICIAR_SISTEMA.bat
+Se você está tendo erro de "não pode ser carregado" ou "não está assinado digitalmente", siga os passos abaixo:
+
+## ✅ Solução Rápida
+
+### Opção 1: Usar o Script Batch (Recomendado)
+
+Execute o arquivo:
+```
+START_SERVERS.bat
 ```
 
-Isso vai:
-1. ✅ Instalar dependências (se necessário)
-2. ✅ Executar migrations
-3. ✅ Iniciar Backend (porta 3000)
-4. ✅ Iniciar Frontend (porta 5173)
+Este script vai:
+1. Iniciar o backend na porta 3000
+2. Iniciar o frontend na porta 5173
+3. Abrir duas janelas CMD separadas
 
----
+### Opção 2: Iniciar Manualmente
 
-## Opção 2: Manual (2 Terminais) 🔧
+**Terminal 1 - Backend:**
+```cmd
+node node_modules\ts-node-dev\lib\bin.js --respawn --transpile-only src/server.ts
+```
 
-### Terminal 1 - Backend
-```bash
+**Terminal 2 - Frontend:**
+```cmd
+cd web-app
+node node_modules\vite\bin\vite.js
+```
+
+### Opção 3: Habilitar Scripts PowerShell (Avançado)
+
+Execute como Administrador:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+Depois pode usar:
+```
 npm run dev
 ```
 
-**Aguarde ver:**
-```
-🚀 Server running on port 3000
-✅ Database connected
-✅ Redis connected
-```
+## 📝 Após Iniciar
 
-### Terminal 2 - Frontend
-```bash
-cd web-app
-npm run dev
-```
+1. **Backend**: http://localhost:3000
+2. **Frontend**: http://localhost:5173
+3. **Login**: Use as credenciais do seu estabelecimento
 
-**Aguarde ver:**
+## 🔧 Aplicar Migrations
+
+Se precisar aplicar migrations:
 ```
-➜  Local:   http://localhost:5173/
+apply-migration.bat
 ```
 
----
+## ❌ Parar os Servidores
 
-## 🌐 Acessar o Sistema
+Feche as janelas CMD que foram abertas ou pressione `Ctrl+C` em cada terminal.
 
-### Abrir no Navegador
-```
-http://localhost:5173/auth/login
-```
+## 📦 Instalar Dependências
 
-### Criar Primeira Conta
-1. Clicar em "Criar conta"
-2. Preencher dados pessoais
-3. Preencher dados do estabelecimento
-4. Clicar em "Criar Conta"
-5. Será redirecionado para o dashboard
+Se for a primeira vez:
 
----
-
-## ❓ Perguntas Frequentes
-
-### Preciso instalar PostgreSQL?
-**Não!** ❌ Você está usando Neon (PostgreSQL na nuvem)
-
-### Preciso instalar Redis?
-**Não!** ❌ Você está usando Upstash (Redis na nuvem)
-
-### Preciso Docker?
-**Não!** ❌ Tudo está na nuvem
-
-### O que preciso ter instalado?
-Apenas:
-- ✅ Node.js 20+
-- ✅ npm
-
-### Primeira vez usando?
-Execute uma vez:
-```bash
+**Backend:**
+```cmd
 npm install
+```
+
+**Frontend:**
+```cmd
 cd web-app
 npm install
-cd ..
-npm run prisma:migrate
 ```
 
----
+## 🐛 Problemas Comuns
 
-## 🐛 Problemas?
+### Porta já em uso
+- Feche outros processos usando as portas 3000 ou 5173
+- Ou altere as portas nos arquivos de configuração
 
-### Backend não inicia
-```bash
-# Verificar se a porta 3000 está livre
-netstat -ano | findstr :3000
+### Erro de conexão com banco
+- Verifique o arquivo `.env`
+- Confirme que a `DATABASE_URL` está correta
 
-# Se estiver ocupada, matar o processo
-taskkill /PID <PID> /F
-```
-
-### Frontend não conecta
-Verificar `web-app/.env.development`:
-```env
-VITE_API_URL=http://localhost:3000/api/v1
-```
-
-### Erro de banco de dados
-```bash
-# Executar migrations novamente
-npm run prisma:migrate
-```
-
----
-
-## ✅ Checklist Rápido
-
-Antes de começar:
-- [ ] Node.js instalado (`node --version`)
-- [ ] Dependências instaladas (`npm install`)
-- [ ] Arquivo `.env` existe na raiz
-- [ ] Backend rodando (porta 3000)
-- [ ] Frontend rodando (porta 5173)
-
----
-
-## 🎯 Pronto!
-
-Agora é só usar o sistema! 🎉
-
-**Login:** http://localhost:5173/auth/login
-**Registro:** http://localhost:5173/auth/register
+### Erro "Cannot find module"
+- Execute `npm install` no backend
+- Execute `npm install` no frontend (dentro da pasta web-app)

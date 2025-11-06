@@ -11,9 +11,64 @@ router.use(authMiddleware.authenticate);
 
 /**
  * @swagger
- * /api/v1/stock/transactions:
+ * /api/v1/stock/items:
+ *   get:
+ *     summary: Listar itens de estoque
+ *     tags: [Stock]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Lista de itens
+ */
+router.get('/items', stockController.getAll);
+
+/**
+ * @swagger
+ * /api/v1/stock/items/{id}:
+ *   get:
+ *     summary: Buscar item por ID
+ *     tags: [Stock]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Dados do item
+ */
+router.get('/items/:id', stockController.getById);
+
+/**
+ * @swagger
+ * /api/v1/stock/items:
  *   post:
- *     summary: Registrar transação de estoque
+ *     summary: Criar novo item
  *     tags: [Stock]
  *     security:
  *       - bearerAuth: []
@@ -23,175 +78,152 @@ router.use(authMiddleware.authenticate);
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - ingredientId
- *               - type
- *               - quantity
- *             properties:
- *               ingredientId:
- *                 type: string
- *               type:
- *                 type: string
- *                 enum: [in, out, adjustment]
- *               quantity:
- *                 type: number
- *               reason:
- *                 type: string
  *     responses:
  *       201:
- *         description: Transação registrada
+ *         description: Item criado
  */
-router.post('/transactions', authMiddleware.authorize('admin'), stockController.createTransaction);
+router.post('/items', authMiddleware.authorize('admin', 'manager'), stockController.create);
 
 /**
  * @swagger
- * /api/v1/stock/transactions:
- *   get:
- *     summary: Listar transações de estoque
- *     tags: [Stock]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: ingredientId
- *         schema:
- *           type: string
- *       - in: query
- *         name: type
- *         schema:
- *           type: string
- *           enum: [in, out, adjustment]
- *       - in: query
- *         name: startDate
- *         schema:
- *           type: string
- *           format: date
- *       - in: query
- *         name: endDate
- *         schema:
- *           type: string
- *           format: date
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 50
- *     responses:
- *       200:
- *         description: Lista de transações
- */
-router.get('/transactions', stockController.getTransactions);
-
-/**
- * @swagger
- * /api/v1/stock/ingredients/{ingredientId}/transactions:
- *   get:
- *     summary: Listar transações de um insumo específico
+ * /api/v1/stock/items/{id}:
+ *   put:
+ *     summary: Atualizar item
  *     tags: [Stock]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: ingredientId
+ *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
  *     responses:
  *       200:
- *         description: Lista de transações do insumo
+ *         description: Item atualizado
  */
-router.get('/ingredients/:ingredientId/transactions', stockController.getTransactionsByIngredient);
-
-// Import report controller
-import { StockReportController } from '@/controllers/stock-report.controller';
-const reportController = new StockReportController();
+router.put('/items/:id', authMiddleware.authorize('admin', 'manager'), stockController.update);
 
 /**
  * @swagger
- * /api/v1/stock/report:
- *   get:
- *     summary: Relatório de estoque atual
- *     tags: [Stock]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Relatório de estoque
- */
-router.get('/report', reportController.getCurrentStock);
-
-/**
- * @swagger
- * /api/v1/stock/report/low:
- *   get:
- *     summary: Relatório de insumos com estoque baixo
- *     tags: [Stock]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Insumos com estoque baixo
- */
-router.get('/report/low', reportController.getLowStock);
-
-/**
- * @swagger
- * /api/v1/stock/report/movement:
- *   get:
- *     summary: Relatório de movimentação de estoque
+ * /api/v1/stock/items/{id}:
+ *   delete:
+ *     summary: Excluir item
  *     tags: [Stock]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: query
- *         name: startDate
+ *       - in: path
+ *         name: id
  *         required: true
  *         schema:
  *           type: string
- *           format: date
- *       - in: query
- *         name: endDate
- *         required: true
- *         schema:
- *           type: string
- *           format: date
  *     responses:
  *       200:
- *         description: Relatório de movimentação
+ *         description: Item excluído
  */
-router.get('/report/movement', reportController.getMovementReport);
+router.delete('/items/:id', authMiddleware.authorize('admin', 'manager'), stockController.delete);
 
 /**
  * @swagger
- * /api/v1/stock/report/value:
+ * /api/v1/stock/movements:
+ *   post:
+ *     summary: Registrar movimentação
+ *     tags: [Stock]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Movimentação registrada
+ */
+router.post('/movements', authMiddleware.authorize('admin', 'manager'), stockController.createMovement);
+
+/**
+ * @swagger
+ * /api/v1/stock/movements:
  *   get:
- *     summary: Relatório de valor total do estoque
+ *     summary: Listar todas as movimentações
  *     tags: [Stock]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Valor total do estoque
+ *         description: Lista de movimentações
  */
-router.get('/report/value', reportController.getStockValue);
+router.get('/movements', stockController.getAllMovements);
 
 /**
  * @swagger
- * /api/v1/stock/report/export/csv:
+ * /api/v1/stock/items/{id}/movements:
  *   get:
- *     summary: Exportar relatório de estoque em CSV
+ *     summary: Listar movimentações de um item
+ *     tags: [Stock]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Lista de movimentações do item
+ */
+router.get('/items/:id/movements', stockController.getMovements);
+
+/**
+ * @swagger
+ * /api/v1/stock/stats:
+ *   get:
+ *     summary: Estatísticas do estoque
  *     tags: [Stock]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Arquivo CSV
+ *         description: Estatísticas
  */
-router.get('/report/export/csv', reportController.exportCSV);
+router.get('/stats', stockController.getStats);
+
+/**
+ * @swagger
+ * /api/v1/stock/alerts/low-stock:
+ *   get:
+ *     summary: Itens com estoque baixo
+ *     tags: [Stock]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de itens com estoque baixo
+ */
+router.get('/alerts/low-stock', stockController.getLowStockItems);
+
+/**
+ * @swagger
+ * /api/v1/stock/alerts/expiring:
+ *   get:
+ *     summary: Itens vencendo
+ *     tags: [Stock]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de itens vencendo
+ */
+router.get('/alerts/expiring', stockController.getExpiringItems);
 
 export default router;

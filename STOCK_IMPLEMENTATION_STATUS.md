@@ -12,12 +12,13 @@
 - ✅ Repository (acesso a dados)
 - ✅ Service (lógica de negócio)
 
-## 🔄 Próximos Passos
+## ✅ Backend Completo!
 
-### Backend (Falta)
-1. **Controller** - `src/controllers/stock.controller.ts`
-2. **Routes** - `src/routes/stock.routes.ts`
-3. **Registrar rotas** no `src/app.ts`
+1. ✅ **Controller** - `src/controllers/stock.controller.ts`
+2. ✅ **Routes** - `src/routes/stock.routes.ts`
+3. ✅ **Registrado** no `src/app.ts`
+
+## 🔄 Próximos Passos
 
 ### Frontend (Falta)
 1. **Páginas:**

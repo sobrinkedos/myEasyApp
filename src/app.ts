@@ -13,12 +13,16 @@ import ingredientRoutes from '@/routes/ingredient.routes';
 import stockRoutes from '@/routes/stock.routes';
 import establishmentRoutes from '@/routes/establishment.routes';
 import tableRoutes from '@/routes/table.routes';
+import stockManagementRoutes from '@/routes/stock.routes';
+import uploadRoutes from '@/routes/upload.routes';
 import logger from '@/utils/logger';
 
 const app: Application = express();
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
 app.use(cors({
   origin: process.env.CORS_ORIGIN || '*',
   credentials: true,
@@ -134,8 +138,10 @@ app.use('/api/v1/categories', categoryRoutes);
 app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/ingredients', ingredientRoutes);
 app.use('/api/v1/stock', stockRoutes);
+app.use('/api/v1/stock-management', stockManagementRoutes);
 app.use('/api/v1/establishment', establishmentRoutes);
 app.use('/api/v1/tables', tableRoutes);
+app.use('/api/v1/upload', uploadRoutes);
 
 // 404 handler
 app.use((req, res) => {

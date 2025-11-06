@@ -21,6 +21,11 @@ import { ProductListPage } from '@/pages/products/ProductListPage';
 // Settings
 import { EstablishmentSettingsPage } from '@/pages/settings/EstablishmentSettingsPage';
 
+// Stock
+import { StockListPage } from '@/pages/stock/StockListPage';
+import { StockFormPage } from '@/pages/stock/StockFormPage';
+import { StockDetailPage } from '@/pages/stock/StockDetailPage';
+
 // Error pages
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage';
@@ -112,7 +117,19 @@ const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <div>Stock Page - Coming soon</div>,
+            element: <StockListPage />,
+          },
+          {
+            path: 'new',
+            element: <StockFormPage />,
+          },
+          {
+            path: ':id',
+            element: <StockDetailPage />,
+          },
+          {
+            path: ':id/edit',
+            element: <StockFormPage />,
           },
           {
             path: 'transactions',

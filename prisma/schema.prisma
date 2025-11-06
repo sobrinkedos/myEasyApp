@@ -439,6 +439,7 @@ model StockItem {
   supplier        String?
   location        String?
   expirationDate  DateTime?
+  imageUrl        String?
   status          String    @default("normal")
   establishmentId String
   isActive        Boolean   @default(true)

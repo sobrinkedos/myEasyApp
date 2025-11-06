@@ -16,6 +16,7 @@ export const createStockItemSchema = z.object({
   supplier: z.string().optional(),
   location: z.string().optional(),
   expirationDate: z.string().datetime().optional(),
+  imageUrl: z.string().optional(),
   isActive: z.boolean().default(true),
 });
 
