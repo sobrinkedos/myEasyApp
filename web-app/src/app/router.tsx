@@ -31,6 +31,10 @@ import { IngredientFormPage } from '@/pages/ingredients/IngredientFormPage';
 import { IngredientDetailPage } from '@/pages/ingredients/IngredientDetailPage';
 import { IngredientBulkEntryPage } from '@/pages/ingredients/IngredientBulkEntryPage';
 
+// Recipes
+import { RecipeListPage } from '@/pages/recipes/RecipeListPage';
+import { RecipeFormPage } from '@/pages/recipes/RecipeFormPage';
+
 // Stock
 import { StockListPage } from '@/pages/stock/StockListPage';
 import { StockFormPage } from '@/pages/stock/StockFormPage';
@@ -153,6 +157,25 @@ const router = createBrowserRouter([
           {
             path: ':id/edit',
             element: <IngredientFormPage />,
+          },
+        ],
+      },
+      
+      // Recipes
+      {
+        path: 'recipes',
+        children: [
+          {
+            index: true,
+            element: <RecipeListPage />,
+          },
+          {
+            path: 'new',
+            element: <RecipeFormPage />,
+          },
+          {
+            path: ':id/edit',
+            element: <RecipeFormPage />,
           },
         ],
       },
