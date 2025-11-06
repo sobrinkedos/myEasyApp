@@ -28,6 +28,7 @@ import { CategoryFormPage } from '@/pages/categories/CategoryFormPage';
 // Ingredients
 import { IngredientListPage } from '@/pages/ingredients/IngredientListPage';
 import { IngredientFormPage } from '@/pages/ingredients/IngredientFormPage';
+import { IngredientDetailPage } from '@/pages/ingredients/IngredientDetailPage';
 import { IngredientBulkEntryPage } from '@/pages/ingredients/IngredientBulkEntryPage';
 
 // Stock
@@ -144,6 +145,10 @@ const router = createBrowserRouter([
           {
             path: 'bulk-entry',
             element: <IngredientBulkEntryPage />,
+          },
+          {
+            path: ':id',
+            element: <IngredientDetailPage />,
           },
           {
             path: ':id/edit',
