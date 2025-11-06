@@ -223,7 +223,13 @@ export function ProductFormPage() {
       }
       
       const dataToSend = {
-        ...formData,
+        name: formData.name,
+        description: formData.description || undefined,
+        price: Number(formData.price),
+        categoryId: formData.categoryId,
+        recipeId: formData.recipeId || undefined,
+        targetMargin: formData.targetMargin ? Number(formData.targetMargin) : undefined,
+        preparationTime: formData.preparationTime ? Number(formData.preparationTime) : undefined,
         imageUrl: imageUrl || undefined,
       };
       
@@ -234,9 +240,18 @@ export function ProductFormPage() {
       }
       
       navigate('/products');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar produto:', error);
-      alert('Erro ao salvar produto');
+      console.error('Detalhes do erro:', error.response?.data);
+      
+      const errorMessage = error.response?.data?.message || 'Erro ao salvar produto';
+      const errorDetails = error.response?.data?.errors 
+        ? '\n\n' + Object.entries(error.response.data.errors)
+            .map(([field, messages]: [string, any]) => `${field}: ${messages.join(', ')}`)
+            .join('\n')
+        : '';
+      
+      alert(errorMessage + errorDetails);
     } finally {
       setLoading(false);
     }
