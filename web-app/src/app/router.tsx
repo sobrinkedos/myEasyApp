@@ -21,6 +21,10 @@ import { ProductListPage } from '@/pages/products/ProductListPage';
 // Settings
 import { EstablishmentSettingsPage } from '@/pages/settings/EstablishmentSettingsPage';
 
+// Categories
+import { CategoryListPage } from '@/pages/categories/CategoryListPage';
+import { CategoryFormPage } from '@/pages/categories/CategoryFormPage';
+
 // Stock
 import { StockListPage } from '@/pages/stock/StockListPage';
 import { StockFormPage } from '@/pages/stock/StockFormPage';
@@ -104,7 +108,20 @@ const router = createBrowserRouter([
       // Categories
       {
         path: 'categories',
-        element: <div>Categories Page - Coming soon</div>,
+        children: [
+          {
+            index: true,
+            element: <CategoryListPage />,
+          },
+          {
+            path: 'new',
+            element: <CategoryFormPage />,
+          },
+          {
+            path: ':id/edit',
+            element: <CategoryFormPage />,
+          },
+        ],
       },
       
       // Ingredients
