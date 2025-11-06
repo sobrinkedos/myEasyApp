@@ -23,20 +23,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     // Check for existing token on mount
+    console.log('🔍 Verificando token existente...');
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
 
+    console.log('🔑 Token:', token ? 'Existe' : 'Não existe');
+    console.log('👤 User:', savedUser ? 'Existe' : 'Não existe');
+
     if (token && savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsedUser = JSON.parse(savedUser);
+        console.log('✅ Usuário carregado:', parsedUser);
+        setUser(parsedUser);
       } catch (err) {
-        console.error('Failed to parse saved user:', err);
+        console.error('❌ Failed to parse saved user:', err);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
+    } else {
+      console.log('⚠️ Sem token ou usuário salvo');
     }
 
     setIsLoading(false);
+    console.log('✅ Auth inicializado');
   }, []);
 
   const login = async (credentials: LoginCredentials) => {

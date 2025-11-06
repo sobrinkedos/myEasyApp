@@ -45,6 +45,7 @@ model User {
   roles                  UserRole[]
   sessions               Session[]
   stockTransactions      StockTransaction[]
+  stockMovements         StockMovement[]
   auditLogs              AuditLog[]
   commands               Command[]
   orders                 Order[]
@@ -298,9 +299,10 @@ model Establishment {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  users       User[]
-  roles       Role[]
+  users         User[]
+  roles         Role[]
   cashRegisters CashRegister[]
+  stockItems    StockItem[]
 
   @@index([cnpj])
   @@map("establishments")
@@ -418,4 +420,59 @@ model OrderModification {
   user  User  @relation(fields: [userId], references: [id])
 
   @@index([orderId, createdAt])
+}
+
+
+model StockItem {
+  id              String    @id @default(uuid())
+  name            String
+  description     String?
+  barcode         String?
+  sku             String?
+  category        String
+  unit            String
+  currentQuantity Decimal   @db.Decimal(10, 3) @default(0)
+  minimumQuantity Decimal   @db.Decimal(10, 3) @default(0)
+  maximumQuantity Decimal?  @db.Decimal(10, 3)
+  costPrice       Decimal   @db.Decimal(10, 2)
+  salePrice       Decimal   @db.Decimal(10, 2)
+  supplier        String?
+  location        String?
+  expirationDate  DateTime?
+  status          String    @default("normal")
+  establishmentId String
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  establishment   Establishment     @relation(fields: [establishmentId], references: [id])
+  movements       StockMovement[]
+
+  @@index([establishmentId])
+  @@index([category])
+  @@index([status])
+  @@index([barcode])
+  @@index([sku])
+  @@map("stock_items")
+}
+
+model StockMovement {
+  id          String   @id @default(uuid())
+  stockItemId String
+  type        String
+  quantity    Decimal  @db.Decimal(10, 3)
+  costPrice   Decimal? @db.Decimal(10, 2)
+  totalCost   Decimal? @db.Decimal(10, 2)
+  reason      String?
+  reference   String?
+  userId      String
+  createdAt   DateTime @default(now())
+
+  stockItem   StockItem @relation(fields: [stockItemId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@index([stockItemId, createdAt])
+  @@index([type])
+  @@index([userId])
+  @@map("stock_movements")
 }
