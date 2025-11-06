@@ -90,6 +90,23 @@ export function StockListPage() {
     return ((sale - cost) / cost * 100).toFixed(1);
   };
 
+  const getStats = () => {
+    const totalCostValue = items.reduce((sum, item) => 
+      sum + (Number(item.currentQuantity) * Number(item.costPrice)), 0
+    );
+    const totalSaleValue = items.reduce((sum, item) => 
+      sum + (Number(item.currentQuantity) * Number(item.salePrice)), 0
+    );
+    const lowStockCount = items.filter(item => 
+      item.status === 'baixo' || item.status === 'zerado'
+    ).length;
+    const totalItems = items.length;
+
+    return { totalCostValue, totalSaleValue, lowStockCount, totalItems };
+  };
+
+  const stats = getStats();
+
   return (
     <div className="space-y-6">
       {/* Success Message */}
@@ -121,6 +138,42 @@ export function StockListPage() {
           </Link>
         </div>
       </div>
+
+      {/* Stats Cards */}
+      {!isLoading && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg shadow p-4">
+            <p className="text-sm text-gray-600">Total de Itens</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalItems}</p>
+            <p className="text-xs text-gray-500 mt-1">produtos cadastrados</p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-4">
+            <p className="text-sm text-gray-600">Valor em Custo</p>
+            <p className="text-2xl font-bold text-blue-600 mt-1">
+              {formatCurrency(stats.totalCostValue)}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">investimento total</p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-4">
+            <p className="text-sm text-gray-600">Valor em Venda</p>
+            <p className="text-2xl font-bold text-green-600 mt-1">
+              {formatCurrency(stats.totalSaleValue)}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">potencial de receita</p>
+          </div>
+
+          <Link
+            to="/stock/low-stock"
+            className="bg-white rounded-lg shadow p-4 hover:bg-orange-50 transition-colors cursor-pointer"
+          >
+            <p className="text-sm text-gray-600">Estoque Baixo</p>
+            <p className="text-2xl font-bold text-orange-600 mt-1">{stats.lowStockCount}</p>
+            <p className="text-xs text-orange-600 mt-1">clique para ver lista →</p>
+          </Link>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow p-4">

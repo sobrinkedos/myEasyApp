@@ -26,6 +26,7 @@ import { StockListPage } from '@/pages/stock/StockListPage';
 import { StockFormPage } from '@/pages/stock/StockFormPage';
 import { StockDetailPage } from '@/pages/stock/StockDetailPage';
 import { StockBulkEntryPage } from '@/pages/stock/StockBulkEntryPage';
+import { StockLowStockPage } from '@/pages/stock/StockLowStockPage';
 
 // Error pages
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -127,6 +128,10 @@ const router = createBrowserRouter([
           {
             path: 'bulk-entry',
             element: <StockBulkEntryPage />,
+          },
+          {
+            path: 'low-stock',
+            element: <StockLowStockPage />,
           },
           {
             path: ':id',
