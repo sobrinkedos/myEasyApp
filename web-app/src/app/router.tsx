@@ -25,6 +25,7 @@ import { EstablishmentSettingsPage } from '@/pages/settings/EstablishmentSetting
 import { StockListPage } from '@/pages/stock/StockListPage';
 import { StockFormPage } from '@/pages/stock/StockFormPage';
 import { StockDetailPage } from '@/pages/stock/StockDetailPage';
+import { StockBulkEntryPage } from '@/pages/stock/StockBulkEntryPage';
 
 // Error pages
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -122,6 +123,10 @@ const router = createBrowserRouter([
           {
             path: 'new',
             element: <StockFormPage />,
+          },
+          {
+            path: 'bulk-entry',
+            element: <StockBulkEntryPage />,
           },
           {
             path: ':id',

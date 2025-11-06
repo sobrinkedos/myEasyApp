@@ -106,12 +106,20 @@ export function StockListPage() {
           <p className="text-gray-600 mt-1">Gerencie seus produtos de revenda</p>
         </div>
         
-        <Link
-          to="/stock/new"
-          className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-        >
-          + Novo Item
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            to="/stock/bulk-entry"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            📦 Entrada em Massa
+          </Link>
+          <Link
+            to="/stock/new"
+            className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+          >
+            + Novo Item
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}
