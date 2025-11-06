@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function LoginPage() {
@@ -101,10 +101,21 @@ export function LoginPage() {
         </button>
       </form>
 
-      <div className="mt-4 text-center">
-        <a href="/auth/forgot-password" className="text-sm text-orange-600 hover:text-orange-700">
-          Esqueceu sua senha?
-        </a>
+      <div className="mt-4 space-y-2">
+        <div className="text-center">
+          <Link to="/auth/forgot-password" className="text-sm text-orange-600 hover:text-orange-700">
+            Esqueceu sua senha?
+          </Link>
+        </div>
+        
+        <div className="text-center pt-2 border-t border-gray-200">
+          <p className="text-sm text-gray-600">
+            Não tem uma conta?{' '}
+            <Link to="/auth/register" className="text-orange-600 hover:text-orange-700 font-medium">
+              Criar conta
+            </Link>
+          </p>
+        </div>
       </div>
     </>
   );

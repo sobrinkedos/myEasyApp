@@ -1,27 +1,14 @@
 import prisma from '@/config/database';
 import { Establishment } from '@prisma/client';
-
-export interface CreateEstablishmentDTO {
-  name: string;
-  cnpj: string;
-  address: any;
-  phone: string;
-  email: string;
-  logoUrl?: string;
-  taxSettings: any;
-}
-
-export interface UpdateEstablishmentDTO {
-  name?: string;
-  cnpj?: string;
-  address?: any;
-  phone?: string;
-  email?: string;
-  logoUrl?: string;
-  taxSettings?: any;
-}
+import type { CreateEstablishmentDTO, UpdateEstablishmentDTO } from '@/models/establishment.model';
 
 export class EstablishmentRepository {
+  async findAll(): Promise<Establishment[]> {
+    return prisma.establishment.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async findFirst(): Promise<Establishment | null> {
     return prisma.establishment.findFirst();
   }
@@ -49,5 +36,15 @@ export class EstablishmentRepository {
       where: { id },
       data,
     });
+  }
+
+  async delete(id: string): Promise<Establishment> {
+    return prisma.establishment.delete({
+      where: { id },
+    });
+  }
+
+  async count(): Promise<number> {
+    return prisma.establishment.count();
   }
 }

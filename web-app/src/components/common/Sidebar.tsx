@@ -140,7 +140,7 @@ export function Sidebar({ open, onClose, variant }: SidebarProps) {
       </div>
 
       {/* Menu Items */}
-      <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+      <nav className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-hide">
         {menuItems.map((item, index) => (
           <MenuItem key={index} item={item} />
         ))}

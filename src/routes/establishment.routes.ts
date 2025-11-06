@@ -14,7 +14,7 @@ router.use(authMiddleware.authenticate);
  * @swagger
  * /api/v1/establishment:
  *   get:
- *     summary: Buscar dados do estabelecimento
+ *     summary: Buscar dados do estabelecimento do usuário logado
  *     tags: [Establishment]
  *     security:
  *       - bearerAuth: []
@@ -55,7 +55,7 @@ router.get('/', establishmentController.get);
  *       200:
  *         description: Estabelecimento atualizado
  */
-router.put('/', authMiddleware.authorize('admin'), establishmentController.update);
+router.put('/', authMiddleware.authorize('admin'), establishmentController.updateCurrent);
 
 /**
  * @swagger

@@ -1,34 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { EstablishmentService } from '@/services/establishment.service';
-import { z } from 'zod';
 import { ValidationError } from '@/utils/errors';
-
-const addressSchema = z.object({
-  street: z.string().min(3),
-  number: z.string(),
-  complement: z.string().optional(),
-  neighborhood: z.string(),
-  city: z.string(),
-  state: z.string().length(2),
-  zipCode: z.string(),
-});
-
-const taxSettingsSchema = z.object({
-  taxRegime: z.string(),
-  icmsRate: z.number().min(0).max(100),
-  issRate: z.number().min(0).max(100),
-  pisRate: z.number().min(0).max(100),
-  cofinsRate: z.number().min(0).max(100),
-});
-
-const updateEstablishmentSchema = z.object({
-  name: z.string().min(3).optional(),
-  cnpj: z.string().optional(),
-  address: addressSchema.optional(),
-  phone: z.string().optional(),
-  email: z.string().email().optional(),
-  taxSettings: taxSettingsSchema.optional(),
-});
+import {
+  createEstablishmentSchema,
+  updateEstablishmentSchema,
+} from '@/models/establishment.model';
 
 export class EstablishmentController {
   private service: EstablishmentService;
@@ -37,9 +13,25 @@ export class EstablishmentController {
     this.service = new EstablishmentService();
   }
 
+  getAll = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const establishments = await this.service.getAll();
+
+      res.status(200).json({
+        success: true,
+        data: establishments,
+        count: establishments.length,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   get = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const establishment = await this.service.get();
+      // Get establishment from user's token
+      const establishmentId = req.user!.establishmentId;
+      const establishment = await this.service.getById(establishmentId);
 
       res.status(200).json({
         success: true,
@@ -50,7 +42,7 @@ export class EstablishmentController {
     }
   };
 
-  update = async (req: Request, res: Response, next: NextFunction) => {
+  updateCurrent = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const validation = updateEstablishmentSchema.safeParse(req.body);
 
@@ -65,12 +57,98 @@ export class EstablishmentController {
       }
 
       const userId = req.user!.userId;
-      const establishment = await this.service.update(validation.data, userId);
+      const establishmentId = req.user!.establishmentId;
+      const establishment = await this.service.update(establishmentId, validation.data, userId);
 
       res.status(200).json({
         success: true,
         data: establishment,
         message: 'Estabelecimento atualizado com sucesso',
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const establishment = await this.service.getById(id);
+
+      res.status(200).json({
+        success: true,
+        data: establishment,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  create = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const validation = createEstablishmentSchema.safeParse(req.body);
+
+      if (!validation.success) {
+        const errors: Record<string, string[]> = {};
+        validation.error.errors.forEach((err) => {
+          const field = err.path.join('.');
+          if (!errors[field]) errors[field] = [];
+          errors[field].push(err.message);
+        });
+        throw new ValidationError('Dados inválidos', errors);
+      }
+
+      const userId = req.user?.userId;
+      const establishment = await this.service.create(validation.data, userId);
+
+      res.status(201).json({
+        success: true,
+        data: establishment,
+        message: 'Estabelecimento criado com sucesso',
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  update = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const validation = updateEstablishmentSchema.safeParse(req.body);
+
+      if (!validation.success) {
+        const errors: Record<string, string[]> = {};
+        validation.error.errors.forEach((err) => {
+          const field = err.path.join('.');
+          if (!errors[field]) errors[field] = [];
+          errors[field].push(err.message);
+        });
+        throw new ValidationError('Dados inválidos', errors);
+      }
+
+      const userId = req.user!.userId;
+      const establishment = await this.service.update(id, validation.data, userId);
+
+      res.status(200).json({
+        success: true,
+        data: establishment,
+        message: 'Estabelecimento atualizado com sucesso',
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  delete = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.userId;
+
+      await this.service.delete(id, userId);
+
+      res.status(200).json({
+        success: true,
+        message: 'Estabelecimento excluído com sucesso',
       });
     } catch (error) {
       next(error);
@@ -87,7 +165,9 @@ export class EstablishmentController {
 
       const logoUrl = `/uploads/${req.file.filename}`;
       const userId = req.user!.userId;
-      const establishment = await this.service.update({ logoUrl }, userId);
+      const establishmentId = req.user!.establishmentId;
+      
+      const establishment = await this.service.update(establishmentId, { logoUrl }, userId);
 
       res.status(200).json({
         success: true,

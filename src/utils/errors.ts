@@ -39,3 +39,36 @@ export class ConflictError extends AppError {
     super(409, message);
   }
 }
+
+export class ForbiddenError extends AppError {
+  constructor(message: string = 'Acesso proibido') {
+    super(403, message);
+  }
+}
+
+// Establishment-specific errors
+export class EstablishmentNotFoundError extends NotFoundError {
+  constructor() {
+    super('Estabelecimento');
+  }
+}
+
+export class DuplicateCNPJError extends ConflictError {
+  constructor() {
+    super('CNPJ já cadastrado no sistema');
+  }
+}
+
+export class InvalidCNPJError extends ValidationError {
+  constructor() {
+    super('CNPJ inválido', { 
+      cnpj: ['Formato ou dígitos verificadores inválidos'] 
+    });
+  }
+}
+
+export class UnauthorizedEstablishmentAccessError extends ForbiddenError {
+  constructor() {
+    super('Você não tem permissão para acessar este estabelecimento');
+  }
+}

@@ -40,8 +40,12 @@ Thumbs.db
 # Prisma
 prisma/migrations/
 
-# Uploads
-uploads/
+# Uploads (keep directory structure)
+uploads/*
+!uploads/.gitkeep
+!uploads/logos/
+uploads/logos/*
+!uploads/logos/.gitkeep
 temp/
 
 # Docker

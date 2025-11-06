@@ -1,17 +1,19 @@
-import {
-  EstablishmentRepository,
-  CreateEstablishmentDTO,
-  UpdateEstablishmentDTO,
-} from '@/repositories/establishment.repository';
-import { NotFoundError, ValidationError, ConflictError } from '@/utils/errors';
+import { EstablishmentRepository } from '@/repositories/establishment.repository';
+import { NotFoundError, ConflictError } from '@/utils/errors';
 import { Establishment } from '@prisma/client';
 import prisma from '@/config/database';
+import { validateCNPJ } from '@/utils/cnpj';
+import type { CreateEstablishmentDTO, UpdateEstablishmentDTO } from '@/models/establishment.model';
 
 export class EstablishmentService {
   private repository: EstablishmentRepository;
 
   constructor() {
     this.repository = new EstablishmentRepository();
+  }
+
+  async getAll(): Promise<Establishment[]> {
+    return this.repository.findAll();
   }
 
   async get(): Promise<Establishment> {
@@ -24,56 +26,117 @@ export class EstablishmentService {
     return establishment;
   }
 
-  async create(data: CreateEstablishmentDTO): Promise<Establishment> {
-    // Validate CNPJ format (14 digits)
+  async getById(id: string): Promise<Establishment> {
+    const establishment = await this.repository.findById(id);
+
+    if (!establishment) {
+      throw new NotFoundError('Estabelecimento');
+    }
+
+    return establishment;
+  }
+
+  async create(data: CreateEstablishmentDTO, userId?: string): Promise<Establishment> {
+    // Normalize CNPJ (remove formatting)
     const cnpjDigits = data.cnpj.replace(/\D/g, '');
-    if (cnpjDigits.length !== 14) {
-      throw new ValidationError('CNPJ inválido', {
-        cnpj: ['CNPJ deve ter 14 dígitos'],
-      });
+
+    // Validate CNPJ
+    if (!validateCNPJ(cnpjDigits)) {
+      throw new ConflictError('CNPJ inválido');
     }
 
     // Check if CNPJ already exists
-    const existing = await this.repository.findByCnpj(data.cnpj);
+    const existing = await this.repository.findByCnpj(cnpjDigits);
     if (existing) {
       throw new ConflictError('CNPJ já cadastrado');
     }
 
-    return this.repository.create(data);
+    const establishment = await this.repository.create({
+      ...data,
+      cnpj: cnpjDigits,
+    });
+
+    // Create audit log if userId provided
+    if (userId) {
+      await prisma.auditLog.create({
+        data: {
+          userId,
+          action: 'create',
+          resource: 'establishment',
+          resourceId: establishment.id,
+          newState: establishment,
+          ipAddress: 'system',
+        },
+      });
+    }
+
+    return establishment;
   }
 
-  async update(data: UpdateEstablishmentDTO, userId: string): Promise<Establishment> {
-    const establishment = await this.get();
+  async update(id: string, data: UpdateEstablishmentDTO, userId: string): Promise<Establishment> {
+    const establishment = await this.getById(id);
 
-    // Validate CNPJ if provided
+    // Validate and normalize CNPJ if provided
     if (data.cnpj) {
       const cnpjDigits = data.cnpj.replace(/\D/g, '');
-      if (cnpjDigits.length !== 14) {
-        throw new ValidationError('CNPJ inválido', {
-          cnpj: ['CNPJ deve ter 14 dígitos'],
-        });
+
+      if (!validateCNPJ(cnpjDigits)) {
+        throw new ConflictError('CNPJ inválido');
       }
 
       // Check if new CNPJ is already taken
-      const existing = await this.repository.findByCnpj(data.cnpj);
-      if (existing && existing.id !== establishment.id) {
+      const existing = await this.repository.findByCnpj(cnpjDigits);
+      if (existing && existing.id !== id) {
         throw new ConflictError('CNPJ já cadastrado');
       }
+
+      data.cnpj = cnpjDigits;
     }
 
-    const updated = await this.repository.update(establishment.id, data);
+    const updated = await this.repository.update(id, data);
 
     // Create audit log
     await prisma.auditLog.create({
       data: {
         userId,
         action: 'update',
-        entity: 'establishment',
-        entityId: establishment.id,
-        changes: data,
+        resource: 'establishment',
+        resourceId: id,
+        previousState: establishment,
+        newState: updated,
+        ipAddress: 'system',
       },
     });
 
     return updated;
+  }
+
+  async delete(id: string, userId: string): Promise<void> {
+    const establishment = await this.getById(id);
+
+    // Check if establishment has users
+    const userCount = await prisma.user.count({
+      where: { establishmentId: id },
+    });
+
+    if (userCount > 0) {
+      throw new ConflictError(
+        `Não é possível excluir o estabelecimento. Existem ${userCount} usuário(s) vinculado(s).`
+      );
+    }
+
+    await this.repository.delete(id);
+
+    // Create audit log
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        action: 'delete',
+        resource: 'establishment',
+        resourceId: id,
+        previousState: establishment,
+        ipAddress: 'system',
+      },
+    });
   }
 }
