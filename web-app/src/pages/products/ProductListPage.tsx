@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
-import { api } from '../../services/api';
+import api from '../../services/api';
 
 interface Product {
   id: string;

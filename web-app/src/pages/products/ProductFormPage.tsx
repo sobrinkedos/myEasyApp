@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, DollarSign, TrendingUp, Calculator } from 'lucide-react';
-import { api } from '../../services/api';
+import api from '../../services/api';
 
 interface Category {
   id: string;

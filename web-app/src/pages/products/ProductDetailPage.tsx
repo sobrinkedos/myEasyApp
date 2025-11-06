@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Edit, TrendingUp, TrendingDown, DollarSign, Package, Calculator, AlertTriangle } from 'lucide-react';
-import { api } from '../../services/api';
+import api from '../../services/api';
 
 interface Product {
   id: string;
