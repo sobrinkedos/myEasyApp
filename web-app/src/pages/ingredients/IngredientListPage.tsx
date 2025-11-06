@@ -209,8 +209,8 @@ export function IngredientListPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {ingredients.map((ingredient) => (
                 <tr key={ingredient.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{ingredient.name}</div>
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-medium text-gray-900 break-words max-w-xs">{ingredient.name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
