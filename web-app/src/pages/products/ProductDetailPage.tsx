@@ -70,10 +70,17 @@ export function ProductDetailPage() {
         currentMargin: data.currentMargin ? Number(data.currentMargin) : undefined,
         suggestedPrice: data.suggestedPrice ? Number(data.suggestedPrice) : undefined,
         markup: data.markup ? Number(data.markup) : undefined,
+        revenue: data.revenue ? Number(data.revenue) : undefined,
+        salesCount: data.salesCount ? Number(data.salesCount) : undefined,
         recipe: data.recipe ? {
           ...data.recipe,
           costPerPortion: Number(data.recipe.costPerPortion),
           portionSize: Number(data.recipe.portionSize),
+          ingredients: data.recipe.ingredients?.map((ing: any) => ({
+            ...ing,
+            quantity: Number(ing.quantity),
+            cost: Number(ing.cost),
+          })),
         } : undefined,
       };
       
