@@ -8,6 +8,10 @@ const createProductSchema = z.object({
   description: z.string().max(500).optional(),
   price: z.number().nonnegative('Preço deve ser maior ou igual a zero'),
   categoryId: z.string().uuid('ID de categoria inválido'),
+  recipeId: z.string().uuid().optional(),
+  targetMargin: z.number().min(0).max(100).optional(),
+  preparationTime: z.number().int().positive().optional(),
+  imageUrl: z.string().optional(),
 });
 
 const updateProductSchema = z.object({
@@ -15,6 +19,15 @@ const updateProductSchema = z.object({
   description: z.string().max(500).optional(),
   price: z.number().nonnegative().optional(),
   categoryId: z.string().uuid().optional(),
+  recipeId: z.string().uuid().optional().nullable(),
+  suggestedPrice: z.number().optional(),
+  targetMargin: z.number().min(0).max(100).optional(),
+  currentMargin: z.number().optional(),
+  markup: z.number().optional(),
+  preparationTime: z.number().int().positive().optional(),
+  salesCount: z.number().int().optional(),
+  revenue: z.number().optional(),
+  imageUrl: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 

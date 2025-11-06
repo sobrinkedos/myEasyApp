@@ -99,7 +99,7 @@ router.get('/:id', productController.getById);
  *       201:
  *         description: Produto criado
  */
-router.post('/', authMiddleware.authorize('admin'), productController.create);
+router.post('/', productController.create);
 
 /**
  * @swagger
@@ -119,7 +119,7 @@ router.post('/', authMiddleware.authorize('admin'), productController.create);
  *       200:
  *         description: Produto atualizado
  */
-router.put('/:id', authMiddleware.authorize('admin'), productController.update);
+router.put('/:id', productController.update);
 
 /**
  * @swagger
@@ -139,7 +139,7 @@ router.put('/:id', authMiddleware.authorize('admin'), productController.update);
  *       200:
  *         description: Produto removido
  */
-router.delete('/:id', authMiddleware.authorize('admin'), productController.delete);
+router.delete('/:id', productController.delete);
 
 /**
  * @swagger
