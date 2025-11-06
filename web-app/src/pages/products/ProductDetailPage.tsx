@@ -60,7 +60,8 @@ export function ProductDetailPage() {
     try {
       setLoading(true);
       const response = await api.get(`/products/${id}`);
-      setProduct(response.data);
+      const data = response.data.data || response.data;
+      setProduct(data);
       
       if (response.data.recipe) {
         generateSimulations(response.data);

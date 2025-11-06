@@ -39,9 +39,11 @@ export function ProductListPage() {
     try {
       setLoading(true);
       const response = await api.get('/products');
-      setProducts(response.data);
+      const data = response.data.data || response.data;
+      setProducts(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
+      setProducts([]);
     } finally {
       setLoading(false);
     }

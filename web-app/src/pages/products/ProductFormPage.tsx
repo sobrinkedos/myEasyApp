@@ -70,18 +70,22 @@ export function ProductFormPage() {
   const loadCategories = async () => {
     try {
       const response = await api.get('/categories');
-      setCategories(response.data);
+      const data = response.data.data || response.data;
+      setCategories(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Erro ao carregar categorias:', error);
+      setCategories([]);
     }
   };
 
   const loadRecipes = async () => {
     try {
       const response = await api.get('/recipes');
-      setRecipes(response.data);
+      const data = response.data.data || response.data;
+      setRecipes(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Erro ao carregar receitas:', error);
+      setRecipes([]);
     }
   };
 
@@ -89,7 +93,7 @@ export function ProductFormPage() {
     try {
       setLoading(true);
       const response = await api.get(`/products/${id}`);
-      const product = response.data;
+      const product = response.data.data || response.data;
       
       setFormData({
         name: product.name,
