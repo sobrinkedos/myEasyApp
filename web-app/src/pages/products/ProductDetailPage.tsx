@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Edit, TrendingUp, TrendingDown, DollarSign, Package, Calculator, AlertTriangle } from 'lucide-react';
 import api from '../../services/api';
+import { getImageUrl } from '../../config/constants';
 
 interface Product {
   id: string;
@@ -171,7 +172,7 @@ export function ProductDetailPage() {
             
             {product.imageUrl && (
               <img
-                src={product.imageUrl}
+                src={getImageUrl(product.imageUrl)}
                 alt={product.name}
                 className="w-full h-64 object-cover rounded-lg mb-4"
               />

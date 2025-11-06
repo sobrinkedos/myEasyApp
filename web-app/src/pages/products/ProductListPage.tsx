@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import api from '../../services/api';
+import { getImageUrl } from '../../config/constants';
 
 interface Product {
   id: string;
@@ -154,7 +155,7 @@ export function ProductListPage() {
               <div key={product.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
                 {product.imageUrl && (
                   <img
-                    src={product.imageUrl}
+                    src={getImageUrl(product.imageUrl)}
                     alt={product.name}
                     className="w-full h-48 object-cover rounded-t-lg"
                   />

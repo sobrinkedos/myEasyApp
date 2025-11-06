@@ -125,7 +125,11 @@ export function ProductFormPage() {
       }
       
       if (product.imageUrl) {
-        setImagePreview(product.imageUrl);
+        // Use getImageUrl to get full URL for preview
+        const fullUrl = product.imageUrl.startsWith('http') 
+          ? product.imageUrl 
+          : `http://localhost:3000${product.imageUrl}`;
+        setImagePreview(fullUrl);
       }
     } catch (error) {
       console.error('Erro ao carregar produto:', error);
