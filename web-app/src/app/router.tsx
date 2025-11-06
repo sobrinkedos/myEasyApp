@@ -18,6 +18,9 @@ import { DashboardPage } from '@/pages/dashboard/DashboardPage';
 // Products
 import { ProductListPage } from '@/pages/products/ProductListPage';
 
+// Settings
+import { EstablishmentSettingsPage } from '@/pages/settings/EstablishmentSettingsPage';
+
 // Error pages
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage';
@@ -202,7 +205,7 @@ const router = createBrowserRouter([
         children: [
           {
             path: 'establishment',
-            element: <div>Establishment Settings Page - Coming soon</div>,
+            element: <EstablishmentSettingsPage />,
           },
           {
             path: 'profile',

@@ -9,7 +9,8 @@ declare global {
       user?: {
         userId: string;
         email: string;
-        role: string;
+        establishmentId: string;
+        roles: string[];
       };
     }
   }
@@ -44,7 +45,8 @@ export class AuthMiddleware {
       req.user = {
         userId: payload.userId,
         email: payload.email,
-        role: payload.role,
+        establishmentId: payload.establishmentId,
+        roles: payload.roles,
       };
 
       next();
@@ -60,7 +62,9 @@ export class AuthMiddleware {
           throw new AuthenticationError('Usuário não autenticado');
         }
 
-        if (!allowedRoles.includes(req.user.role)) {
+        const hasRole = allowedRoles.some(role => req.user!.roles.includes(role));
+        
+        if (!hasRole) {
           throw new AuthorizationError('Você não tem permissão para acessar este recurso');
         }
 

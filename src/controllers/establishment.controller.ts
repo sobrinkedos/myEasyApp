@@ -29,15 +29,21 @@ export class EstablishmentController {
 
   get = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      console.log('🔍 req.user:', req.user);
+      
       // Get establishment from user's token
       const establishmentId = req.user!.establishmentId;
+      console.log('🏢 establishmentId:', establishmentId);
+      
       const establishment = await this.service.getById(establishmentId);
+      console.log('✅ establishment:', establishment);
 
       res.status(200).json({
         success: true,
         data: establishment,
       });
     } catch (error) {
+      console.error('❌ Erro no get establishment:', error);
       next(error);
     }
   };
