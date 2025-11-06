@@ -82,7 +82,15 @@ export function ProductFormPage() {
     try {
       const response = await api.get('/recipes');
       const data = response.data.data || response.data;
-      setRecipes(Array.isArray(data) ? data : []);
+      
+      // Converter valores Decimal para number
+      const recipesWithNumbers = Array.isArray(data) ? data.map((r: any) => ({
+        ...r,
+        costPerPortion: Number(r.costPerPortion),
+        portionSize: Number(r.portionSize),
+      })) : [];
+      
+      setRecipes(recipesWithNumbers);
     } catch (error) {
       console.error('Erro ao carregar receitas:', error);
       setRecipes([]);
@@ -98,10 +106,10 @@ export function ProductFormPage() {
       setFormData({
         name: product.name,
         description: product.description || '',
-        price: product.price,
+        price: Number(product.price),
         categoryId: product.categoryId,
         recipeId: product.recipeId || '',
-        targetMargin: product.targetMargin || 65,
+        targetMargin: product.targetMargin ? Number(product.targetMargin) : 65,
         preparationTime: product.preparationTime || 0,
         imageUrl: product.imageUrl || '',
       });

@@ -40,7 +40,22 @@ export function ProductListPage() {
       setLoading(true);
       const response = await api.get('/products');
       const data = response.data.data || response.data;
-      setProducts(Array.isArray(data) ? data : []);
+      
+      // Converter valores Decimal para number
+      const productsWithNumbers = Array.isArray(data) ? data.map((p: any) => ({
+        ...p,
+        price: Number(p.price),
+        targetMargin: p.targetMargin ? Number(p.targetMargin) : undefined,
+        currentMargin: p.currentMargin ? Number(p.currentMargin) : undefined,
+        suggestedPrice: p.suggestedPrice ? Number(p.suggestedPrice) : undefined,
+        markup: p.markup ? Number(p.markup) : undefined,
+        recipe: p.recipe ? {
+          ...p.recipe,
+          costPerPortion: Number(p.recipe.costPerPortion),
+        } : undefined,
+      })) : [];
+      
+      setProducts(productsWithNumbers);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
       setProducts([]);

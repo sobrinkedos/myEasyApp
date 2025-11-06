@@ -61,7 +61,23 @@ export function ProductDetailPage() {
       setLoading(true);
       const response = await api.get(`/products/${id}`);
       const data = response.data.data || response.data;
-      setProduct(data);
+      
+      // Converter valores Decimal para number
+      const productWithNumbers = {
+        ...data,
+        price: Number(data.price),
+        targetMargin: data.targetMargin ? Number(data.targetMargin) : undefined,
+        currentMargin: data.currentMargin ? Number(data.currentMargin) : undefined,
+        suggestedPrice: data.suggestedPrice ? Number(data.suggestedPrice) : undefined,
+        markup: data.markup ? Number(data.markup) : undefined,
+        recipe: data.recipe ? {
+          ...data.recipe,
+          costPerPortion: Number(data.recipe.costPerPortion),
+          portionSize: Number(data.recipe.portionSize),
+        } : undefined,
+      };
+      
+      setProduct(productWithNumbers);
       
       if (response.data.recipe) {
         generateSimulations(response.data);
