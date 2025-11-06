@@ -38,6 +38,7 @@ const menuItems: MenuItem[] = [
     children: [
       { icon: 'package', label: 'Produtos', path: '/products' },
       { icon: 'tag', label: 'Categorias', path: '/categories' },
+      { icon: 'clipboard', label: 'Receitas', path: '/recipes' },
       { icon: 'clipboard', label: 'Insumos', path: '/ingredients' },
       { icon: 'clipboard', label: 'Estoque', path: '/stock' },
     ],
