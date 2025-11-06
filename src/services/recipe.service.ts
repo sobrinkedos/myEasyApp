@@ -76,7 +76,7 @@ export class RecipeService {
     return this.repository.findById(recipe.id) as Promise<Recipe>;
   }
 
-  async update(id: string, data: UpdateRecipeDTO): Promise<Recipe> {
+  async update(id: string, data: UpdateRecipeDTO & { ingredients?: CreateRecipeIngredientDTO[] }): Promise<Recipe> {
     // Check if recipe exists
     await this.getById(id);
 
@@ -87,15 +87,46 @@ export class RecipeService {
       });
     }
 
-    // Update recipe
-    const recipe = await this.repository.update(id, data);
+    // Extract ingredients from data
+    const { ingredients, ...recipeData } = data;
 
-    // Recalculate costs if yield changed
-    if (data.yield !== undefined) {
+    // Update recipe basic data
+    const recipe = await this.repository.update(id, recipeData);
+
+    // Update ingredients if provided
+    if (ingredients && ingredients.length > 0) {
+      // Remove all existing ingredients
+      const existingRecipe = await this.getById(id);
+      for (const ing of existingRecipe.ingredients) {
+        await this.repository.removeIngredient(id, ing.ingredientId);
+      }
+
+      // Add new ingredients
+      for (const ingredient of ingredients) {
+        // Validate ingredient exists
+        const ing = await this.ingredientRepository.findById(ingredient.ingredientId);
+        if (!ing) {
+          throw new NotFoundError(`Ingrediente ${ingredient.ingredientId}`);
+        }
+
+        // Validate quantity
+        if (ingredient.quantity <= 0) {
+          throw new ValidationError('Quantidade inválida', {
+            quantity: ['Quantidade deve ser maior que zero'],
+          });
+        }
+
+        await this.repository.addIngredient(id, ingredient);
+      }
+
+      // Recalculate costs
+      await this.calculateAndUpdateCosts(id);
+    } else if (data.yield !== undefined) {
+      // Recalculate costs if yield changed
       await this.calculateAndUpdateCosts(id);
     }
 
-    return recipe;
+    return this.getById(id);
   }
 
   async delete(id: string): Promise<void> {

@@ -32,6 +32,7 @@ const updateRecipeSchema = z.object({
   instructions: z.string().optional(),
   imageUrl: z.string().optional(),
   isActive: z.boolean().optional(),
+  ingredients: z.array(recipeIngredientSchema).optional(),
 });
 
 const updateIngredientSchema = z.object({
