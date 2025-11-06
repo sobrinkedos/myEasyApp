@@ -59,9 +59,12 @@ export class IngredientRepository {
   }
 
   async create(data: CreateIngredientDTO): Promise<Ingredient> {
+    const { expirationDate, ...rest } = data;
+    
     return prisma.ingredient.create({
       data: {
-        ...data,
+        ...rest,
+        expirationDate: expirationDate ? new Date(expirationDate) : null,
         status: this.calculateStatus(data.currentQuantity, data.minimumQuantity),
       },
     });
@@ -76,11 +79,14 @@ export class IngredientRepository {
 
     const currentQuantity = data.currentQuantity ?? ingredient.currentQuantity;
     const minimumQuantity = data.minimumQuantity ?? ingredient.minimumQuantity;
+    
+    const { expirationDate, ...rest } = data;
 
     return prisma.ingredient.update({
       where: { id },
       data: {
-        ...data,
+        ...rest,
+        expirationDate: expirationDate ? new Date(expirationDate) : undefined,
         status: this.calculateStatus(Number(currentQuantity), Number(minimumQuantity)),
       },
     });
