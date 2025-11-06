@@ -34,6 +34,9 @@ export function ProductFormPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
@@ -120,10 +123,53 @@ export function ProductFormPage() {
           setSelectedRecipe(recipe);
         }
       }
+      
+      if (product.imageUrl) {
+        setImagePreview(product.imageUrl);
+      }
     } catch (error) {
       console.error('Erro ao carregar produto:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!imageFile) return formData.imageUrl || null;
+
+    try {
+      setIsUploadingImage(true);
+      const formDataUpload = new FormData();
+      formDataUpload.append('image', imageFile);
+
+      const response = await api.post('/upload/image', formDataUpload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data.success) {
+        return response.data.data.url;
+      }
+      return null;
+    } catch (err) {
+      console.error('Erro ao fazer upload da imagem:', err);
+      alert('Erro ao fazer upload da imagem');
+      return null;
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -163,10 +209,24 @@ export function ProductFormPage() {
     try {
       setLoading(true);
       
+      // Upload image first if there's a new one
+      let imageUrl = formData.imageUrl;
+      if (imageFile) {
+        const uploadedUrl = await uploadImage();
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        }
+      }
+      
+      const dataToSend = {
+        ...formData,
+        imageUrl: imageUrl || undefined,
+      };
+      
       if (id) {
-        await api.put(`/products/${id}`, formData);
+        await api.put(`/products/${id}`, dataToSend);
       } else {
-        await api.post('/products', formData);
+        await api.post('/products', dataToSend);
       }
       
       navigate('/products');
@@ -402,18 +462,89 @@ export function ProductFormPage() {
 
         {/* Imagem */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Imagem</h2>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              URL da Imagem
-            </label>
-            <input
-              type="url"
-              value={formData.imageUrl}
-              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="https://exemplo.com/imagem.jpg"
-            />
+          <h2 className="text-xl font-semibold mb-4">Imagem do Produto</h2>
+          
+          <div className="space-y-4">
+            {/* Preview da Imagem */}
+            {imagePreview && (
+              <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageFile(null);
+                    setImagePreview('');
+                    setFormData({ ...formData, imageUrl: '' });
+                  }}
+                  className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            {/* Upload de Arquivo */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Fazer Upload de Imagem
+              </label>
+              <div className="flex items-center gap-4">
+                <label className="flex-1 cursor-pointer">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-500 transition-colors">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <p className="mt-2 text-sm text-gray-600">
+                      Clique para selecionar uma imagem
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      PNG, JPG, WebP até 5MB
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Ou URL */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Ou use uma URL</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                URL da Imagem
+              </label>
+              <input
+                type="url"
+                value={formData.imageUrl}
+                onChange={(e) => {
+                  setFormData({ ...formData, imageUrl: e.target.value });
+                  if (e.target.value) {
+                    setImagePreview(e.target.value);
+                    setImageFile(null);
+                  }
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                placeholder="https://exemplo.com/imagem.jpg"
+              />
+            </div>
           </div>
         </div>
 
@@ -428,11 +559,20 @@ export function ProductFormPage() {
           </button>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || isUploadingImage}
             className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
           >
-            <Save className="h-5 w-5 mr-2" />
-            {loading ? 'Salvando...' : 'Salvar Produto'}
+            {loading || isUploadingImage ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                {isUploadingImage ? 'Enviando imagem...' : 'Salvando...'}
+              </>
+            ) : (
+              <>
+                <Save className="h-5 w-5 mr-2" />
+                Salvar Produto
+              </>
+            )}
           </button>
         </div>
       </form>
