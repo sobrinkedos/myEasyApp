@@ -25,6 +25,10 @@ import { EstablishmentSettingsPage } from '@/pages/settings/EstablishmentSetting
 import { CategoryListPage } from '@/pages/categories/CategoryListPage';
 import { CategoryFormPage } from '@/pages/categories/CategoryFormPage';
 
+// Ingredients
+import { IngredientListPage } from '@/pages/ingredients/IngredientListPage';
+import { IngredientFormPage } from '@/pages/ingredients/IngredientFormPage';
+
 // Stock
 import { StockListPage } from '@/pages/stock/StockListPage';
 import { StockFormPage } from '@/pages/stock/StockFormPage';
@@ -127,7 +131,20 @@ const router = createBrowserRouter([
       // Ingredients
       {
         path: 'ingredients',
-        element: <div>Ingredients Page - Coming soon</div>,
+        children: [
+          {
+            index: true,
+            element: <IngredientListPage />,
+          },
+          {
+            path: 'new',
+            element: <IngredientFormPage />,
+          },
+          {
+            path: ':id/edit',
+            element: <IngredientFormPage />,
+          },
+        ],
       },
       
       // Stock
