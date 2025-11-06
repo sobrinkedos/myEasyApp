@@ -17,6 +17,8 @@ import { DashboardPage } from '@/pages/dashboard/DashboardPage';
 
 // Products
 import { ProductListPage } from '@/pages/products/ProductListPage';
+import { ProductFormPage } from '@/pages/products/ProductFormPage';
+import { ProductDetailPage } from '@/pages/products/ProductDetailPage';
 
 // Settings
 import { EstablishmentSettingsPage } from '@/pages/settings/EstablishmentSettingsPage';
@@ -34,6 +36,7 @@ import { IngredientBulkEntryPage } from '@/pages/ingredients/IngredientBulkEntry
 // Recipes
 import { RecipeListPage } from '@/pages/recipes/RecipeListPage';
 import { RecipeFormPage } from '@/pages/recipes/RecipeFormPage';
+import { RecipeDetailPage } from '@/pages/recipes/RecipeDetailPage';
 
 // Stock
 import { StockListPage } from '@/pages/stock/StockListPage';
@@ -102,15 +105,15 @@ const router = createBrowserRouter([
           },
           {
             path: 'new',
-            element: <div>New Product Page - Coming soon</div>,
+            element: <ProductFormPage />,
           },
           {
             path: ':id',
-            element: <div>Product Detail Page - Coming soon</div>,
+            element: <ProductDetailPage />,
           },
           {
             path: ':id/edit',
-            element: <div>Edit Product Page - Coming soon</div>,
+            element: <ProductFormPage />,
           },
         ],
       },
@@ -172,6 +175,10 @@ const router = createBrowserRouter([
           {
             path: 'new',
             element: <RecipeFormPage />,
+          },
+          {
+            path: ':id',
+            element: <RecipeDetailPage />,
           },
           {
             path: ':id/edit',
