@@ -100,12 +100,20 @@ export function IngredientListPage() {
           <p className="text-gray-600 mt-1">Gerencie os insumos para produção</p>
         </div>
         
-        <Link
-          to="/ingredients/new"
-          className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-        >
-          + Novo Insumo
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            to="/ingredients/bulk-entry"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            📦 Entrada em Massa
+          </Link>
+          <Link
+            to="/ingredients/new"
+            className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+          >
+            + Novo Insumo
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
