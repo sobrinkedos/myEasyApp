@@ -265,9 +265,16 @@ export function StockListPage() {
                     {getMargin(item.costPrice, item.salePrice)}%
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${STATUS_COLORS[item.status as keyof typeof STATUS_COLORS]}`}>
-                      {item.status}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${STATUS_COLORS[item.status as keyof typeof STATUS_COLORS]}`}>
+                        {item.status}
+                      </span>
+                      {!item.isActive && (
+                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                          Indisponível
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
                     <Link

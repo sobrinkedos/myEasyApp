@@ -202,7 +202,7 @@ export function StockDetailPage() {
       </div>
 
       {/* Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-white rounded-lg shadow p-4">
           <p className="text-sm text-gray-600">Quantidade Atual</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
@@ -229,6 +229,16 @@ export function StockDetailPage() {
           <span className={`inline-block mt-1 px-3 py-1 text-sm font-semibold rounded-full ${STATUS_COLORS[item.status as keyof typeof STATUS_COLORS]}`}>
             {item.status}
           </span>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-4">
+          <p className="text-sm text-gray-600">Disponibilidade</p>
+          <div className="flex items-center gap-2 mt-1">
+            <span className={`inline-block w-3 h-3 rounded-full ${item.isActive ? 'bg-green-500' : 'bg-red-500'}`}></span>
+            <span className="text-sm font-semibold text-gray-900">
+              {item.isActive ? 'Disponível' : 'Indisponível'}
+            </span>
+          </div>
         </div>
       </div>
 

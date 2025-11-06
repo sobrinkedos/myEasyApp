@@ -47,6 +47,7 @@ export function StockFormPage() {
     location: '',
     expirationDate: '',
     imageUrl: '',
+    isActive: true,
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -82,6 +83,7 @@ export function StockFormPage() {
           location: item.location || '',
           expirationDate: item.expirationDate ? item.expirationDate.split('T')[0] : '',
           imageUrl: item.imageUrl || '',
+          isActive: item.isActive !== undefined ? item.isActive : true,
         });
         
         if (item.imageUrl) {
@@ -480,6 +482,25 @@ export function StockFormPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
+          </div>
+
+          {/* Disponibilidade */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="isActive"
+                checked={formData.isActive}
+                onChange={(e) => handleChange('isActive', e.target.checked)}
+                className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+              />
+              <label htmlFor="isActive" className="text-sm font-medium text-gray-700 cursor-pointer">
+                Disponível para venda
+              </label>
+            </div>
+            <p className="mt-1 text-xs text-gray-500 ml-7">
+              Quando desmarcado, o produto não aparecerá como opção de venda no sistema
+            </p>
           </div>
         </div>
 
