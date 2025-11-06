@@ -243,20 +243,30 @@ model Product {
 }
 
 model Ingredient {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   name            String
+  description     String?
+  barcode         String?
+  sku             String?
   unit            String
-  currentQuantity Decimal  @db.Decimal(10, 3)
-  minimumQuantity Decimal  @db.Decimal(10, 3)
-  averageCost     Decimal  @db.Decimal(10, 2)
-  status          String   @default("normal")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  currentQuantity Decimal   @db.Decimal(10, 3)
+  minimumQuantity Decimal   @db.Decimal(10, 3)
+  maximumQuantity Decimal?  @db.Decimal(10, 3)
+  averageCost     Decimal   @db.Decimal(10, 2)
+  supplier        String?
+  location        String?
+  expirationDate  DateTime?
+  imageUrl        String?
+  status          String    @default("normal")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   products     ProductIngredient[]
   transactions StockTransaction[]
 
   @@index([status])
+  @@index([barcode])
+  @@index([sku])
 }
 
 model ProductIngredient {
