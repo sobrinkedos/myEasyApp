@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { RecipeController } from '@/controllers/recipe.controller';
-import { authMiddleware } from '@/middlewares/auth.middleware';
+import { AuthMiddleware } from '@/middlewares/auth.middleware';
 
 const router = Router();
 const controller = new RecipeController();
+const authMiddleware = new AuthMiddleware();
 
 // All routes require authentication
-router.use(authMiddleware);
+router.use(authMiddleware.authenticate);
 
 /**
  * @swagger
