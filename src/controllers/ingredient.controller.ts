@@ -5,20 +5,36 @@ import { ValidationError } from '@/utils/errors';
 
 const createIngredientSchema = z.object({
   name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres').max(100),
+  description: z.string().optional(),
+  barcode: z.string().optional(),
+  sku: z.string().optional(),
   unit: z.enum(['kg', 'g', 'l', 'ml', 'un'], {
     errorMap: () => ({ message: 'Unidade inválida' }),
   }),
   currentQuantity: z.number().nonnegative('Quantidade deve ser maior ou igual a zero'),
   minimumQuantity: z.number().nonnegative('Quantidade mínima deve ser maior ou igual a zero'),
+  maximumQuantity: z.number().nonnegative().optional(),
   averageCost: z.number().nonnegative('Custo médio deve ser maior ou igual a zero'),
+  supplier: z.string().optional(),
+  location: z.string().optional(),
+  expirationDate: z.string().optional(),
+  imageUrl: z.string().optional(),
 });
 
 const updateIngredientSchema = z.object({
   name: z.string().min(3).max(100).optional(),
+  description: z.string().optional(),
+  barcode: z.string().optional(),
+  sku: z.string().optional(),
   unit: z.enum(['kg', 'g', 'l', 'ml', 'un']).optional(),
   currentQuantity: z.number().nonnegative().optional(),
   minimumQuantity: z.number().nonnegative().optional(),
+  maximumQuantity: z.number().nonnegative().optional(),
   averageCost: z.number().nonnegative().optional(),
+  supplier: z.string().optional(),
+  location: z.string().optional(),
+  expirationDate: z.string().optional(),
+  imageUrl: z.string().optional(),
 });
 
 const linkProductSchema = z.object({

@@ -3,18 +3,34 @@ import { Ingredient } from '@prisma/client';
 
 export interface CreateIngredientDTO {
   name: string;
+  description?: string;
+  barcode?: string;
+  sku?: string;
   unit: string;
   currentQuantity: number;
   minimumQuantity: number;
+  maximumQuantity?: number;
   averageCost: number;
+  supplier?: string;
+  location?: string;
+  expirationDate?: string;
+  imageUrl?: string;
 }
 
 export interface UpdateIngredientDTO {
   name?: string;
+  description?: string;
+  barcode?: string;
+  sku?: string;
   unit?: string;
   currentQuantity?: number;
   minimumQuantity?: number;
+  maximumQuantity?: number;
   averageCost?: number;
+  supplier?: string;
+  location?: string;
+  expirationDate?: string;
+  imageUrl?: string;
 }
 
 export class IngredientRepository {
