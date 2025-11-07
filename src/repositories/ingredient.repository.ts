@@ -108,6 +108,12 @@ export class IngredientRepository {
     });
   }
 
+  async delete(id: string): Promise<void> {
+    await prisma.ingredient.delete({
+      where: { id },
+    });
+  }
+
   private calculateStatus(currentQuantity: number, minimumQuantity: number): string {
     if (currentQuantity === 0) return 'out_of_stock';
     if (currentQuantity <= minimumQuantity) return 'low';

@@ -93,4 +93,25 @@ export class IngredientService {
       },
     });
   }
+
+  async delete(id: string): Promise<void> {
+    // Check if ingredient exists
+    await this.getById(id);
+
+    // Check if ingredient is used in any recipes
+    const recipesUsingIngredient = await prisma.recipeIngredient.count({
+      where: { ingredientId: id },
+    });
+
+    if (recipesUsingIngredient > 0) {
+      throw new ValidationError(
+        'Não é possível deletar este insumo pois ele está sendo usado em receitas',
+        {
+          ingredient: ['Insumo está vinculado a receitas'],
+        }
+      );
+    }
+
+    await this.repository.delete(id);
+  }
 }

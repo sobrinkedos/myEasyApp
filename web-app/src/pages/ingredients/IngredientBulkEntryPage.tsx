@@ -79,15 +79,26 @@ export function IngredientBulkEntryPage() {
       setIsSaving(true);
       setError('');
 
-      // Criar transações para cada insumo
-      const promises = entriesToSave.map(entry =>
-        api.post('/stock/transactions', {
-          ingredientId: entry.ingredientId,
-          type: 'entrada',
-          quantity: entry.quantity,
-          reason: `Compra - Entrada em massa - ${new Date().toLocaleDateString()}`,
-        })
-      );
+      // Atualizar quantidade e preço médio de cada insumo
+      const promises = entriesToSave.map(async (entry) => {
+        // Buscar ingrediente atual
+        const response = await api.get(`/ingredients/${entry.ingredientId}`);
+        const ingredient = response.data.data || response.data;
+        const currentQuantity = Number(ingredient.currentQuantity || 0);
+        const currentCost = Number(ingredient.averageCost || 0);
+        const newQuantity = currentQuantity + entry.quantity;
+        
+        // Calcular preço médio ponderado
+        // Fórmula: (Qtd_Atual × Custo_Atual + Qtd_Nova × Custo_Novo) / Qtd_Total
+        const totalValue = (currentQuantity * currentCost) + (entry.quantity * entry.cost);
+        const newAverageCost = newQuantity > 0 ? totalValue / newQuantity : entry.cost;
+        
+        // Atualizar com nova quantidade e preço médio
+        return api.put(`/ingredients/${entry.ingredientId}`, {
+          currentQuantity: newQuantity,
+          averageCost: newAverageCost,
+        });
+      });
 
       await Promise.all(promises);
 

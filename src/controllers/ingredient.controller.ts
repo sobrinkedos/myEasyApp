@@ -154,4 +154,18 @@ export class IngredientController {
       next(error);
     }
   };
+
+  delete = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      await this.service.delete(id);
+
+      res.status(200).json({
+        success: true,
+        message: 'Insumo removido com sucesso',
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

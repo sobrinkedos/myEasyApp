@@ -74,7 +74,26 @@ export function AppraisalDetailPage() {
       setLoading(true);
       const response = await api.get(`/appraisals/${id}`);
       const data = response.data.data || response.data;
-      setAppraisal(data);
+      
+      // Converter valores Decimal para number
+      const appraisalWithNumbers = {
+        ...data,
+        totalTheoretical: Number(data.totalTheoretical || 0),
+        totalPhysical: Number(data.totalPhysical || 0),
+        totalDifference: Number(data.totalDifference || 0),
+        accuracy: Number(data.accuracy || 0),
+        items: (data.items || []).map((item: any) => ({
+          ...item,
+          theoreticalQuantity: Number(item.theoreticalQuantity),
+          physicalQuantity: Number(item.physicalQuantity || 0),
+          difference: Number(item.difference || 0),
+          differencePercentage: Number(item.differencePercentage || 0),
+          unitCost: Number(item.unitCost),
+          totalDifference: Number(item.totalDifference || 0),
+        })),
+      };
+      
+      setAppraisal(appraisalWithNumbers);
     } catch (error) {
       console.error('Erro ao carregar conferência:', error);
       alert('Erro ao carregar conferência');

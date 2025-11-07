@@ -16,8 +16,8 @@ interface Product {
     id: string;
     name: string;
     costPerPortion: number;
-    portionSize: number;
-    portionUnit: string;
+    yield: number;
+    yieldUnit: string;
     ingredients: Array<{
       ingredient: {
         name: string;
@@ -76,7 +76,7 @@ export function ProductDetailPage() {
         recipe: data.recipe ? {
           ...data.recipe,
           costPerPortion: Number(data.recipe.costPerPortion),
-          portionSize: Number(data.recipe.portionSize),
+          yield: Number(data.recipe.yield),
           ingredients: data.recipe.ingredients?.map((ing: any) => ({
             ...ing,
             quantity: Number(ing.quantity),
@@ -87,8 +87,8 @@ export function ProductDetailPage() {
       
       setProduct(productWithNumbers);
       
-      if (response.data.recipe) {
-        generateSimulations(response.data);
+      if (productWithNumbers.recipe) {
+        generateSimulations(productWithNumbers);
       }
     } catch (error) {
       console.error('Erro ao carregar produto:', error);
@@ -133,8 +133,18 @@ export function ProductDetailPage() {
   const cost = product.recipe?.costPerPortion || 0;
   const profit = product.price - cost;
   const hasRecipe = !!product.recipe;
-  const marginStatus = product.currentMargin && product.targetMargin 
-    ? product.currentMargin >= product.targetMargin 
+  
+  // Calcular margem e markup se houver receita
+  const currentMargin = hasRecipe && product.price > 0 
+    ? ((profit / product.price) * 100) 
+    : (product.currentMargin || 0);
+  
+  const markup = hasRecipe && cost > 0 
+    ? ((profit / cost) * 100) 
+    : (product.markup || 0);
+  
+  const marginStatus = product.targetMargin 
+    ? currentMargin >= product.targetMargin 
     : null;
 
   return (
@@ -219,34 +229,36 @@ export function ProductDetailPage() {
                   </div>
                 </div>
                 
-                <div className={`p-4 rounded-lg ${marginStatus ? 'bg-green-50' : 'bg-red-50'}`}>
-                  <div className={`text-sm mb-1 ${marginStatus ? 'text-green-600' : 'text-red-600'}`}>
+                <div className={`p-4 rounded-lg ${marginStatus === null ? 'bg-gray-50' : marginStatus ? 'bg-green-50' : 'bg-red-50'}`}>
+                  <div className={`text-sm mb-1 ${marginStatus === null ? 'text-gray-600' : marginStatus ? 'text-green-600' : 'text-red-600'}`}>
                     Margem Atual
                   </div>
-                  <div className={`text-xl font-bold flex items-center ${marginStatus ? 'text-green-900' : 'text-red-900'}`}>
-                    {marginStatus ? <TrendingUp className="h-5 w-5 mr-1" /> : <TrendingDown className="h-5 w-5 mr-1" />}
-                    {product.currentMargin?.toFixed(1)}%
+                  <div className={`text-xl font-bold flex items-center ${marginStatus === null ? 'text-gray-900' : marginStatus ? 'text-green-900' : 'text-red-900'}`}>
+                    {marginStatus !== null && (marginStatus ? <TrendingUp className="h-5 w-5 mr-1" /> : <TrendingDown className="h-5 w-5 mr-1" />)}
+                    {currentMargin.toFixed(1)}%
                   </div>
                 </div>
                 
                 <div className="bg-purple-50 p-4 rounded-lg">
                   <div className="text-sm text-purple-600 mb-1">Markup</div>
                   <div className="text-xl font-bold text-purple-900">
-                    {product.markup?.toFixed(1)}%
+                    {markup.toFixed(1)}%
                   </div>
                 </div>
               </div>
 
-              {product.targetMargin && product.currentMargin && product.currentMargin < product.targetMargin && (
+              {product.targetMargin && currentMargin < product.targetMargin && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                   <div className="flex items-start">
                     <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2 mt-0.5" />
                     <div>
                       <p className="font-medium text-yellow-900">Margem Abaixo do Esperado</p>
                       <p className="text-sm text-yellow-700 mt-1">
-                        Margem atual ({product.currentMargin.toFixed(1)}%) está abaixo da margem desejada ({product.targetMargin.toFixed(1)}%).
-                        {product.suggestedPrice && (
+                        Margem atual ({currentMargin.toFixed(1)}%) está abaixo da margem desejada ({product.targetMargin.toFixed(1)}%).
+                        {product.suggestedPrice && product.suggestedPrice > 0 ? (
                           <> Considere ajustar o preço para R$ {product.suggestedPrice.toFixed(2)}.</>
+                        ) : (
+                          <> Considere ajustar o preço para R$ {(cost / (1 - product.targetMargin / 100)).toFixed(2)}.</>
                         )}
                       </p>
                     </div>
@@ -257,23 +269,27 @@ export function ProductDetailPage() {
               {/* Composição de Custos */}
               {product.recipe && product.recipe.ingredients.length > 0 && (
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Composição de Custos</h3>
+                  <h3 className="font-semibold text-gray-900 mb-3">Composição de Custos (por porção)</h3>
                   <div className="space-y-2">
                     {product.recipe.ingredients.map((item, index) => {
-                      const percentage = (item.cost / cost) * 100;
+                      // Calcular custo por porção do ingrediente
+                      const yieldValue = product.recipe!.yield || 1;
+                      const costPerPortion = item.cost / yieldValue;
+                      const percentage = cost > 0 ? (costPerPortion / cost) * 100 : 0;
+                      const cappedPercentage = Math.min(percentage, 100); // Limitar a 100%
                       return (
                         <div key={index} className="flex items-center justify-between text-sm">
                           <div className="flex-1">
                             <div className="flex justify-between mb-1">
                               <span className="text-gray-700">{item.ingredient.name}</span>
                               <span className="text-gray-900 font-medium">
-                                R$ {item.cost.toFixed(2)} ({percentage.toFixed(1)}%)
+                                R$ {costPerPortion.toFixed(2)} ({percentage.toFixed(1)}%)
                               </span>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div
                                 className="bg-orange-600 h-2 rounded-full"
-                                style={{ width: `${percentage}%` }}
+                                style={{ width: `${cappedPercentage}%` }}
                               />
                             </div>
                           </div>
@@ -347,9 +363,9 @@ export function ProductDetailPage() {
                   </p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">Tamanho da Porção</span>
+                  <span className="text-sm text-gray-600">Rendimento</span>
                   <p className="font-medium text-gray-900">
-                    {product.recipe.portionSize} {product.recipe.portionUnit}
+                    {product.recipe.yield} {product.recipe.yieldUnit}
                   </p>
                 </div>
                 <button
@@ -375,7 +391,7 @@ export function ProductDetailPage() {
           )}
 
           {/* Metas */}
-          {product.targetMargin && (
+          {product.targetMargin !== undefined && product.targetMargin > 0 && (
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4 flex items-center">
                 <DollarSign className="h-5 w-5 mr-2 text-orange-600" />
@@ -386,7 +402,7 @@ export function ProductDetailPage() {
                   <span className="text-sm text-gray-600">Margem Desejada</span>
                   <p className="text-2xl font-bold text-gray-900">{product.targetMargin.toFixed(1)}%</p>
                 </div>
-                {product.suggestedPrice && (
+                {product.suggestedPrice && product.suggestedPrice > 0 && (
                   <div>
                     <span className="text-sm text-gray-600">Preço Sugerido</span>
                     <p className="text-2xl font-bold text-green-600">
@@ -399,17 +415,17 @@ export function ProductDetailPage() {
           )}
 
           {/* Estatísticas */}
-          {(product.salesCount || product.revenue) && (
+          {((product.salesCount !== undefined && product.salesCount > 0) || (product.revenue !== undefined && product.revenue > 0)) && (
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Estatísticas</h2>
               <div className="space-y-3">
-                {product.salesCount && (
+                {product.salesCount !== undefined && product.salesCount > 0 && (
                   <div>
                     <span className="text-sm text-gray-600">Vendas</span>
                     <p className="text-2xl font-bold text-gray-900">{product.salesCount}</p>
                   </div>
                 )}
-                {product.revenue && (
+                {product.revenue !== undefined && product.revenue > 0 && (
                   <div>
                     <span className="text-sm text-gray-600">Receita Total</span>
                     <p className="text-2xl font-bold text-green-600">

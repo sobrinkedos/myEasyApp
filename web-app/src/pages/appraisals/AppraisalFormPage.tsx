@@ -17,7 +17,16 @@ export function AppraisalFormPage() {
     
     try {
       setLoading(true);
-      const response = await api.post('/appraisals', formData);
+      
+      // Converter data para formato ISO datetime
+      const dateTime = new Date(formData.date + 'T00:00:00').toISOString();
+      
+      const payload = {
+        ...formData,
+        date: dateTime,
+      };
+      
+      const response = await api.post('/appraisals', payload);
       const appraisalId = response.data.data?.id || response.data.id;
       
       // Redirecionar para tela de contagem
@@ -31,7 +40,7 @@ export function AppraisalFormPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <button
@@ -47,7 +56,7 @@ export function AppraisalFormPage() {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6 max-w-3xl">
         {/* Data */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">

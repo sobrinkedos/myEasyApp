@@ -35,8 +35,7 @@ export function AppraisalCountPage() {
   const navigate = useNavigate();
   const [appraisal, setAppraisal] = useState<Appraisal | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = us
-eState(false);
+  const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [items, setItems] = useState<AppraisalItem[]>([]);
 
@@ -49,8 +48,24 @@ eState(false);
       setLoading(true);
       const response = await api.get(`/appraisals/${id}`);
       const data = response.data.data || response.data;
+      
+      // Converter valores Decimal para number
+      const itemsWithNumbers = (data.items || []).map((item: any) => ({
+        ...item,
+        theoreticalQuantity: Number(item.theoreticalQuantity),
+        physicalQuantity: Number(item.physicalQuantity || 0),
+        difference: Number(item.difference || 0),
+        differencePercentage: Number(item.differencePercentage || 0),
+        unitCost: Number(item.unitCost),
+        totalDifference: Number(item.totalDifference || 0),
+        ingredient: {
+          ...item.ingredient,
+          currentStock: Number(item.ingredient.currentStock),
+        },
+      }));
+      
       setAppraisal(data);
-      setItems(data.items || []);
+      setItems(itemsWithNumbers);
     } catch (error) {
       console.error('Erro ao carregar conferência:', error);
       alert('Erro ao carregar conferência');

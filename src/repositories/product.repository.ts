@@ -79,6 +79,15 @@ export class ProductRepository {
       where: { id },
       include: {
         category: true,
+        recipe: {
+          include: {
+            ingredients: {
+              include: {
+                ingredient: true,
+              },
+            },
+          },
+        },
         ingredients: {
           include: {
             ingredient: true,

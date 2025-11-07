@@ -22,7 +22,18 @@ export function CMVPeriodFormPage() {
 
     try {
       setLoading(true);
-      const response = await api.post('/cmv/periods', formData);
+      
+      // Converter datas para formato ISO datetime
+      const startDateTime = new Date(formData.startDate + 'T00:00:00').toISOString();
+      const endDateTime = new Date(formData.endDate + 'T23:59:59').toISOString();
+      
+      const payload = {
+        ...formData,
+        startDate: startDateTime,
+        endDate: endDateTime,
+      };
+      
+      const response = await api.post('/cmv/periods', payload);
       const periodId = response.data.data?.id || response.data.id;
       navigate(`/cmv/periods/${periodId}`);
     } catch (error: any) {
@@ -34,7 +45,7 @@ export function CMVPeriodFormPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center gap-4">
         <button
           onClick={() => navigate('/cmv/periods')}
@@ -48,7 +59,7 @@ export function CMVPeriodFormPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6 max-w-3xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

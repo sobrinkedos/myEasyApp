@@ -137,4 +137,26 @@ router.put('/:id', authMiddleware.authorize('admin'), ingredientController.updat
  */
 router.post('/:id/link-product', authMiddleware.authorize('admin'), ingredientController.linkToProduct);
 
+/**
+ * @swagger
+ * /api/v1/ingredients/{id}:
+ *   delete:
+ *     summary: Deletar insumo
+ *     tags: [Ingredients]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Insumo deletado
+ *       404:
+ *         description: Insumo não encontrado
+ */
+router.delete('/:id', authMiddleware.authorize('admin'), ingredientController.delete);
+
 export default router;

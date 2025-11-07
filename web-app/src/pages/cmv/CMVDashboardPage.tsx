@@ -31,7 +31,19 @@ export function CMVDashboardPage() {
       setLoading(true);
       const response = await api.get('/cmv/periods?limit=5');
       const data = response.data.data || response.data;
-      setPeriods(Array.isArray(data) ? data : []);
+      
+      // Converter valores Decimal para number
+      const periodsWithNumbers = (Array.isArray(data) ? data : []).map((period: any) => ({
+        ...period,
+        cmv: Number(period.cmv || 0),
+        revenue: Number(period.revenue || 0),
+        cmvPercentage: Number(period.cmvPercentage || 0),
+        openingStock: Number(period.openingStock || 0),
+        purchases: Number(period.purchases || 0),
+        closingStock: Number(period.closingStock || 0),
+      }));
+      
+      setPeriods(periodsWithNumbers);
     } catch (error) {
       console.error('Erro ao carregar períodos:', error);
       setPeriods([]);
