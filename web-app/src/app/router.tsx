@@ -4,7 +4,6 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 // Layouts
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
-import { FullscreenLayout } from '@/layouts/FullscreenLayout';
 
 // Auth pages
 import { LoginPage } from '@/pages/auth/LoginPage';
@@ -44,6 +43,21 @@ import { StockFormPage } from '@/pages/stock/StockFormPage';
 import { StockDetailPage } from '@/pages/stock/StockDetailPage';
 import { StockBulkEntryPage } from '@/pages/stock/StockBulkEntryPage';
 import { StockLowStockPage } from '@/pages/stock/StockLowStockPage';
+
+// Appraisals
+import { AppraisalListPage } from '@/pages/appraisals/AppraisalListPage';
+import { AppraisalFormPage } from '@/pages/appraisals/AppraisalFormPage';
+import { AppraisalCountPage } from '@/pages/appraisals/AppraisalCountPage';
+import { AppraisalReviewPage } from '@/pages/appraisals/AppraisalReviewPage';
+import { AppraisalDetailPage } from '@/pages/appraisals/AppraisalDetailPage';
+
+// CMV
+import { CMVDashboardPage } from '@/pages/cmv/CMVDashboardPage';
+import { CMVPeriodListPage } from '@/pages/cmv/CMVPeriodListPage';
+import { CMVPeriodFormPage } from '@/pages/cmv/CMVPeriodFormPage';
+import { CMVPeriodDetailPage } from '@/pages/cmv/CMVPeriodDetailPage';
+import { CMVPeriodClosePage } from '@/pages/cmv/CMVPeriodClosePage';
+import { CMVReportPage } from '@/pages/cmv/CMVReportPage';
 
 // Error pages
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -218,6 +232,64 @@ const router = createBrowserRouter([
           {
             path: 'transactions',
             element: <div>Stock Transactions Page - Coming soon</div>,
+          },
+        ],
+      },
+      
+      // Appraisals
+      {
+        path: 'appraisals',
+        children: [
+          {
+            index: true,
+            element: <AppraisalListPage />,
+          },
+          {
+            path: 'new',
+            element: <AppraisalFormPage />,
+          },
+          {
+            path: ':id',
+            element: <AppraisalDetailPage />,
+          },
+          {
+            path: ':id/count',
+            element: <AppraisalCountPage />,
+          },
+          {
+            path: ':id/review',
+            element: <AppraisalReviewPage />,
+          },
+        ],
+      },
+      
+      // CMV
+      {
+        path: 'cmv',
+        children: [
+          {
+            index: true,
+            element: <CMVDashboardPage />,
+          },
+          {
+            path: 'periods',
+            element: <CMVPeriodListPage />,
+          },
+          {
+            path: 'periods/new',
+            element: <CMVPeriodFormPage />,
+          },
+          {
+            path: 'periods/:id',
+            element: <CMVPeriodDetailPage />,
+          },
+          {
+            path: 'periods/:id/close',
+            element: <CMVPeriodClosePage />,
+          },
+          {
+            path: 'reports',
+            element: <CMVReportPage />,
           },
         ],
       },

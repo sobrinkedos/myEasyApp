@@ -41,6 +41,8 @@ const menuItems: MenuItem[] = [
       { icon: 'clipboard', label: 'Receitas', path: '/recipes' },
       { icon: 'clipboard', label: 'Insumos', path: '/ingredients' },
       { icon: 'clipboard', label: 'Estoque', path: '/stock' },
+      { icon: 'clipboard', label: 'Conferências', path: '/appraisals' },
+      { icon: 'chartBar', label: 'CMV', path: '/cmv' },
     ],
   },
   {
