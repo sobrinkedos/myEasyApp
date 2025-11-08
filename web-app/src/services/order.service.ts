@@ -18,7 +18,9 @@ export interface Order {
 
 export interface OrderItem {
   id: string;
-  productId: string;
+  productId: string | null;
+  stockItemId?: string | null;
+  productName: string;
   quantity: number;
   unitPrice: number;
   subtotal: number;
@@ -27,6 +29,11 @@ export interface OrderItem {
     id: string;
     name: string;
     price: number;
+  };
+  stockItem?: {
+    id: string;
+    name: string;
+    salePrice: number;
   };
 }
 

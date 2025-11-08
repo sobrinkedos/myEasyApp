@@ -28,11 +28,12 @@ export default function CommandDetailPage() {
   };
 
   const handleCloseCommand = async () => {
-    if (!command || !window.confirm('Deseja fechar esta comanda?')) return;
+    if (!command || !window.confirm('Deseja enviar esta comanda para pagamento?')) return;
 
     try {
       await commandService.closeCommand(command.id);
       await loadCommand();
+      alert('Comanda enviada para pagamento no caixa!');
     } catch (error: any) {
       alert(error.response?.data?.message || 'Erro ao fechar comanda');
     }
@@ -123,9 +124,11 @@ export default function CommandDetailPage() {
                 <span className={`px-3 py-1 rounded text-sm font-medium ${
                   command.status === 'open' 
                     ? 'bg-green-100 text-green-800' 
+                    : command.status === 'pending_payment'
+                    ? 'bg-yellow-100 text-yellow-800'
                     : 'bg-gray-100 text-gray-800'
                 }`}>
-                  {command.status === 'open' ? 'Aberta' : 'Fechada'}
+                  {command.status === 'open' ? 'Aberta' : command.status === 'pending_payment' ? 'Pendente de Pagamento' : 'Fechada'}
                 </span>
               </div>
               
@@ -141,15 +144,32 @@ export default function CommandDetailPage() {
                     onClick={handleCloseCommand}
                     className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
                   >
-                    Fechar Comanda
+                    Enviar para Pagamento
                   </button>
+                </div>
+              )}
+              {command.status === 'pending_payment' && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
+                  <p className="text-sm text-yellow-800 font-medium">
+                    Aguardando pagamento no caixa
+                  </p>
                 </div>
               )}
             </div>
           </div>
 
-          {command.status !== 'open' && (
-            <div className="mt-6 pt-6 border-t">
+          <div className="mt-6 pt-6 border-t">
+            {command.status === 'open' ? (
+              <div className="text-right">
+                <p className="text-sm text-gray-600">Total Atual</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  R$ {orders.reduce((sum, order) => sum + Number(order.subtotal), 0).toFixed(2)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  (Taxa de serviço será calculada no fechamento)
+                </p>
+              </div>
+            ) : (
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <p className="text-sm text-gray-600">Subtotal</p>
@@ -164,8 +184,8 @@ export default function CommandDetailPage() {
                   <p className="text-xl font-bold text-green-600">R$ {Number(command.total).toFixed(2)}</p>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
@@ -209,7 +229,7 @@ export default function CommandDetailPage() {
                   <div key={item.id} className="flex justify-between text-sm">
                     <div>
                       <span className="font-medium">{item.quantity}x</span>{' '}
-                      {item.product?.name}
+                      {item.productName || item.product?.name}
                       {item.observations && (
                         <p className="text-xs text-gray-500 ml-6">Obs: {item.observations}</p>
                       )}

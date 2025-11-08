@@ -11,7 +11,7 @@ export interface CreateCommandDTO {
 }
 
 export interface UpdateCommandDTO {
-  status?: 'open' | 'closed' | 'paid';
+  status?: 'open' | 'closed' | 'paid' | 'pending_payment';
   subtotal?: number;
   serviceCharge?: number;
   total?: number;

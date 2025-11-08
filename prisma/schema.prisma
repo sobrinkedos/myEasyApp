@@ -515,17 +515,22 @@ model Order {
 model OrderItem {
   id           String   @id @default(uuid())
   orderId      String
-  productId    String
+  productId    String?
+  stockItemId  String?
+  productName  String
   quantity     Int
   unitPrice    Decimal  @db.Decimal(10, 2)
   subtotal     Decimal  @db.Decimal(10, 2)
   observations String?
   createdAt    DateTime @default(now())
 
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
+  order     Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product?   @relation(fields: [productId], references: [id])
+  stockItem StockItem? @relation(fields: [stockItemId], references: [id])
 
   @@index([orderId])
+  @@index([productId])
+  @@index([stockItemId])
 }
 
 model OrderModification {
@@ -568,6 +573,7 @@ model StockItem {
 
   establishment   Establishment     @relation(fields: [establishmentId], references: [id])
   movements       StockMovement[]
+  orderItems      OrderItem[]
 
   @@index([establishmentId])
   @@index([category])

@@ -62,6 +62,12 @@ export class AuthMiddleware {
           throw new AuthenticationError('Usuário não autenticado');
         }
 
+        // SUPER_ADMIN has access to everything
+        if (req.user.roles.includes('SUPER_ADMIN')) {
+          next();
+          return;
+        }
+
         const hasRole = allowedRoles.some(role => req.user!.roles.includes(role));
         
         if (!hasRole) {

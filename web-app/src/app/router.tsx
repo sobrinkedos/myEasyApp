@@ -76,6 +76,10 @@ import { CashSessionPage } from '@/pages/cash/CashSessionPage';
 import { OpenCashPage } from '@/pages/cash/OpenCashPage';
 import { WithdrawalPage } from '@/pages/cash/WithdrawalPage';
 import { SupplyPage } from '@/pages/cash/SupplyPage';
+import { CloseCashPage } from '@/pages/cash/CloseCashPage';
+import { CashTransactionsPage } from '@/pages/cash/CashTransactionsPage';
+import PendingCommandsPage from '@/pages/cash/PendingCommandsPage';
+import CommandPaymentPage from '@/pages/cash/CommandPaymentPage';
 
 // Error pages
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -384,6 +388,14 @@ const router = createBrowserRouter([
             element: <OpenCashPage />,
           },
           {
+            path: 'pending-commands',
+            element: <PendingCommandsPage />,
+          },
+          {
+            path: 'commands/:id/payment',
+            element: <CommandPaymentPage />,
+          },
+          {
             path: 'sessions/:id/withdrawal',
             element: <WithdrawalPage />,
           },
@@ -393,11 +405,11 @@ const router = createBrowserRouter([
           },
           {
             path: 'sessions/:id/close',
-            element: <div>Close Cash Page - Coming soon</div>,
+            element: <CloseCashPage />,
           },
           {
             path: 'sessions/:id/transactions',
-            element: <div>Transactions Page - Coming soon</div>,
+            element: <CashTransactionsPage />,
           },
         ],
       },

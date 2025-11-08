@@ -91,11 +91,18 @@ async function main() {
     { resource: 'reports', action: 'financial', description: 'Visualizar relatórios financeiros' },
     { resource: 'reports', action: 'export', description: 'Exportar relatórios' },
     
+    // Commands
+    { resource: 'commands', action: 'create', description: 'Criar comandas' },
+    { resource: 'commands', action: 'read', description: 'Visualizar comandas' },
+    { resource: 'commands', action: 'update', description: 'Atualizar comandas' },
+    { resource: 'commands', action: 'close', description: 'Fechar comandas' },
+    
     // Orders
     { resource: 'orders', action: 'create', description: 'Criar pedidos' },
     { resource: 'orders', action: 'read', description: 'Visualizar pedidos' },
     { resource: 'orders', action: 'update', description: 'Atualizar pedidos' },
     { resource: 'orders', action: 'update-status', description: 'Atualizar status de pedidos' },
+    { resource: 'orders', action: 'cancel', description: 'Cancelar pedidos' },
     
     // Tables
     { resource: 'tables', action: 'read', description: 'Visualizar mesas' },
@@ -280,7 +287,7 @@ async function main() {
   });
   
   const waiterPermissions = createdPermissions.filter(p => 
-    ['orders', 'tables:read', 'products:read', 'customers:read'].some(prefix => 
+    ['commands', 'orders', 'tables:read', 'products:read', 'customers:read'].some(prefix => 
       `${p.resource}:${p.action}`.startsWith(prefix)
     )
   );
@@ -430,14 +437,133 @@ async function main() {
     { name: 'Lanches', displayOrder: 5 },
   ];
 
+  const createdCategories: any = {};
   for (const category of categories) {
-    await prisma.category.upsert({
+    const cat = await prisma.category.upsert({
       where: { name: category.name },
       update: {},
       create: category,
     });
+    createdCategories[category.name] = cat;
   }
   console.log('✅ Categorias de exemplo criadas');
+
+  // 6. Criar ingredientes
+  const ingredients = [
+    { name: 'Filé Mignon', unit: 'kg', currentQuantity: 10, minimumQuantity: 2, averageCost: 65.00 },
+    { name: 'Batata', unit: 'kg', currentQuantity: 20, minimumQuantity: 5, averageCost: 4.50 },
+    { name: 'Alface', unit: 'un', currentQuantity: 15, minimumQuantity: 3, averageCost: 2.50 },
+    { name: 'Tomate', unit: 'kg', currentQuantity: 8, minimumQuantity: 2, averageCost: 5.00 },
+    { name: 'Queijo Mussarela', unit: 'kg', currentQuantity: 5, minimumQuantity: 1, averageCost: 35.00 },
+    { name: 'Pão Francês', unit: 'un', currentQuantity: 50, minimumQuantity: 20, averageCost: 0.80 },
+    { name: 'Óleo', unit: 'l', currentQuantity: 10, minimumQuantity: 2, averageCost: 8.00 },
+    { name: 'Sal', unit: 'kg', currentQuantity: 5, minimumQuantity: 1, averageCost: 2.00 },
+    { name: 'Açúcar', unit: 'kg', currentQuantity: 10, minimumQuantity: 2, averageCost: 3.50 },
+    { name: 'Farinha de Trigo', unit: 'kg', currentQuantity: 15, minimumQuantity: 3, averageCost: 4.00 },
+  ];
+
+  const createdIngredients: any = {};
+  for (const ingredient of ingredients) {
+    const ing = await prisma.ingredient.create({
+      data: ingredient,
+    });
+    createdIngredients[ingredient.name] = ing;
+  }
+  console.log('✅ Ingredientes criados');
+
+  // 7. Criar receitas
+  const fileComFritasRecipe = await prisma.recipe.create({
+    data: {
+      name: 'Filé com Fritas',
+      category: 'Pratos Principais',
+      yield: 1,
+      yieldUnit: 'porção',
+      preparationTime: 30,
+      instructions: '1. Tempere o filé\n2. Grelhe o filé\n3. Frite as batatas\n4. Sirva',
+      ingredients: {
+        create: [
+          { ingredientId: createdIngredients['Filé Mignon'].id, quantity: 0.3, unit: 'kg', cost: 19.50 },
+          { ingredientId: createdIngredients['Batata'].id, quantity: 0.4, unit: 'kg', cost: 1.80 },
+          { ingredientId: createdIngredients['Óleo'].id, quantity: 0.1, unit: 'l', cost: 0.80 },
+          { ingredientId: createdIngredients['Sal'].id, quantity: 0.01, unit: 'kg', cost: 0.02 },
+        ],
+      },
+    },
+  });
+  
+  // Calcular custo total da receita
+  await prisma.recipe.update({
+    where: { id: fileComFritasRecipe.id },
+    data: {
+      totalCost: 22.12,
+      costPerPortion: 22.12,
+    },
+  });
+  console.log('✅ Receita "Filé com Fritas" criada');
+
+  // 8. Criar produtos manufaturados
+  await prisma.product.create({
+    data: {
+      name: 'Filé com Fritas',
+      description: 'Delicioso filé mignon grelhado acompanhado de batatas fritas crocantes',
+      price: 35.00,
+      categoryId: createdCategories['Pratos Principais'].id,
+      recipeId: fileComFritasRecipe.id,
+      preparationTime: 30,
+      isActive: true,
+    },
+  });
+  console.log('✅ Produto "Filé com Fritas" criado');
+
+  // 9. Criar itens de estoque (revenda)
+  const stockItems = [
+    { name: 'Cerveja Brahma 350ml lata', category: 'Bebidas', unit: 'un', currentQuantity: 100, minimumQuantity: 20, costPrice: 3.50, salePrice: 8.00 },
+    { name: 'Refrigerante Coca-Cola 350ml lata', category: 'Bebidas', unit: 'un', currentQuantity: 80, minimumQuantity: 15, costPrice: 2.80, salePrice: 6.00 },
+    { name: 'Água Mineral 500ml', category: 'Bebidas', unit: 'un', currentQuantity: 120, minimumQuantity: 30, costPrice: 1.20, salePrice: 3.50 },
+    { name: 'Suco Natural Laranja 300ml', category: 'Bebidas', unit: 'un', currentQuantity: 40, minimumQuantity: 10, costPrice: 3.00, salePrice: 7.00 },
+  ];
+
+  for (const item of stockItems) {
+    await prisma.stockItem.create({
+      data: {
+        ...item,
+        establishmentId: establishment.id,
+      },
+    });
+  }
+  console.log('✅ Itens de estoque criados');
+
+  // 10. Criar mesas
+  const tables = [
+    { number: 1, capacity: 2 },
+    { number: 2, capacity: 4 },
+    { number: 3, capacity: 4 },
+    { number: 4, capacity: 6 },
+    { number: 5, capacity: 2 },
+    { number: 6, capacity: 8 },
+  ];
+
+  for (const table of tables) {
+    await prisma.table.upsert({
+      where: { number: table.number },
+      update: {},
+      create: table,
+    });
+  }
+  console.log('✅ Mesas criadas');
+
+  // 11. Criar caixa
+  await prisma.cashRegister.upsert({
+    where: { number_establishmentId: { number: 1, establishmentId: establishment.id } },
+    update: {},
+    create: {
+      number: 1,
+      name: 'Caixa Principal',
+      establishmentId: establishment.id,
+      isActive: true,
+    },
+  });
+  console.log('✅ Caixa criado');
 }
 
 main()

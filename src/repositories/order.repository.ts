@@ -12,6 +12,11 @@ export interface CreateOrderItemDTO {
   productId: string;
   quantity: number;
   observations?: string;
+  itemType?: 'product' | 'stock_item';
+  productName?: string;
+  stockItemId?: string | null;
+  unitPrice?: number;
+  subtotal?: number;
 }
 
 export interface UpdateOrderDTO {
@@ -127,6 +132,8 @@ export class OrderRepository {
         items: {
           create: data.items.map((item: any) => ({
             productId: item.productId,
+            stockItemId: item.stockItemId,
+            productName: item.productName,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             subtotal: item.subtotal,
@@ -142,6 +149,13 @@ export class OrderRepository {
                 id: true,
                 name: true,
                 price: true,
+              },
+            },
+            stockItem: {
+              select: {
+                id: true,
+                name: true,
+                salePrice: true,
               },
             },
           },
@@ -185,6 +199,8 @@ export class OrderRepository {
       data: items.map((item) => ({
         orderId,
         productId: item.productId,
+        stockItemId: item.stockItemId,
+        productName: item.productName,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         subtotal: item.subtotal,

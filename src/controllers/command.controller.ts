@@ -150,7 +150,33 @@ export class CommandController {
       res.status(200).json({
         success: true,
         data: command,
-        message: 'Comanda fechada com sucesso',
+        message: 'Comanda enviada para pagamento',
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  confirmPayment = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { paymentMethod, amount } = req.body;
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      if (!paymentMethod || !amount) {
+        throw new Error('Forma de pagamento e valor são obrigatórios');
+      }
+
+      const command = await this.service.confirmPayment(id, paymentMethod, amount, userId);
+
+      res.status(200).json({
+        success: true,
+        data: command,
+        message: 'Pagamento confirmado com sucesso',
       });
     } catch (error) {
       next(error);

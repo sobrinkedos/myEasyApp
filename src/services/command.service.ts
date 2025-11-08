@@ -1,7 +1,9 @@
 import { CommandRepository, CreateCommandDTO, UpdateCommandDTO } from '@/repositories/command.repository';
 import { TableService } from '@/services/table.service';
+import { CashTransactionService } from '@/services/cash-transaction.service';
+import { CashSessionService } from '@/services/cash-session.service';
 import { ConflictError, NotFoundError, BadRequestError } from '@/utils/errors';
-import { Command } from '@prisma/client';
+import { Command, PaymentMethod } from '@prisma/client';
 import { cacheService } from '@/utils/cache';
 
 export interface OpenCommandDTO {
@@ -26,10 +28,14 @@ const CACHE_TTL = 120; // 2 minutos
 export class CommandService {
   private repository: CommandRepository;
   private tableService: TableService;
+  private cashTransactionService: CashTransactionService;
+  private cashSessionService: CashSessionService;
 
   constructor() {
     this.repository = new CommandRepository();
     this.tableService = new TableService();
+    this.cashTransactionService = new CashTransactionService();
+    this.cashSessionService = new CashSessionService();
   }
 
   async getAll(
@@ -137,44 +143,102 @@ export class CommandService {
     id: string,
     serviceChargePercentage: number = 10
   ): Promise<Command> {
+    try {
+      const command = await this.getById(id);
+
+      // Validate command is open
+      if (command.status !== 'open') {
+        throw new BadRequestError('Comanda já está fechada');
+      }
+
+      // Check if all orders are delivered
+      const orders = (command as any).orders || [];
+      const pendingOrders = orders.filter(
+        (order: any) => order.status !== 'delivered' && order.status !== 'cancelled'
+      );
+
+      if (pendingOrders.length > 0) {
+        throw new BadRequestError(
+          `Existem ${pendingOrders.length} pedidos não entregues`
+        );
+      }
+
+      // Calculate totals
+      const subtotal = orders
+        .filter((order: any) => order.status !== 'cancelled')
+        .reduce((sum: number, order: any) => sum + Number(order.subtotal), 0);
+
+      const serviceCharge = (subtotal * serviceChargePercentage) / 100;
+      const total = subtotal + serviceCharge;
+
+      // Update command to pending_payment (waiting for cashier)
+      const closedCommand = await this.repository.update(id, {
+        status: 'pending_payment',
+        subtotal,
+        serviceCharge,
+        total,
+        closedAt: new Date(),
+      });
+
+      // Invalidate cache
+      await cacheService.del(OPEN_COMMANDS_CACHE_KEY);
+
+      return closedCommand;
+    } catch (error) {
+      console.error('Error closing command:', error);
+      throw error;
+    }
+  }
+
+  async confirmPayment(
+    id: string,
+    paymentMethod: string,
+    amount: number,
+    userId: string
+  ): Promise<Command> {
     const command = await this.getById(id);
 
-    // Validate command is open
-    if (command.status !== 'open') {
-      throw new BadRequestError('Comanda já está fechada');
+    // Validate command is pending payment
+    if (command.status !== 'pending_payment') {
+      throw new BadRequestError('Comanda não está pendente de pagamento');
     }
 
-    // Check if all orders are delivered
-    const pendingOrders = command.orders?.filter(
-      (order) => order.status !== 'delivered' && order.status !== 'cancelled'
+    // Validate payment method
+    const validPaymentMethods = Object.values(PaymentMethod);
+    if (!validPaymentMethods.includes(paymentMethod as PaymentMethod)) {
+      throw new BadRequestError('Forma de pagamento inválida');
+    }
+
+    // Get active cash session for the user
+    const activeSession = await this.cashSessionService.getActiveSession(userId);
+    if (!activeSession) {
+      throw new BadRequestError('Nenhuma sessão de caixa aberta para registrar o pagamento');
+    }
+
+    // Register cash transaction
+    await this.cashTransactionService.recordSale(
+      activeSession.id,
+      {
+        saleId: command.id,
+        amount,
+        paymentMethod: paymentMethod as PaymentMethod,
+      },
+      userId
     );
 
-    if (pendingOrders && pendingOrders.length > 0) {
-      throw new BadRequestError(
-        `Existem ${pendingOrders.length} pedidos não entregues`
-      );
-    }
-
-    // Calculate totals
-    const subtotal = command.orders
-      ?.filter((order) => order.status !== 'cancelled')
-      .reduce((sum, order) => sum + Number(order.subtotal), 0) || 0;
-
-    const serviceCharge = (subtotal * serviceChargePercentage) / 100;
-    const total = subtotal + serviceCharge;
-
-    // Update command
-    const closedCommand = await this.repository.update(id, {
+    // Update command to closed
+    const paidCommand = await this.repository.update(id, {
       status: 'closed',
-      subtotal,
-      serviceCharge,
-      total,
-      closedAt: new Date(),
     });
+
+    // Free table if it's a table command
+    if (paidCommand.tableId) {
+      await this.tableService.updateStatus(paidCommand.tableId, 'available');
+    }
 
     // Invalidate cache
     await cacheService.del(OPEN_COMMANDS_CACHE_KEY);
 
-    return closedCommand;
+    return paidCommand;
   }
 }

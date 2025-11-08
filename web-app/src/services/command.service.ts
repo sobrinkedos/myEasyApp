@@ -75,4 +75,9 @@ export const commandService = {
     const response = await api.post(`/commands/${id}/close`, data);
     return response.data;
   },
+
+  async confirmPayment(id: string) {
+    const response = await api.post(`/commands/${id}/confirm-payment`);
+    return response.data;
+  },
 };

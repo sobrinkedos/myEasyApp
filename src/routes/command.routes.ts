@@ -138,4 +138,24 @@ router.post('/', authMiddleware.authorize('waiter', 'admin'), commandController.
  */
 router.post('/:id/close', authMiddleware.authorize('waiter', 'admin'), commandController.closeCommand);
 
+/**
+ * @swagger
+ * /api/v1/commands/{id}/confirm-payment:
+ *   post:
+ *     summary: Confirmar pagamento da comanda
+ *     tags: [Commands]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Pagamento confirmado
+ */
+router.post('/:id/confirm-payment', authMiddleware.authorize('cashier', 'admin'), commandController.confirmPayment);
+
 export default router;

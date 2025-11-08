@@ -41,6 +41,11 @@ export class StockIntegrationService {
 
     // For each item in the order
     for (const orderItem of order.items) {
+      // Skip stock items (resale items) - they don't need ingredient deduction
+      if (!orderItem.productId || orderItem.stockItemId) {
+        continue;
+      }
+
       const product = await this.productRepository.findById(orderItem.productId);
 
       if (!product) {
@@ -113,7 +118,7 @@ export class StockIntegrationService {
 
     return {
       success: insufficientItems.length === 0,
-      deductedItems,
+      deductedItems: deductionItems,
       insufficientItems,
     };
   }

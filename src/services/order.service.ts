@@ -1,6 +1,7 @@
 import { OrderRepository, CreateOrderItemDTO, UpdateOrderDTO } from '@/repositories/order.repository';
 import { CommandService } from '@/services/command.service';
 import { ProductRepository } from '@/repositories/product.repository';
+import { StockItemRepository } from '@/repositories/stock-item.repository';
 import { StockIntegrationService } from '@/services/stock-integration.service';
 import { NotFoundError, BadRequestError } from '@/utils/errors';
 import { Order } from '@prisma/client';
@@ -17,12 +18,14 @@ export class OrderService {
   private repository: OrderRepository;
   private commandService: CommandService;
   private productRepository: ProductRepository;
+  private stockItemRepository: StockItemRepository;
   private stockIntegrationService: StockIntegrationService;
 
   constructor() {
     this.repository = new OrderRepository();
     this.commandService = new CommandService();
     this.productRepository = new ProductRepository();
+    this.stockItemRepository = new StockItemRepository();
     this.stockIntegrationService = new StockIntegrationService();
   }
 
@@ -59,17 +62,37 @@ export class OrderService {
     let subtotal = 0;
     const itemsWithPrices = await Promise.all(
       data.items.map(async (item) => {
+        let unitPrice = 0;
+        let productName = '';
+        let productId = null;
+        let stockItemId = null;
+        
+        // Try to find as Product first
         const product = await this.productRepository.findById(item.productId);
-        if (!product) {
-          throw new NotFoundError(`Produto ${item.productId}`);
+        if (product) {
+          unitPrice = Number(product.price);
+          productName = product.name;
+          productId = product.id;
+        } else {
+          // Try to find as StockItem
+          const stockItem = await this.stockItemRepository.findById(item.productId);
+          if (stockItem) {
+            unitPrice = Number(stockItem.salePrice);
+            productName = stockItem.name;
+            stockItemId = stockItem.id;
+          } else {
+            throw new NotFoundError(`Produto ${item.productId}`);
+          }
         }
 
-        const unitPrice = Number(product.price);
         const itemSubtotal = unitPrice * item.quantity;
         subtotal += itemSubtotal;
 
         return {
           ...item,
+          productId,
+          stockItemId,
+          productName,
           unitPrice,
           subtotal: itemSubtotal,
         };
@@ -223,16 +246,36 @@ export class OrderService {
     if (modifications.addItems && modifications.addItems.length > 0) {
       const itemsWithPrices = await Promise.all(
         modifications.addItems.map(async (item) => {
+          let unitPrice = 0;
+          let productName = '';
+          let productId = null;
+          let stockItemId = null;
+
+          // Try to find as Product first
           const product = await this.productRepository.findById(item.productId);
-          if (!product) {
-            throw new NotFoundError(`Produto ${item.productId}`);
+          if (product) {
+            unitPrice = Number(product.price);
+            productName = product.name;
+            productId = product.id;
+          } else {
+            // Try to find as StockItem
+            const stockItem = await this.stockItemRepository.findById(item.productId);
+            if (stockItem) {
+              unitPrice = Number(stockItem.salePrice);
+              productName = stockItem.name;
+              stockItemId = stockItem.id;
+            } else {
+              throw new NotFoundError(`Produto ${item.productId}`);
+            }
           }
 
-          const unitPrice = Number(product.price);
           const itemSubtotal = unitPrice * item.quantity;
 
           return {
             ...item,
+            productId,
+            stockItemId,
+            productName,
             unitPrice,
             subtotal: itemSubtotal,
           };

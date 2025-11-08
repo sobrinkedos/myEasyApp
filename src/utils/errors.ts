@@ -121,3 +121,9 @@ export class BusinessError extends BusinessRuleError {
     super(message);
   }
 }
+
+export class BadRequestError extends AppError {
+  constructor(message: string) {
+    super(400, message);
+  }
+}
