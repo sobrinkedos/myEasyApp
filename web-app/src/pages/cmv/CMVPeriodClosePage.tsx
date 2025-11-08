@@ -10,9 +10,11 @@ export function CMVPeriodClosePage() {
   const [loading, setLoading] = useState(true);
   const [closing, setClosing] = useState(false);
   const [appraisalId, setAppraisalId] = useState('');
+  const [appraisals, setAppraisals] = useState<any[]>([]);
 
   useEffect(() => {
     loadPeriod();
+    loadAppraisals();
   }, [id]);
 
   const loadPeriod = async () => {
@@ -25,6 +27,17 @@ export function CMVPeriodClosePage() {
       navigate('/cmv/periods');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAppraisals = async () => {
+    try {
+      const response = await api.get('/appraisals?status=approved');
+      const data = response.data.data || response.data;
+      setAppraisals(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Erro ao carregar conferências:', error);
+      setAppraisals([]);
     }
   };
 
@@ -45,7 +58,9 @@ export function CMVPeriodClosePage() {
       navigate(`/cmv/periods/${id}`);
     } catch (error: any) {
       console.error('Erro ao fechar período:', error);
-      alert(error.response?.data?.message || 'Erro ao fechar período');
+      console.error('Detalhes do erro:', error.response?.data);
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Erro ao fechar período';
+      alert(errorMessage);
     } finally {
       setClosing(false);
     }
@@ -133,6 +148,11 @@ export function CMVPeriodClosePage() {
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           >
             <option value="">Selecione uma conferência aprovada...</option>
+            {appraisals.map((appraisal) => (
+              <option key={appraisal.id} value={appraisal.id}>
+                {appraisal.type === 'daily' ? 'Diária' : appraisal.type === 'weekly' ? 'Semanal' : 'Mensal'} - {formatDate(appraisal.date)} - Acurácia: {Number(appraisal.accuracy).toFixed(1)}%
+              </option>
+            ))}
           </select>
           <p className="text-sm text-gray-500 mt-1">
             Apenas conferências aprovadas podem ser usadas

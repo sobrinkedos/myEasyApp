@@ -175,7 +175,7 @@ export function CMVDashboardPage() {
                   <p className="text-sm font-medium text-gray-900">
                     {formatDate(period.startDate)} - {formatDate(period.endDate)}
                   </p>
-                  <p className="text-xs text-gray-600">CMV: {period.cmvPercentage.toFixed(1)}%</p>
+                  <p className="text-xs text-gray-600">CMV: {Number(period.cmvPercentage).toFixed(1)}%</p>
                 </div>
                 <button
                   onClick={() => navigate(`/cmv/periods/${period.id}`)}
@@ -263,7 +263,7 @@ export function CMVDashboardPage() {
                           period.cmvPercentage > 35 ? 'text-yellow-600' :
                           'text-green-600'
                         }`}>
-                          {period.cmvPercentage.toFixed(1)}%
+                          {Number(period.cmvPercentage).toFixed(1)}%
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">

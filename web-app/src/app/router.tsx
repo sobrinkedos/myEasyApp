@@ -59,6 +59,12 @@ import { CMVPeriodDetailPage } from '@/pages/cmv/CMVPeriodDetailPage';
 import { CMVPeriodClosePage } from '@/pages/cmv/CMVPeriodClosePage';
 import { CMVReportPage } from '@/pages/cmv/CMVReportPage';
 
+// Cash
+import { CashSessionPage } from '@/pages/cash/CashSessionPage';
+import { OpenCashPage } from '@/pages/cash/OpenCashPage';
+import { WithdrawalPage } from '@/pages/cash/WithdrawalPage';
+import { SupplyPage } from '@/pages/cash/SupplyPage';
+
 // Error pages
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage';
@@ -336,15 +342,27 @@ const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <div>Cash List Page - Coming soon</div>,
+            element: <CashSessionPage />,
           },
           {
             path: 'open',
-            element: <div>Open Cash Page - Coming soon</div>,
+            element: <OpenCashPage />,
           },
           {
-            path: 'close',
+            path: 'sessions/:id/withdrawal',
+            element: <WithdrawalPage />,
+          },
+          {
+            path: 'sessions/:id/supply',
+            element: <SupplyPage />,
+          },
+          {
+            path: 'sessions/:id/close',
             element: <div>Close Cash Page - Coming soon</div>,
+          },
+          {
+            path: 'sessions/:id/transactions',
+            element: <div>Transactions Page - Coming soon</div>,
           },
         ],
       },

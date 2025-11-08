@@ -53,6 +53,9 @@ model User {
   delegatedPermissions    DelegatedPermission[]
   cashSessionsAsOperator  CashSession[]           @relation("CashOperator")
   cashSessionsAsTreasurer CashSession[]           @relation("CashTreasurer")
+  cashTransactions        CashTransaction[]       @relation("CashTransactions")
+  transfersInitiated      CashTransfer[]          @relation("Transferrer")
+  transfersReceived       CashTransfer[]          @relation("Receiver")
   appraisalsCreated       StockAppraisal[]        @relation("AppraisalUser")
   appraisalsApproved      StockAppraisal[]        @relation("AppraisalApprover")
 
@@ -190,7 +193,7 @@ model CashSession {
   expectedAmount    Decimal?            @db.Decimal(10, 2)
   countedAmount     Decimal?            @db.Decimal(10, 2)
   difference        Decimal?            @db.Decimal(10, 2)
-  status            String              @default("OPEN")
+  status            CashSessionStatus   @default(OPEN)
   openedAt          DateTime            @default(now())
   closedAt          DateTime?
   transferredAt     DateTime?
@@ -202,12 +205,97 @@ model CashSession {
   cashRegister      CashRegister        @relation(fields: [cashRegisterId], references: [id])
   operator          User                @relation("CashOperator", fields: [operatorId], references: [id])
   treasurer         User?               @relation("CashTreasurer", fields: [treasurerUserId], references: [id])
+  transactions      CashTransaction[]
+  counts            CashCount[]
+  transfer          CashTransfer?
 
   @@index([cashRegisterId])
   @@index([operatorId])
   @@index([status])
   @@index([openedAt])
   @@map("cash_sessions")
+}
+
+enum CashSessionStatus {
+  OPEN
+  CLOSED
+  TRANSFERRED
+  RECEIVED
+  REOPENED
+}
+
+model CashTransaction {
+  id              String              @id @default(uuid())
+  cashSessionId   String
+  type            TransactionType
+  paymentMethod   PaymentMethod?
+  amount          Decimal             @db.Decimal(10, 2)
+  description     String?
+  saleId          String?
+  userId          String
+  timestamp       DateTime            @default(now())
+  metadata        Json?
+
+  cashSession     CashSession         @relation(fields: [cashSessionId], references: [id])
+  user            User                @relation("CashTransactions", fields: [userId], references: [id])
+
+  @@index([cashSessionId])
+  @@index([type])
+  @@index([timestamp])
+  @@map("cash_transactions")
+}
+
+enum TransactionType {
+  SALE
+  WITHDRAWAL
+  SUPPLY
+  OPENING
+  CLOSING
+  ADJUSTMENT
+}
+
+enum PaymentMethod {
+  CASH
+  DEBIT
+  CREDIT
+  PIX
+  VOUCHER
+  OTHER
+}
+
+model CashCount {
+  id              String      @id @default(uuid())
+  cashSessionId   String
+  denomination    Decimal     @db.Decimal(10, 2)
+  quantity        Int
+  total           Decimal     @db.Decimal(10, 2)
+  createdAt       DateTime    @default(now())
+
+  cashSession     CashSession @relation(fields: [cashSessionId], references: [id])
+
+  @@index([cashSessionId])
+  @@map("cash_counts")
+}
+
+model CashTransfer {
+  id              String      @id @default(uuid())
+  cashSessionId   String      @unique
+  transferredBy   String
+  receivedBy      String?
+  expectedAmount  Decimal     @db.Decimal(10, 2)
+  receivedAmount  Decimal?    @db.Decimal(10, 2)
+  difference      Decimal?    @db.Decimal(10, 2)
+  notes           String?     @db.Text
+  transferredAt   DateTime    @default(now())
+  receivedAt      DateTime?
+
+  cashSession     CashSession @relation(fields: [cashSessionId], references: [id])
+  transferrer     User        @relation("Transferrer", fields: [transferredBy], references: [id])
+  receiver        User?       @relation("Receiver", fields: [receivedBy], references: [id])
+
+  @@index([cashSessionId])
+  @@index([transferredAt])
+  @@map("cash_transfers")
 }
 
 model Category {
@@ -299,17 +387,22 @@ model ProductIngredient {
 model StockTransaction {
   id           String   @id @default(uuid())
   ingredientId String
-  type         String
+  type         String   // 'purchase', 'usage', 'adjustment', 'waste'
   quantity     Decimal  @db.Decimal(10, 3)
+  unitCost     Decimal? @db.Decimal(10, 4)
+  totalValue   Decimal? @db.Decimal(12, 2)
   reason       String?
+  reference    String?  // Reference to order, appraisal, etc.
   userId       String
   createdAt    DateTime @default(now())
 
-  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id])
 
   @@index([ingredientId, createdAt])
   @@index([type])
+  @@index([createdAt])
+  @@map("stock_transactions")
 }
 
 model Establishment {

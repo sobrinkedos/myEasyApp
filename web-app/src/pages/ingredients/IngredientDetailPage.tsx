@@ -35,9 +35,14 @@ export function IngredientDetailPage() {
   const [ingredient, setIngredient] = useState<Ingredient | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
 
   useEffect(() => {
-    loadIngredient();
+    if (id) {
+      loadIngredient();
+      loadTransactions();
+    }
   }, [id]);
 
   const loadIngredient = async () => {
@@ -65,6 +70,40 @@ export function IngredientDetailPage() {
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('pt-BR');
+  };
+
+  const loadTransactions = async () => {
+    try {
+      setLoadingTransactions(true);
+      const response = await api.get(`/stock/transactions/ingredient/${id}?limit=10`);
+      const data = response.data.data || response.data;
+      setTransactions(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Erro ao carregar histórico:', error);
+      setTransactions([]);
+    } finally {
+      setLoadingTransactions(false);
+    }
+  };
+
+  const getTransactionTypeLabel = (type: string) => {
+    const types: Record<string, string> = {
+      purchase: 'Compra',
+      usage: 'Uso',
+      adjustment: 'Ajuste',
+      waste: 'Perda',
+    };
+    return types[type] || type;
+  };
+
+  const getTransactionTypeColor = (type: string) => {
+    const colors: Record<string, string> = {
+      purchase: 'text-green-600 bg-green-50',
+      usage: 'text-blue-600 bg-blue-50',
+      adjustment: 'text-yellow-600 bg-yellow-50',
+      waste: 'text-red-600 bg-red-50',
+    };
+    return colors[type] || 'text-gray-600 bg-gray-50';
   };
 
   const handleDelete = async () => {
@@ -307,6 +346,80 @@ export function IngredientDetailPage() {
                 <p className="text-base text-gray-900 mt-1">{formatDate(ingredient.updatedAt)}</p>
               </div>
             </div>
+          </div>
+
+          {/* Transaction History */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+              Histórico de Movimentações
+            </h2>
+            
+            {loadingTransactions ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+              </div>
+            ) : transactions.length > 0 ? (
+              <div className="space-y-3">
+                {transactions.map((transaction, index) => (
+                  <div key={index} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTransactionTypeColor(transaction.type)}`}>
+                          {getTransactionTypeLabel(transaction.type)}
+                        </span>
+                        <span className="text-sm text-gray-600">
+                          {formatDate(transaction.createdAt)}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <div className={`font-medium ${transaction.type === 'usage' || transaction.type === 'waste' ? 'text-red-600' : 'text-green-600'}`}>
+                          {transaction.type === 'usage' || transaction.type === 'waste' ? '-' : '+'}
+                          {Number(transaction.quantity).toFixed(2)} {ingredient?.unit}
+                        </div>
+                        {transaction.totalValue && (
+                          <div className="text-sm text-gray-600">
+                            {formatCurrency(Number(transaction.totalValue))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {transaction.reason && (
+                      <div className="text-sm text-gray-600 mb-1">
+                        <strong>Motivo:</strong> {transaction.reason}
+                      </div>
+                    )}
+                    {transaction.unitCost && (
+                      <div className="text-sm text-gray-600">
+                        <strong>Custo unitário:</strong> {formatCurrency(Number(transaction.unitCost))}/{ingredient?.unit}
+                      </div>
+                    )}
+                    {transaction.user && (
+                      <div className="text-xs text-gray-500 mt-2">
+                        Por: {transaction.user.name}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {transactions.length === 10 && (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-gray-500">
+                      Mostrando as 10 movimentações mais recentes
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                <p>Nenhuma movimentação registrada</p>
+                <p className="text-sm mt-1">As movimentações aparecerão aqui quando houver entradas, saídas ou ajustes de estoque.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

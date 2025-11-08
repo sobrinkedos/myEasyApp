@@ -18,6 +18,9 @@ import stockManagementRoutes from '@/routes/stock.routes';
 import uploadRoutes from '@/routes/upload.routes';
 import appraisalRoutes from '@/routes/appraisal.routes';
 import cmvRoutes from '@/routes/cmv.routes';
+import stockTransactionRoutes from '@/routes/stock-transaction.routes';
+import stockMovementRoutes from '@/routes/stock-movement.routes';
+import cashRoutes from '@/routes/cash.routes';
 import logger from '@/utils/logger';
 
 const app: Application = express();
@@ -148,6 +151,9 @@ app.use('/api/v1/tables', tableRoutes);
 app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/appraisals', appraisalRoutes);
 app.use('/api/v1/cmv/periods', cmvRoutes);
+app.use('/api/v1/stock/transactions', stockTransactionRoutes);
+app.use('/api/v1/stock/movements', stockMovementRoutes);
+app.use('/api/v1/cash', cashRoutes);
 
 // 404 handler
 app.use((req, res) => {

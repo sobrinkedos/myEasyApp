@@ -115,7 +115,7 @@ export function CMVPeriodDetailPage() {
               <p className="text-sm opacity-80">Custo de Mercadoria Vendida</p>
             </div>
             <div className="text-right">
-              <p className="text-5xl font-bold">{period.cmvPercentage.toFixed(1)}%</p>
+              <p className="text-5xl font-bold">{Number(period.cmvPercentage).toFixed(1)}%</p>
             </div>
           </div>
         </div>

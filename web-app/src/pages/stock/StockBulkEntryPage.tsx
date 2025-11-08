@@ -88,19 +88,19 @@ export function StockBulkEntryPage() {
       setIsSaving(true);
       setError('');
 
-      // Criar movimentações para cada item
-      const promises = entriesToSave.map(entry =>
-        api.post('/stock-management/movements', {
-          stockItemId: entry.itemId,
-          type: 'entrada',
-          quantity: entry.quantity,
-          costPrice: entry.costPrice || undefined,
-          reason: `Compra - ${entry.supplier || 'Fornecedor não informado'}`,
-          reference: `Entrada em massa - ${new Date().toLocaleDateString()}`,
-        })
-      );
+      // Criar movimentações em massa usando o novo sistema
+      // O sistema automaticamente atualiza o estoque e integra com CMV
+      const movements = entriesToSave.map(entry => ({
+        stockItemId: entry.itemId,
+        type: 'purchase',
+        quantity: entry.quantity,
+        costPrice: entry.costPrice || 0,
+        totalCost: entry.quantity * (entry.costPrice || 0),
+        reason: `Compra - ${entry.supplier || 'Fornecedor não informado'}`,
+        reference: `bulk-entry-${Date.now()}`,
+      }));
 
-      await Promise.all(promises);
+      await api.post('/stock/movements/bulk', { movements });
 
       setSuccessMessage(`${entriesToSave.length} item(ns) atualizado(s) com sucesso!`);
       setEntries(new Map());

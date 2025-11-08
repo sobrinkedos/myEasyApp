@@ -3,6 +3,13 @@ import { AppError, ValidationError } from '@/utils/errors';
 import logger from '@/utils/logger';
 
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error('=== ERROR HANDLER ===');
+  console.error('Error type:', err.constructor.name);
+  console.error('Error message:', err.message);
+  console.error('Error stack:', err.stack);
+  console.error('Request URL:', req.url);
+  console.error('Request method:', req.method);
+
   if (err instanceof AppError) {
     // Operational errors
     const response: any = {
@@ -28,5 +35,6 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
   return res.status(500).json({
     success: false,
     message: 'Erro interno do servidor',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined,
   });
 };

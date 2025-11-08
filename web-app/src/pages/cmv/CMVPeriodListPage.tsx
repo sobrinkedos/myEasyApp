@@ -239,7 +239,7 @@ export function CMVPeriodListPage() {
                     }`}>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">CMV</span>
-                        <span className="text-2xl font-bold">{period.cmvPercentage.toFixed(1)}%</span>
+                        <span className="text-2xl font-bold">{Number(period.cmvPercentage).toFixed(1)}%</span>
                       </div>
                     </div>
                   )}

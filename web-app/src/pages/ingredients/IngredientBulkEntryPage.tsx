@@ -79,26 +79,21 @@ export function IngredientBulkEntryPage() {
       setIsSaving(true);
       setError('');
 
-      // Atualizar quantidade e preço médio de cada insumo
-      const promises = entriesToSave.map(async (entry) => {
-        // Buscar ingrediente atual
-        const response = await api.get(`/ingredients/${entry.ingredientId}`);
-        const ingredient = response.data.data || response.data;
-        const currentQuantity = Number(ingredient.currentQuantity || 0);
-        const currentCost = Number(ingredient.averageCost || 0);
-        const newQuantity = currentQuantity + entry.quantity;
-        
-        // Calcular preço médio ponderado
-        // Fórmula: (Qtd_Atual × Custo_Atual + Qtd_Nova × Custo_Novo) / Qtd_Total
-        const totalValue = (currentQuantity * currentCost) + (entry.quantity * entry.cost);
-        const newAverageCost = newQuantity > 0 ? totalValue / newQuantity : entry.cost;
-        
-        // Atualizar com nova quantidade e preço médio
-        return api.put(`/ingredients/${entry.ingredientId}`, {
-          currentQuantity: newQuantity,
-          averageCost: newAverageCost,
-        });
-      });
+      // Criar transações de compra para cada insumo
+      // O sistema automaticamente atualiza o estoque e integra com CMV
+      const transactions = entriesToSave.map(entry => ({
+        ingredientId: entry.ingredientId,
+        type: 'purchase',
+        quantity: entry.quantity,
+        unitCost: entry.cost,
+        totalValue: entry.quantity * entry.cost,
+        reason: `Entrada em massa - ${new Date().toLocaleDateString()}`,
+        reference: `bulk-entry-${Date.now()}`,
+      }));
+
+      const promises = [
+        api.post('/stock/transactions/bulk', { transactions })
+      ];
 
       await Promise.all(promises);
 

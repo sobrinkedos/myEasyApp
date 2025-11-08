@@ -149,6 +149,53 @@ export class CMVService {
     await this.repository.delete(id);
   }
 
+  async closePeriod(periodId: string, closingAppraisalId: string): Promise<CMVPeriod> {
+    // Get period
+    const period = await this.getById(periodId);
+
+    // Validate that period is open
+    if (period.status === 'closed') {
+      throw new BusinessRuleError('Período já está fechado');
+    }
+
+    // Get closing appraisal
+    const appraisal = await prisma.stockAppraisal.findUnique({
+      where: { id: closingAppraisalId },
+    });
+
+    if (!appraisal) {
+      throw new NotFoundError('Conferência de estoque');
+    }
+
+    if (appraisal.status !== 'approved') {
+      throw new BusinessRuleError('Apenas conferências aprovadas podem ser usadas');
+    }
+
+    // Use the physical stock value from appraisal as closing stock
+    const closingStock = Number(appraisal.totalPhysical);
+
+    // Calculate CMV
+    const openingStock = Number(period.openingStock);
+    const purchases = Number(period.purchases);
+    const cmv = openingStock + purchases - closingStock;
+
+    // Get revenue from orders
+    const revenue = await this.calculateRevenue(periodId);
+
+    // Calculate CMV percentage
+    const cmvPercentage = revenue > 0 ? (cmv / revenue) * 100 : 0;
+
+    // Update period
+    return this.repository.update(periodId, {
+      closingStock,
+      cmv,
+      revenue,
+      cmvPercentage,
+      status: 'closed',
+      closedAt: new Date(),
+    });
+  }
+
   async registerPurchase(periodId: string, amount: number): Promise<CMVPeriod> {
     // Check if period exists
     const period = await this.getById(periodId);
@@ -275,12 +322,8 @@ export class CMVService {
     // Get period
     const period = await this.getById(periodId);
 
-    // Validate that period has closing stock (must be closed or have a final appraisal)
-    if (period.status === 'open' && Number(period.closingStock) === 0) {
-      throw new BusinessRuleError(
-        'Período deve ter conferência de estoque final para calcular CMV'
-      );
-    }
+    // Note: closingStock can be zero if there's no stock at the end of the period
+    // This is valid and should not throw an error
 
     const openingStock = Number(period.openingStock);
     const purchases = Number(period.purchases);

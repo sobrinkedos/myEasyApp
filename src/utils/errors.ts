@@ -40,6 +40,12 @@ export class ConflictError extends AppError {
   }
 }
 
+export class BusinessRuleError extends AppError {
+  constructor(message: string) {
+    super(422, message);
+  }
+}
+
 export class ForbiddenError extends AppError {
   constructor(message: string = 'Acesso proibido') {
     super(403, message);
@@ -70,5 +76,48 @@ export class InvalidCNPJError extends ValidationError {
 export class UnauthorizedEstablishmentAccessError extends ForbiddenError {
   constructor() {
     super('Você não tem permissão para acessar este estabelecimento');
+  }
+}
+
+// Cash Management specific errors
+export class SessionAlreadyOpenError extends ConflictError {
+  constructor() {
+    super('Operador já possui um caixa aberto');
+  }
+}
+
+export class SessionNotFoundError extends NotFoundError {
+  constructor(sessionId?: string) {
+    super(sessionId ? `Sessão de caixa ${sessionId}` : 'Sessão de caixa');
+  }
+}
+
+export class InvalidSessionStatusError extends BusinessRuleError {
+  constructor(currentStatus: string, requiredStatus: string) {
+    super(`Status da sessão é ${currentStatus}, requerido ${requiredStatus}`);
+  }
+}
+
+export class InsufficientCashError extends BusinessRuleError {
+  constructor(available: number, required: number) {
+    super(`Saldo insuficiente. Disponível: R$ ${available.toFixed(2)}, Necessário: R$ ${required.toFixed(2)}`);
+  }
+}
+
+export class AuthorizationRequiredError extends AuthorizationError {
+  constructor(operation: string) {
+    super(`Autorização necessária para ${operation}`);
+  }
+}
+
+export class JustificationRequiredError extends ValidationError {
+  constructor(reason: string) {
+    super(reason, { justification: [reason] });
+  }
+}
+
+export class BusinessError extends BusinessRuleError {
+  constructor(message: string) {
+    super(message);
   }
 }

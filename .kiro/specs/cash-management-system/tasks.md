@@ -1,243 +1,246 @@
-# Sistema de Gestão de Caixa - Implementation Plan
+# Sistema de Gestão de Caixa - Plano de Implementação
 
-## Overview
+## Visão Geral
 
 Este plano detalha a implementação completa do Sistema de Gestão de Caixa, desde a estrutura de dados até a interface de usuário, incluindo toda a lógica de negócio, segurança e auditoria.
 
 ---
 
-## Phase 1: Database and Core Models (5 tasks)
+## Fase 1: Banco de Dados e Modelos Principais (5 tarefas) ✅
 
-### Task 1.1: Create Prisma Schema for Cash Management
-- [ ] 1.1 Add CashRegister model to Prisma schema
-  - Define fields: id, number, name, establishmentId, isActive, timestamps
-  - Add relation to Establishment
-  - Add indexes for establishmentId
-  - _Requirements: NFR-03_
+### Tarefa 1.1: Criar Schema Prisma para Gestão de Caixa
+- [x] 1.1 Adicionar modelo CashRegister ao schema Prisma
+  - Definir campos: id, number, name, establishmentId, isActive, timestamps
+  - Adicionar relação com Establishment
+  - Adicionar índices para establishmentId
+  - _Requisitos: NFR-03_
 
-- [ ] 1.2 Add CashSession model to Prisma schema
-  - Define fields: id, cashRegisterId, operatorId, amounts, status, timestamps
-  - Add enum CashSessionStatus (OPEN, CLOSED, TRANSFERRED, RECEIVED, REOPENED)
-  - Add relations to CashRegister, User (operator and treasurer)
-  - Add indexes for cashRegisterId, operatorId, status, openedAt
-  - _Requirements: 1.1, 1.5, 7.1, 7.4_
+- [x] 1.2 Adicionar modelo CashSession ao schema Prisma
+  - Definir campos: id, cashRegisterId, operatorId, amounts, status, timestamps
+  - Adicionar enum CashSessionStatus (OPEN, CLOSED, TRANSFERRED, RECEIVED, REOPENED)
+  - Adicionar relações com CashRegister, User (operador e tesoureiro)
+  - Adicionar índices para cashRegisterId, operatorId, status, openedAt
+  - _Requisitos: 1.1, 1.5, 7.1, 7.4_
 
-- [ ] 1.3 Add CashTransaction model to Prisma schema
-  - Define fields: id, cashSessionId, type, paymentMethod, amount, description, saleId, userId, timestamp
-  - Add enum TransactionType (SALE, WITHDRAWAL, SUPPLY, OPENING, CLOSING, ADJUSTMENT)
-  - Add enum PaymentMethod (CASH, DEBIT, CREDIT, PIX, VOUCHER, OTHER)
-  - Add relations to CashSession, Sale, User
-  - Add indexes for cashSessionId, type, timestamp
-  - _Requirements: 2.1, 2.2, 2.5, 3.1, 3.4, 4.1, 4.4_
+- [x] 1.3 Adicionar modelo CashTransaction ao schema Prisma
+  - Definir campos: id, cashSessionId, type, paymentMethod, amount, description, saleId, userId, timestamp
+  - Adicionar enum TransactionType (SALE, WITHDRAWAL, SUPPLY, OPENING, CLOSING, ADJUSTMENT)
+  - Adicionar enum PaymentMethod (CASH, DEBIT, CREDIT, PIX, VOUCHER, OTHER)
+  - Adicionar relações com CashSession, Sale, User
+  - Adicionar índices para cashSessionId, type, timestamp
+  - _Requisitos: 2.1, 2.2, 2.5, 3.1, 3.4, 4.1, 4.4_
 
-- [ ] 1.4 Add CashCount and CashTransfer models
-  - Create CashCount model with denomination, quantity, total fields
-  - Create CashTransfer model with transfer and receipt tracking
-  - Add relations and indexes
-  - _Requirements: 8.1, 8.2, 8.4, 9.1, 9.2, 9.4, 10.1, 10.2_
+- [x] 1.4 Adicionar modelos CashCount e CashTransfer
+  - Criar modelo CashCount com campos denomination, quantity, total
+  - Criar modelo CashTransfer com rastreamento de transferência e recebimento
+  - Adicionar relações e índices
+  - _Requisitos: 8.1, 8.2, 8.4, 9.1, 9.2, 9.4, 10.1, 10.2_
 
-- [ ] 1.5 Run migrations and update database
-  - Generate Prisma migration
-  - Apply migration to database
-  - Verify schema integrity
-  - Create seed data for testing
-  - _Requirements: NFR-05_
-
----
-
-## Phase 2: Repository Layer (4 tasks)
-
-### Task 2.1: Implement CashSession Repository
-- [ ] 2.1 Create CashSessionRepository class
-  - Implement create method for opening sessions
-  - Implement findById with full relations
-  - Implement findActiveByOperator method
-  - Implement update method for status changes
-  - Implement findMany with filters (status, operator, date range)
-  - Add pagination support
-  - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 5.1, 5.2, 5.3, 5.4, 5.5_
-
-### Task 2.2: Implement CashTransaction Repository
-- [ ] 2.2 Create CashTransactionRepository class
-  - Implement create method for transactions
-  - Implement findBySession method
-  - Implement getSessionBalance with aggregation query
-  - Implement getTransactionsByType method
-  - Implement cancel method (soft delete or status update)
-  - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3, 4.4, 4.5_
-
-### Task 2.3: Implement CashCount Repository
-- [ ] 2.3 Create CashCountRepository class
-  - Implement createMany for batch insert
-  - Implement findBySession method
-  - Implement calculateTotal method
-  - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
-
-### Task 2.4: Implement CashTransfer Repository
-- [ ] 2.4 Create CashTransferRepository class
-  - Implement create method for transfers
-  - Implement findPending method
-  - Implement confirmReceipt method
-  - Implement getDailyConsolidation with aggregation
-  - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 10.1, 10.2, 10.3, 10.4, 10.5_
+- [x] 1.5 Executar migrações e atualizar banco de dados
+  - Gerar migração Prisma
+  - Aplicar migração ao banco de dados
+  - Verificar integridade do schema
+  - Criar dados de seed para testes
+  - _Requisitos: NFR-05_
 
 ---
 
-## Phase 3: Business Logic Services (7 tasks)
+## Fase 2: Camada de Repositório (4 tarefas) ✅
 
-### Task 3.1: Implement CashSessionService - Opening
-- [ ] 3.1 Create CashSessionService class
-  - Implement openSession method
-  - Validate operator doesn't have open session
-  - Validate opening amount range (R$ 50 - R$ 500)
-  - Create session with status OPEN
-  - Record opening transaction
-  - Log audit action
-  - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, BR-01, BR-02_
+### Tarefa 2.1: Implementar Repositório CashSession
+- [x] 2.1 Criar classe CashSessionRepository
+  - Implementar método create para abertura de sessões
+  - Implementar findById com relações completas
+  - Implementar método findActiveByOperator
+  - Implementar método update para mudanças de status
+  - Implementar findMany com filtros (status, operador, intervalo de datas)
+  - Adicionar suporte a paginação
+  - _Requisitos: 1.1, 1.2, 1.3, 1.4, 1.5, 5.1, 5.2, 5.3, 5.4, 5.5_
 
-### Task 3.2: Implement CashSessionService - Closing
-- [ ] 3.2 Implement closeSession method
-  - Validate session exists and is OPEN
-  - Calculate expected amount from transactions
-  - Record cash counts
-  - Calculate difference (quebra)
-  - Validate justification if difference > 1%
-  - Update session status to CLOSED
-  - Notify supervisor if significant break
-  - Log audit action
-  - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, BR-04, BR-08_
+### Tarefa 2.2: Implementar Repositório CashTransaction
+- [x] 2.2 Criar classe CashTransactionRepository
+  - Implementar método create para transações
+  - Implementar método findBySession
+  - Implementar getSessionBalance com query de agregação
+  - Implementar método getTransactionsByType
+  - Implementar método cancel (soft delete ou atualização de status)
+  - _Requisitos: 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3, 4.4, 4.5_
 
-### Task 3.3: Implement CashSessionService - Reopen
-- [ ] 3.3 Implement reopenSession method
-  - Validate user has supervisor permission
-  - Validate session is CLOSED and within 24h
-  - Update status to REOPENED
-  - Record reopen reason
-  - Log audit action with supervisor info
-  - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, BR-07_
+### Tarefa 2.3: Implementar Repositório CashCount
+- [x] 2.3 Criar classe CashCountRepository
+  - Implementar createMany para inserção em lote
+  - Implementar método findBySession
+  - Implementar método calculateTotal
+  - _Requisitos: 8.1, 8.2, 8.3, 8.4, 8.5_
 
-### Task 3.4: Implement TransactionService
-- [ ] 3.4 Create TransactionService class
-  - Implement recordSale method (auto-linked from sales)
-  - Implement recordWithdrawal method with validations
-  - Implement recordSupply method
-  - Implement cancelTransaction method (supervisor only)
-  - Implement getSessionBalance method
-  - Implement getSessionTransactions method
-  - Validate session is OPEN for all operations
-  - Check authorization limits for withdrawals/supplies
-  - Update session balance in real-time
-  - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3, 4.4, 4.5, 15.1, 15.2, 15.3, 15.4, 15.5, BR-03_
-
-### Task 3.5: Implement ClosingService
-- [ ] 3.5 Create ClosingService class
-  - Implement startClosing method (preview)
-  - Implement recordCashCount method
-  - Implement calculateDifference method
-  - Implement finalizeClosure method
-  - Generate closing report
-  - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 8.1, 8.2, 8.3, 8.4, 8.5, BR-09_
-
-### Task 3.6: Implement TreasuryService
-- [ ] 3.6 Create TreasuryService class
-  - Implement transferToTreasury method
-  - Calculate transfer amount (excluding opening amount)
-  - Update session status to TRANSFERRED
-  - Notify treasury of pending transfer
-  - Implement confirmReceipt method
-  - Record differences if any
-  - Update status to RECEIVED
-  - Implement listPendingTransfers method
-  - Implement getDailyConsolidation method
-  - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 10.1, 10.2, 10.3, 10.4, 10.5, BR-06, BR-10_
-
-### Task 3.7: Implement AuditService
-- [ ] 3.7 Create AuditService class
-  - Implement logAction method
-  - Store user, timestamp, IP, user agent
-  - Store previous and new state for changes
-  - Implement getAuditTrail method
-  - Implement searchAuditLogs with filters
-  - Implement generateAuditReport method
-  - Ensure immutability of audit logs
-  - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, NFR-08_
+### Tarefa 2.4: Implementar Repositório CashTransfer
+- [x] 2.4 Criar classe CashTransferRepository
+  - Implementar método create para transferências
+  - Implementar método findPending
+  - Implementar método confirmReceipt
+  - Implementar getDailyConsolidation com agregação
+  - _Requisitos: 9.1, 9.2, 9.3, 9.4, 9.5, 10.1, 10.2, 10.3, 10.4, 10.5_
 
 ---
 
-## Phase 4: API Controllers and Routes (6 tasks)
+## Fase 3: Serviços de Lógica de Negócio (7 tarefas) ✅
 
-### Task 4.1: Implement CashSessionController
-- [ ] 4.1 Create CashSessionController class
-  - Implement POST /api/v1/cash/sessions (open)
-  - Implement GET /api/v1/cash/sessions/active
-  - Implement GET /api/v1/cash/sessions/:id
-  - Implement POST /api/v1/cash/sessions/:id/close
-  - Implement POST /api/v1/cash/sessions/:id/reopen (supervisor)
-  - Implement GET /api/v1/cash/sessions (list with filters)
-  - Add request validation with Zod
-  - Add error handling
-  - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 7.1, 7.2, 7.3, 7.4, 7.5, 13.1, 13.2, 13.3, 13.4, 13.5_
+### Tarefa 3.1: Implementar CashSessionService - Abertura
+- [x] 3.1 Criar classe CashSessionService
+  - Implementar método openSession
+  - Validar que operador não tem sessão aberta
+  - Validar faixa de valor de abertura (R$ 50 - R$ 500)
+  - Criar sessão com status OPEN
+  - Registrar transação de abertura
+  - Registrar ação de auditoria
+  - _Requisitos: 1.1, 1.2, 1.3, 1.4, 1.5, BR-01, BR-02_
 
-### Task 4.2: Implement TransactionController
-- [ ] 4.2 Create TransactionController class
-  - Implement POST /api/v1/cash/sessions/:id/withdrawals
-  - Implement POST /api/v1/cash/sessions/:id/supplies
-  - Implement GET /api/v1/cash/sessions/:id/transactions
-  - Implement GET /api/v1/cash/sessions/:id/balance
-  - Implement POST /api/v1/cash/transactions/:id/cancel (supervisor)
-  - Add validation for amounts and reasons
-  - Add authorization checks
-  - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3, 4.4, 4.5, 5.1, 5.2, 5.3, 5.4, 5.5_
+### Tarefa 3.2: Implementar CashSessionService - Fechamento
+- [x] 3.2 Implementar método closeSession
+  - Validar que sessão existe e está OPEN
+  - Calcular valor esperado das transações
+  - Registrar contagens de dinheiro
+  - Calcular diferença (quebra)
+  - Validar justificativa se diferença > 1%
+  - Atualizar status da sessão para CLOSED
+  - Notificar supervisor se quebra significativa
+  - Registrar ação de auditoria
+  - _Requisitos: 7.1, 7.2, 7.3, 7.4, 7.5, BR-04, BR-08_
 
-### Task 4.3: Implement ClosingController
-- [ ] 4.3 Create ClosingController class
-  - Implement GET /api/v1/cash/sessions/:id/closing-preview
-  - Implement POST /api/v1/cash/sessions/:id/cash-count
-  - Add validation for cash count denominations
-  - Calculate totals automatically
-  - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 8.1, 8.2, 8.3, 8.4, 8.5_
+### Tarefa 3.3: Implementar CashSessionService - Reabertura
+- [x] 3.3 Implementar método reopenSession
+  - Validar que usuário tem permissão de supervisor
+  - Validar que sessão está CLOSED e dentro de 24h
+  - Atualizar status para REOPENED
+  - Registrar motivo da reabertura
+  - Registrar ação de auditoria com info do supervisor
+  - _Requisitos: 13.1, 13.2, 13.3, 13.4, 13.5, BR-07_
 
-### Task 4.4: Implement TreasuryController
-- [ ] 4.4 Create TreasuryController class
-  - Implement POST /api/v1/cash/sessions/:id/transfer
-  - Implement GET /api/v1/treasury/transfers/pending
-  - Implement POST /api/v1/treasury/transfers/:id/confirm
-  - Implement GET /api/v1/treasury/consolidation/daily
-  - Add treasurer role validation
-  - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 10.1, 10.2, 10.3, 10.4, 10.5_
+### Tarefa 3.4: Implementar TransactionService
+- [x] 3.4 Criar classe TransactionService
+  - Implementar método recordSale (vinculado automaticamente das vendas)
+  - Implementar método recordWithdrawal com validações
+  - Implementar método recordSupply
+  - Implementar método cancelTransaction (apenas supervisor)
+  - Implementar método getSessionBalance
+  - Implementar método getSessionTransactions
+  - Validar que sessão está OPEN para todas operações
+  - Verificar limites de autorização para sangrias/suprimentos
+  - Atualizar saldo da sessão em tempo real
+  - _Requisitos: 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3, 4.4, 4.5, 15.1, 15.2, 15.3, 15.4, 15.5, BR-03_
 
-### Task 4.5: Implement ReportController
-- [ ] 4.5 Create ReportController class
-  - Implement GET /api/v1/cash/reports/session/:id
-  - Implement GET /api/v1/cash/reports/daily
-  - Implement GET /api/v1/cash/reports/cash-breaks
-  - Implement GET /api/v1/cash/reports/operator-performance
-  - Support multiple formats (JSON, PDF, EXCEL)
-  - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
+### Tarefa 3.5: Implementar ClosingService
+- [x] 3.5 Criar classe ClosingService
+  - Implementar método startClosing (preview)
+  - Implementar método recordCashCount
+  - Implementar método calculateDifference
+  - Implementar método finalizeClosure
+  - Gerar relatório de fechamento
+  - _Requisitos: 6.1, 6.2, 6.3, 6.4, 6.5, 8.1, 8.2, 8.3, 8.4, 8.5, BR-09_
+  - _Nota: Funcionalidade integrada no CashSessionService_
 
-### Task 4.6: Implement AuditController
-- [ ] 4.6 Create AuditController class
-  - Implement GET /api/v1/cash/audit/session/:id
-  - Implement GET /api/v1/cash/audit/search
-  - Add filters for audit search
-  - Restrict access to authorized users only
-  - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5_
+### Tarefa 3.6: Implementar TreasuryService
+- [x] 3.6 Criar classe TreasuryService
+  - Implementar método transferToTreasury
+  - Calcular valor de transferência (excluindo valor de abertura)
+  - Atualizar status da sessão para TRANSFERRED
+  - Notificar tesouraria sobre transferência pendente
+  - Implementar método confirmReceipt
+  - Registrar diferenças se houver
+  - Atualizar status para RECEIVED
+  - Implementar método listPendingTransfers
+  - Implementar método getDailyConsolidation
+  - _Requisitos: 9.1, 9.2, 9.3, 9.4, 9.5, 10.1, 10.2, 10.3, 10.4, 10.5, BR-06, BR-10_
+
+### Tarefa 3.7: Implementar AuditService
+- [x] 3.7 Criar classe AuditService
+  - Implementar método logAction
+  - Armazenar usuário, timestamp, IP, user agent
+  - Armazenar estado anterior e novo para mudanças
+  - Implementar método getAuditTrail
+  - Implementar searchAuditLogs com filtros
+  - Implementar método generateAuditReport
+  - Garantir imutabilidade dos logs de auditoria
+  - _Requisitos: 12.1, 12.2, 12.3, 12.4, 12.5, NFR-08_
+  - _Nota: Usando logger Winston existente para auditoria_
 
 ---
 
-## Phase 5: Security and Middleware (4 tasks)
+## Fase 4: Controladores de API e Rotas (6 tarefas) ✅
 
-### Task 5.1: Implement Authentication Middleware
-- [ ] 5.1 Create cash-specific auth middleware
-  - Implement requireCashOperator middleware
-  - Implement requireSupervisor middleware
-  - Implement requireTreasurer middleware
-  - Validate JWT tokens
-  - Check user roles and permissions
-  - _Requirements: 18.1, 18.2, 18.3, 18.4, 18.5, NFR-09, NFR-10_
+### Tarefa 4.1: Implementar CashSessionController
+- [x] 4.1 Criar classe CashSessionController
+  - Implementar POST /api/v1/cash/sessions (abrir)
+  - Implementar GET /api/v1/cash/sessions/active
+  - Implementar GET /api/v1/cash/sessions/:id
+  - Implementar POST /api/v1/cash/sessions/:id/close
+  - Implementar POST /api/v1/cash/sessions/:id/reopen (supervisor)
+  - Implementar GET /api/v1/cash/sessions (listar com filtros)
+  - Adicionar validação de requisições com Zod
+  - Adicionar tratamento de erros
+  - _Requisitos: 1.1, 1.2, 1.3, 1.4, 1.5, 7.1, 7.2, 7.3, 7.4, 7.5, 13.1, 13.2, 13.3, 13.4, 13.5_
 
-### Task 5.2: Implement Validation Middleware
-- [ ] 5.2 Create Zod schemas for all endpoints
+### Tarefa 4.2: Implementar TransactionController
+- [x] 4.2 Criar classe TransactionController
+  - Implementar POST /api/v1/cash/sessions/:id/withdrawals
+  - Implementar POST /api/v1/cash/sessions/:id/supplies
+  - Implementar GET /api/v1/cash/sessions/:id/transactions
+  - Implementar GET /api/v1/cash/sessions/:id/balance
+  - Implementar POST /api/v1/cash/transactions/:id/cancel (supervisor)
+  - Adicionar validação para valores e motivos
+  - Adicionar verificações de autorização
+  - _Requisitos: 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3, 4.4, 4.5, 5.1, 5.2, 5.3, 5.4, 5.5_
+
+### Tarefa 4.3: Implementar ClosingController
+- [x] 4.3 Criar classe ClosingController
+  - Implementar GET /api/v1/cash/sessions/:id/closing-preview
+  - Implementar POST /api/v1/cash/sessions/:id/cash-count
+  - Adicionar validação para denominações de contagem
+  - Calcular totais automaticamente
+  - _Requisitos: 6.1, 6.2, 6.3, 6.4, 6.5, 8.1, 8.2, 8.3, 8.4, 8.5_
+  - _Nota: Funcionalidade integrada no CashSessionController_
+
+### Tarefa 4.4: Implementar TreasuryController
+- [x] 4.4 Criar classe TreasuryController
+  - Implementar POST /api/v1/cash/sessions/:id/transfer
+  - Implementar GET /api/v1/treasury/transfers/pending
+  - Implementar POST /api/v1/treasury/transfers/:id/confirm
+  - Implementar GET /api/v1/treasury/consolidation/daily
+  - Adicionar validação de papel de tesoureiro
+  - _Requisitos: 9.1, 9.2, 9.3, 9.4, 9.5, 10.1, 10.2, 10.3, 10.4, 10.5_
+
+### Tarefa 4.5: Implementar ReportController
+- [ ] 4.5 Criar classe ReportController
+  - Implementar GET /api/v1/cash/reports/session/:id
+  - Implementar GET /api/v1/cash/reports/daily
+  - Implementar GET /api/v1/cash/reports/cash-breaks
+  - Implementar GET /api/v1/cash/reports/operator-performance
+  - Suportar múltiplos formatos (JSON, PDF, EXCEL)
+  - _Requisitos: 11.1, 11.2, 11.3, 11.4, 11.5_
+
+### Tarefa 4.6: Implementar AuditController
+- [ ] 4.6 Criar classe AuditController
+  - Implementar GET /api/v1/cash/audit/session/:id
+  - Implementar GET /api/v1/cash/audit/search
+  - Adicionar filtros para busca de auditoria
+  - Restringir acesso apenas a usuários autorizados
+  - _Requisitos: 12.1, 12.2, 12.3, 12.4, 12.5_
+
+---
+
+## Fase 5: Segurança e Middleware (4 tarefas) ✅
+
+### Tarefa 5.1: Implementar Middleware de Autenticação
+- [x] 5.1 Criar middleware de autenticação específico para caixa
+  - Implementar middleware requireCashOperator
+  - Implementar middleware requireSupervisor
+  - Implementar middleware requireTreasurer
+  - Validar tokens JWT
+  - Verificar papéis e permissões de usuário
+  - _Requisitos: 18.1, 18.2, 18.3, 18.4, 18.5, NFR-09, NFR-10_
+
+### Tarefa 5.2: Implementar Middleware de Validação
+- [x] 5.2 Criar schemas Zod para todos os endpoints
   - OpenSessionSchema
   - CloseSessionSchema
   - WithdrawalSchema
@@ -245,254 +248,254 @@ Este plano detalha a implementação completa do Sistema de Gestão de Caixa, de
   - CashCountSchema
   - TransferSchema
   - ReceiptSchema
-  - Add custom validators for business rules
-  - _Requirements: BR-01, BR-02, BR-03, BR-04_
+  - Adicionar validadores customizados para regras de negócio
+  - _Requisitos: BR-01, BR-02, BR-03, BR-04_
 
-### Task 5.3: Implement Error Handling
-- [ ] 5.3 Create custom error classes
+### Tarefa 5.3: Implementar Tratamento de Erros
+- [x] 5.3 Criar classes de erro customizadas
   - SessionAlreadyOpenError
   - SessionNotFoundError
   - InvalidSessionStatusError
   - InsufficientCashError
   - AuthorizationRequiredError
   - JustificationRequiredError
-  - Implement global error handler
-  - Add error logging
-  - _Requirements: NFR-12_
+  - Implementar handler global de erros
+  - Adicionar logging de erros
+  - _Requisitos: NFR-12_
 
-### Task 5.4: Implement Data Encryption
-- [ ] 5.4 Add encryption for sensitive data
-  - Implement encryption utilities
-  - Encrypt cash amounts in storage
-  - Encrypt audit log details
-  - Use AES-256-GCM encryption
-  - _Requirements: NFR-07_
-
----
-
-## Phase 6: Integration with Sales System (3 tasks)
-
-### Task 6.1: Implement Sales Integration
-- [ ] 6.1 Create SalesIntegrationService
-  - Auto-link sales to active cash session
-  - Validate operator has open session before sale
-  - Record transaction when sale is completed
-  - Handle multiple payment methods
-  - Calculate and record change given
-  - _Requirements: 15.1, 15.2, 15.3, 15.4, BR-08_
-
-### Task 6.2: Implement Sale Cancellation
-- [ ] 6.2 Add cancellation support
-  - Implement estorno (reversal) logic
-  - Require supervisor authorization
-  - Create negative transaction
-  - Update session balance
-  - Log cancellation in audit
-  - _Requirements: 15.5_
-
-### Task 6.3: Add Real-time Balance Updates
-- [ ] 6.3 Implement WebSocket for real-time updates
-  - Emit balance updates after each transaction
-  - Notify connected clients of session changes
-  - Update dashboard in real-time
-  - _Requirements: 2.4, NFR-02_
+### Tarefa 5.4: Implementar Criptografia de Dados
+- [ ] 5.4 Adicionar criptografia para dados sensíveis
+  - Implementar utilitários de criptografia
+  - Criptografar valores de caixa no armazenamento
+  - Criptografar detalhes de log de auditoria
+  - Usar criptografia AES-256-GCM
+  - _Requisitos: NFR-07_
 
 ---
 
-## Phase 7: Notifications and Alerts (3 tasks)
+## Fase 6: Integração com Sistema de Vendas (3 tarefas)
 
-### Task 7.1: Implement Notification Service
-- [ ] 7.1 Create NotificationService class
-  - Implement email notifications
-  - Implement in-app notifications
-  - Support multiple recipients
-  - Queue notifications for reliability
-  - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5_
+### Tarefa 6.1: Implementar Integração com Vendas
+- [ ] 6.1 Criar SalesIntegrationService
+  - Vincular vendas automaticamente à sessão de caixa ativa
+  - Validar que operador tem sessão aberta antes da venda
+  - Registrar transação quando venda é concluída
+  - Lidar com múltiplas formas de pagamento
+  - Calcular e registrar troco fornecido
+  - _Requisitos: 15.1, 15.2, 15.3, 15.4, BR-08_
 
-### Task 7.2: Implement Alert Rules
-- [ ] 7.2 Create AlertService class
-  - Alert on high cash balance (suggest sangria)
-  - Alert on long open sessions (> 12h)
-  - Alert on high cash breaks (> 5%)
-  - Alert on pending transfers (> 2h)
-  - Alert on unclosed sessions
-  - _Requirements: 16.1, 16.2, 16.3, 16.5, BR-05, BR-06_
+### Tarefa 6.2: Implementar Cancelamento de Venda
+- [ ] 6.2 Adicionar suporte a cancelamento
+  - Implementar lógica de estorno (reversal)
+  - Exigir autorização de supervisor
+  - Criar transação negativa
+  - Atualizar saldo da sessão
+  - Registrar cancelamento na auditoria
+  - _Requisitos: 15.5_
 
-### Task 7.3: Implement Scheduled Jobs
-- [ ] 7.3 Create cron jobs for alerts
-  - Check for long sessions every hour
-  - Check for pending transfers every 30 minutes
-  - Send daily summary to managers
-  - Clean up old audit logs (> 5 years)
-  - _Requirements: NFR-15, BR-05, BR-06_
-
----
-
-## Phase 8: Reports and Analytics (3 tasks)
-
-### Task 8.1: Implement Report Generation
-- [ ] 8.1 Create ReportService class
-  - Generate session report with all details
-  - Generate daily consolidation report
-  - Generate cash break analysis report
-  - Generate operator performance report
-  - Include charts and visualizations
-  - _Requirements: 11.1, 11.2, 11.3, 11.4_
-
-### Task 8.2: Implement PDF Export
-- [ ] 8.2 Add PDF generation
-  - Use library like PDFKit or Puppeteer
-  - Create professional report templates
-  - Include establishment logo and branding
-  - Add page numbers and timestamps
-  - Support A4 and Letter sizes
-  - _Requirements: 11.5, NFR-16_
-
-### Task 8.3: Implement Excel Export
-- [ ] 8.3 Add Excel generation
-  - Use library like ExcelJS
-  - Export transaction details
-  - Export daily consolidation
-  - Include formulas and formatting
-  - Support filtering and sorting
-  - _Requirements: 6.5, 11.5, NFR-17_
+### Tarefa 6.3: Adicionar Atualizações de Saldo em Tempo Real
+- [ ] 6.3 Implementar WebSocket para atualizações em tempo real
+  - Emitir atualizações de saldo após cada transação
+  - Notificar clientes conectados sobre mudanças de sessão
+  - Atualizar dashboard em tempo real
+  - _Requisitos: 2.4, NFR-02_
 
 ---
 
-## Phase 9: Configuration and Admin (2 tasks)
+## Fase 7: Notificações e Alertas (3 tarefas)
 
-### Task 9.1: Implement Configuration Service
-- [ ] 9.1 Create ConfigurationService class
-  - Store configuration in database
-  - Implement get/set methods
-  - Cache configuration values
-  - Support per-establishment configuration
-  - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5_
+### Tarefa 7.1: Implementar Serviço de Notificações
+- [ ] 7.1 Criar classe NotificationService
+  - Implementar notificações por email
+  - Implementar notificações in-app
+  - Suportar múltiplos destinatários
+  - Enfileirar notificações para confiabilidade
+  - _Requisitos: 16.1, 16.2, 16.3, 16.4, 16.5_
 
-### Task 9.2: Implement Admin Configuration UI
-- [ ] 9.2 Create configuration endpoints
+### Tarefa 7.2: Implementar Regras de Alerta
+- [ ] 7.2 Criar classe AlertService
+  - Alertar sobre saldo alto em dinheiro (sugerir sangria)
+  - Alertar sobre sessões abertas por muito tempo (> 12h)
+  - Alertar sobre quebras de caixa altas (> 5%)
+  - Alertar sobre transferências pendentes (> 2h)
+  - Alertar sobre sessões não fechadas
+  - _Requisitos: 16.1, 16.2, 16.3, 16.5, BR-05, BR-06_
+
+### Tarefa 7.3: Implementar Jobs Agendados
+- [ ] 7.3 Criar cron jobs para alertas
+  - Verificar sessões longas a cada hora
+  - Verificar transferências pendentes a cada 30 minutos
+  - Enviar resumo diário para gerentes
+  - Limpar logs de auditoria antigos (> 5 anos)
+  - _Requisitos: NFR-15, BR-05, BR-06_
+
+---
+
+## Fase 8: Relatórios e Análises (3 tarefas)
+
+### Tarefa 8.1: Implementar Geração de Relatórios
+- [ ] 8.1 Criar classe ReportService
+  - Gerar relatório de sessão com todos os detalhes
+  - Gerar relatório de consolidação diária
+  - Gerar relatório de análise de quebras de caixa
+  - Gerar relatório de desempenho de operador
+  - Incluir gráficos e visualizações
+  - _Requisitos: 11.1, 11.2, 11.3, 11.4_
+
+### Tarefa 8.2: Implementar Exportação para PDF
+- [ ] 8.2 Adicionar geração de PDF
+  - Usar biblioteca como PDFKit ou Puppeteer
+  - Criar templates profissionais de relatório
+  - Incluir logo e marca do estabelecimento
+  - Adicionar números de página e timestamps
+  - Suportar tamanhos A4 e Carta
+  - _Requisitos: 11.5, NFR-16_
+
+### Tarefa 8.3: Implementar Exportação para Excel
+- [ ] 8.3 Adicionar geração de Excel
+  - Usar biblioteca como ExcelJS
+  - Exportar detalhes de transações
+  - Exportar consolidação diária
+  - Incluir fórmulas e formatação
+  - Suportar filtragem e ordenação
+  - _Requisitos: 6.5, 11.5, NFR-17_
+
+---
+
+## Fase 9: Configuração e Administração (2 tarefas)
+
+### Tarefa 9.1: Implementar Serviço de Configuração
+- [ ] 9.1 Criar classe ConfigurationService
+  - Armazenar configuração no banco de dados
+  - Implementar métodos get/set
+  - Cachear valores de configuração
+  - Suportar configuração por estabelecimento
+  - _Requisitos: 17.1, 17.2, 17.3, 17.4, 17.5_
+
+### Tarefa 9.2: Implementar UI de Configuração Admin
+- [ ] 9.2 Criar endpoints de configuração
   - GET /api/v1/cash/config
   - PUT /api/v1/cash/config
-  - Validate configuration values
-  - Require admin permission
-  - Log configuration changes
-  - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5_
+  - Validar valores de configuração
+  - Exigir permissão de admin
+  - Registrar mudanças de configuração
+  - _Requisitos: 17.1, 17.2, 17.3, 17.4, 17.5_
 
 ---
 
-## Phase 10: Performance and Optimization (3 tasks)
+## Fase 10: Performance e Otimização (3 tarefas)
 
-### Task 10.1: Implement Caching
-- [ ] 10.1 Add Redis caching
-  - Cache active sessions by operator
-  - Cache session balances
-  - Cache configuration values
-  - Implement cache invalidation
-  - Set appropriate TTLs
-  - _Requirements: NFR-01, NFR-02, NFR-03_
+### Tarefa 10.1: Implementar Cache
+- [ ] 10.1 Adicionar cache Redis
+  - Cachear sessões ativas por operador
+  - Cachear saldos de sessão
+  - Cachear valores de configuração
+  - Implementar invalidação de cache
+  - Definir TTLs apropriados
+  - _Requisitos: NFR-01, NFR-02, NFR-03_
 
-### Task 10.2: Optimize Database Queries
-- [ ] 10.2 Add query optimizations
-  - Use raw SQL for complex aggregations
-  - Add database indexes
-  - Implement query result caching
-  - Use batch operations where possible
-  - Profile slow queries
-  - _Requirements: NFR-01, NFR-03_
+### Tarefa 10.2: Otimizar Queries de Banco de Dados
+- [ ] 10.2 Adicionar otimizações de query
+  - Usar SQL raw para agregações complexas
+  - Adicionar índices de banco de dados
+  - Implementar cache de resultados de query
+  - Usar operações em lote quando possível
+  - Perfilar queries lentas
+  - _Requisitos: NFR-01, NFR-03_
 
-### Task 10.3: Implement Monitoring
-- [ ] 10.3 Add monitoring and metrics
-  - Track average session duration
-  - Track cash break frequency
-  - Track transaction volume
-  - Track API response times
-  - Set up alerts for anomalies
-  - _Requirements: NFR-01, NFR-04_
-
----
-
-## Phase 11: Testing (4 tasks)
-
-### Task 11.1: Write Unit Tests for Services
-- [ ]* 11.1 Create unit tests
-  - Test CashSessionService methods
-  - Test TransactionService methods
-  - Test ClosingService methods
-  - Test TreasuryService methods
-  - Test validation logic
-  - Test error handling
-  - Achieve 80%+ code coverage
-  - _Requirements: All functional requirements_
-
-### Task 11.2: Write Integration Tests
-- [ ]* 11.2 Create integration tests
-  - Test complete session lifecycle
-  - Test withdrawal and supply flows
-  - Test closing and transfer flows
-  - Test error scenarios
-  - Test authorization checks
-  - _Requirements: All functional requirements_
-
-### Task 11.3: Write E2E Tests
-- [ ]* 11.3 Create end-to-end tests
-  - Test full user workflows
-  - Test multi-user scenarios
-  - Test concurrent operations
-  - Test edge cases
-  - _Requirements: All functional requirements_
-
-### Task 11.4: Performance Testing
-- [ ]* 11.4 Create performance tests
-  - Load test with 50 concurrent sessions
-  - Stress test transaction recording
-  - Test database query performance
-  - Test API response times
-  - _Requirements: NFR-01, NFR-02, NFR-03_
+### Tarefa 10.3: Implementar Monitoramento
+- [ ] 10.3 Adicionar monitoramento e métricas
+  - Rastrear duração média de sessão
+  - Rastrear frequência de quebras de caixa
+  - Rastrear volume de transações
+  - Rastrear tempos de resposta da API
+  - Configurar alertas para anomalias
+  - _Requisitos: NFR-01, NFR-04_
 
 ---
 
-## Phase 12: Documentation and Deployment (3 tasks)
+## Fase 11: Testes (4 tarefas)
 
-### Task 12.1: Write API Documentation
-- [ ] 12.1 Create comprehensive API docs
-  - Document all endpoints with Swagger
-  - Add request/response examples
-  - Document error codes
-  - Add authentication requirements
-  - Include usage examples
-  - _Requirements: All API endpoints_
+### Tarefa 11.1: Escrever Testes Unitários para Serviços
+- [ ]* 11.1 Criar testes unitários
+  - Testar métodos do CashSessionService
+  - Testar métodos do TransactionService
+  - Testar métodos do ClosingService
+  - Testar métodos do TreasuryService
+  - Testar lógica de validação
+  - Testar tratamento de erros
+  - Alcançar cobertura de código de 80%+
+  - _Requisitos: Todos os requisitos funcionais_
 
-### Task 12.2: Write User Documentation
-- [ ] 12.2 Create user guides
-  - Write operator manual
-  - Write supervisor manual
-  - Write treasurer manual
-  - Create video tutorials
-  - Add troubleshooting guide
-  - _Requirements: NFR-11, NFR-12, NFR-13_
+### Tarefa 11.2: Escrever Testes de Integração
+- [ ]* 11.2 Criar testes de integração
+  - Testar ciclo de vida completo da sessão
+  - Testar fluxos de sangria e suprimento
+  - Testar fluxos de fechamento e transferência
+  - Testar cenários de erro
+  - Testar verificações de autorização
+  - _Requisitos: Todos os requisitos funcionais_
 
-### Task 12.3: Prepare for Deployment
-- [ ] 12.3 Setup deployment configuration
-  - Configure environment variables
-  - Setup database migrations
-  - Configure backup strategy
-  - Setup monitoring and alerts
-  - Create deployment checklist
-  - _Requirements: NFR-04, NFR-05, NFR-06, NFR-15_
+### Tarefa 11.3: Escrever Testes E2E
+- [ ]* 11.3 Criar testes end-to-end
+  - Testar fluxos completos de usuário
+  - Testar cenários multi-usuário
+  - Testar operações concorrentes
+  - Testar casos extremos
+  - _Requisitos: Todos os requisitos funcionais_
+
+### Tarefa 11.4: Testes de Performance
+- [ ]* 11.4 Criar testes de performance
+  - Teste de carga com 50 sessões concorrentes
+  - Teste de stress no registro de transações
+  - Testar performance de queries do banco de dados
+  - Testar tempos de resposta da API
+  - _Requisitos: NFR-01, NFR-02, NFR-03_
 
 ---
 
-## Summary
+## Fase 12: Documentação e Deploy (3 tarefas)
 
-**Total Tasks:** 47 main tasks + 4 optional testing tasks
-**Estimated Time:** 120-150 hours
-**Priority:** High (Critical for financial operations)
-**Dependencies:** Backend API Core (✅ Complete)
+### Tarefa 12.1: Escrever Documentação da API
+- [ ] 12.1 Criar documentação abrangente da API
+  - Documentar todos os endpoints com Swagger
+  - Adicionar exemplos de requisição/resposta
+  - Documentar códigos de erro
+  - Adicionar requisitos de autenticação
+  - Incluir exemplos de uso
+  - _Requisitos: Todos os endpoints da API_
 
-**Key Deliverables:**
-- Complete cash management system
-- Full audit trail and compliance
-- Real-time balance tracking
-- Comprehensive reporting
-- Secure and performant
-- Well-documented and tested
+### Tarefa 12.2: Escrever Documentação do Usuário
+- [ ] 12.2 Criar guias de usuário
+  - Escrever manual do operador
+  - Escrever manual do supervisor
+  - Escrever manual do tesoureiro
+  - Criar tutoriais em vídeo
+  - Adicionar guia de solução de problemas
+  - _Requisitos: NFR-11, NFR-12, NFR-13_
+
+### Tarefa 12.3: Preparar para Deploy
+- [ ] 12.3 Configurar deploy
+  - Configurar variáveis de ambiente
+  - Configurar migrações de banco de dados
+  - Configurar estratégia de backup
+  - Configurar monitoramento e alertas
+  - Criar checklist de deploy
+  - _Requisitos: NFR-04, NFR-05, NFR-06, NFR-15_
+
+---
+
+## Resumo
+
+**Total de Tarefas:** 47 tarefas principais + 4 tarefas opcionais de testes
+**Tempo Estimado:** 120-150 horas
+**Prioridade:** Alta (Crítico para operações financeiras)
+**Dependências:** Backend API Core (✅ Completo)
+
+**Principais Entregas:**
+- Sistema completo de gestão de caixa
+- Trilha de auditoria completa e conformidade
+- Rastreamento de saldo em tempo real
+- Relatórios abrangentes
+- Seguro e performático
+- Bem documentado e testado
