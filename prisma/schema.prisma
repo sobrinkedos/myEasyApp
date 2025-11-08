@@ -467,6 +467,8 @@ model Command {
   type           String    @default("table")
   waiterId       String
   numberOfPeople Int
+  customerName   String?
+  customerPhone  String?
   status         String    @default("open")
   subtotal       Decimal   @db.Decimal(10, 2) @default(0)
   serviceCharge  Decimal   @db.Decimal(10, 2) @default(0)

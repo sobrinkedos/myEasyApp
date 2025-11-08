@@ -21,6 +21,8 @@ import cmvRoutes from '@/routes/cmv.routes';
 import stockTransactionRoutes from '@/routes/stock-transaction.routes';
 import stockMovementRoutes from '@/routes/stock-movement.routes';
 import cashRoutes from '@/routes/cash.routes';
+import commandRoutes from '@/routes/command.routes';
+import orderRoutes from '@/routes/order.routes';
 import logger from '@/utils/logger';
 
 const app: Application = express();
@@ -154,6 +156,8 @@ app.use('/api/v1/cmv/periods', cmvRoutes);
 app.use('/api/v1/stock/transactions', stockTransactionRoutes);
 app.use('/api/v1/stock/movements', stockMovementRoutes);
 app.use('/api/v1/cash', cashRoutes);
+app.use('/api/v1/commands', commandRoutes);
+app.use('/api/v1/orders', orderRoutes);
 
 // 404 handler
 app.use((req, res) => {

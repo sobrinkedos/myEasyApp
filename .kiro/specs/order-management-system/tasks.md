@@ -14,7 +14,9 @@
 
 
 - [ ] 2. Implementar gestão de mesas
-- [ ] 2.1 Criar módulo de mesas
+- [x] 2.1 Criar módulo de mesas
+
+
   - Implementar TableRepository com métodos CRUD usando Prisma
   - Implementar TableService com validação de número único de mesa
   - Criar TableController com endpoints REST (GET, POST, PUT, DELETE)
@@ -29,8 +31,11 @@
   - Testar mudanças de status
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-- [ ] 3. Implementar gestão de comandas
-- [ ] 3.1 Criar módulo de comandas base
+- [x] 3. Implementar gestão de comandas
+
+- [x] 3.1 Criar módulo de comandas base
+
+
   - Implementar CommandRepository com métodos CRUD e queries específicas (findOpen, findByTable)
   - Implementar CommandService com lógica de abertura e geração de código único
   - Criar CommandController com endpoints REST para comandas
@@ -38,7 +43,9 @@
   - Adicionar lógica para validar que mesa não possui comanda aberta
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 3.2 Implementar fechamento de comanda
+- [x] 3.2 Implementar fechamento de comanda
+
+
   - Adicionar método closeCommand no CommandService
   - Validar que todos os pedidos foram entregues antes de fechar
   - Calcular subtotal somando todos os pedidos não cancelados
@@ -47,7 +54,9 @@
   - Atualizar status da comanda para "fechada" e registrar closedAt
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 3.3 Implementar consulta de comandas
+- [x] 3.3 Implementar consulta de comandas
+
+
   - Criar endpoint GET /commands com paginação e filtros (status, waiterId, tableId, período)
   - Implementar endpoint GET /commands/open para comandas abertas
   - Adicionar eager loading de relacionamentos (table, waiter, orders)
@@ -65,8 +74,13 @@
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 6.1, 6.2, 6.3, 6.4, 6.5_
 
 
-- [ ] 4. Implementar gestão de pedidos
-- [ ] 4.1 Criar módulo de pedidos base
+- [x] 4. Implementar gestão de pedidos
+
+
+
+- [x] 4.1 Criar módulo de pedidos base
+
+
   - Implementar OrderRepository com métodos CRUD e queries (findByCommand, findByStatus)
   - Implementar OrderService com lógica de criação de pedidos
   - Criar OrderController com endpoints REST para pedidos
@@ -75,7 +89,9 @@
   - Calcular subtotal do pedido baseado nos preços dos produtos
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 4.2 Implementar controle de status de pedidos
+- [x] 4.2 Implementar controle de status de pedidos
+
+
   - Adicionar método updateStatus no OrderService
   - Validar transições de status (pendente → em preparo → pronto → entregue)
   - Registrar timestamps para cada mudança de status (preparedAt, readyAt, deliveredAt)
@@ -83,7 +99,9 @@
   - Recalcular total da comanda ao mudar status de pedido
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 4.3 Implementar cancelamento de pedidos
+
+- [x] 4.3 Implementar cancelamento de pedidos
+
   - Adicionar método cancelOrder no OrderService
   - Validar que motivo foi informado (mínimo 15 caracteres)
   - Permitir cancelamento imediato de pedidos pendentes
@@ -92,7 +110,9 @@
   - Recalcular total da comanda após cancelamento
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 4.4 Implementar modificação de pedidos
+- [x] 4.4 Implementar modificação de pedidos
+
+
   - Adicionar método modifyOrder no OrderService
   - Permitir adicionar novos itens a pedido pendente
   - Permitir remover itens de pedido pendente
@@ -110,8 +130,12 @@
   - Escrever testes de integração para endpoints
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3, 4.4, 4.5, 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 5. Implementar integração com estoque
-- [ ] 5.1 Criar serviço de integração com estoque
+- [x] 5. Implementar integração com estoque
+
+
+- [x] 5.1 Criar serviço de integração com estoque
+
+
   - Implementar StockIntegrationService com método deductStockForOrder
   - Buscar receita de cada produto do pedido (insumos necessários)
   - Calcular quantidade total de cada insumo necessário
@@ -119,7 +143,9 @@
   - Retornar lista de itens insuficientes se houver
   - _Requirements: 11.1, 11.2, 11.4_
 
-- [ ] 5.2 Integrar baixa de estoque com pedidos
+- [x] 5.2 Integrar baixa de estoque com pedidos
+
+
   - Chamar StockIntegrationService ao mudar status para "em preparo"
   - Criar transações de estoque para cada insumo deduzido
   - Registrar referência ao pedido nas transações
@@ -166,8 +192,12 @@
   - Testar recebimento de notificações no cliente
   - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5_
 
-- [ ] 7. Implementar pedidos de balcão
-- [ ] 7.1 Adicionar suporte a comandas de balcão
+- [x] 7. Implementar pedidos de balcão
+
+
+- [x] 7.1 Adicionar suporte a comandas de balcão
+
+
   - Permitir criar comanda sem tableId (type: "counter")
   - Gerar número sequencial para identificação de pedidos de balcão
   - Permitir informar nome ou telefone do cliente

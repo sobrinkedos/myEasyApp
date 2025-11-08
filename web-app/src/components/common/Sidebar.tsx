@@ -27,6 +27,7 @@ const menuItems: MenuItem[] = [
     icon: 'shoppingBag',
     label: 'Vendas',
     children: [
+      { icon: 'clipboard', label: 'Comandas', path: '/commands' },
       { icon: 'clipboard', label: 'Pedidos', path: '/orders' },
       { icon: 'table', label: 'Mesas', path: '/tables' },
       { icon: 'cash', label: 'Caixa', path: '/cash' },

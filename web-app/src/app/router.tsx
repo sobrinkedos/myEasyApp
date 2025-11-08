@@ -59,6 +59,18 @@ import { CMVPeriodDetailPage } from '@/pages/cmv/CMVPeriodDetailPage';
 import { CMVPeriodClosePage } from '@/pages/cmv/CMVPeriodClosePage';
 import { CMVReportPage } from '@/pages/cmv/CMVReportPage';
 
+// Commands
+import CommandsListPage from '@/pages/commands/CommandsListPage';
+import CommandDetailPage from '@/pages/commands/CommandDetailPage';
+import NewCommandPage from '@/pages/commands/NewCommandPage';
+import NewOrderPage from '@/pages/commands/NewOrderPage';
+
+// Orders
+import OrdersListPage from '@/pages/orders/OrdersListPage';
+
+// Tables
+import TablesPage from '@/pages/tables/TablesPage';
+
 // Cash
 import { CashSessionPage } from '@/pages/cash/CashSessionPage';
 import { OpenCashPage } from '@/pages/cash/OpenCashPage';
@@ -315,13 +327,36 @@ const router = createBrowserRouter([
         ],
       },
       
+      // Commands
+      {
+        path: 'commands',
+        children: [
+          {
+            index: true,
+            element: <CommandsListPage />,
+          },
+          {
+            path: 'new',
+            element: <NewCommandPage />,
+          },
+          {
+            path: ':id',
+            element: <CommandDetailPage />,
+          },
+          {
+            path: ':id/new-order',
+            element: <NewOrderPage />,
+          },
+        ],
+      },
+      
       // Orders
       {
         path: 'orders',
         children: [
           {
             index: true,
-            element: <div>Orders List Page - Coming soon</div>,
+            element: <OrdersListPage />,
           },
           {
             path: ':id',
@@ -333,7 +368,7 @@ const router = createBrowserRouter([
       // Tables
       {
         path: 'tables',
-        element: <div>Tables Page - Coming soon</div>,
+        element: <TablesPage />,
       },
       
       // Cash
