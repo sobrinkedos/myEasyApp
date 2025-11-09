@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { commandService } from '../../services/command.service';
 import { tableService, Table } from '../../services/table.service';
 
 export default function NewCommandPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -17,12 +18,22 @@ export default function NewCommandPage() {
 
   useEffect(() => {
     loadTables();
-  }, []);
+    
+    // Pré-selecionar mesa se vier da URL
+    const tableIdFromUrl = searchParams.get('tableId');
+    if (tableIdFromUrl) {
+      setFormData(prev => ({ ...prev, tableId: tableIdFromUrl }));
+    }
+  }, [searchParams]);
 
   const loadTables = async () => {
     try {
       const response = await tableService.getAll();
-      const availableTables = response.data.filter((t: Table) => t.status === 'available');
+      // Incluir mesas disponíveis e a mesa específica se vier da URL
+      const tableIdFromUrl = searchParams.get('tableId');
+      const availableTables = response.data.filter(
+        (t: Table) => t.status === 'available' || t.id === tableIdFromUrl
+      );
       setTables(availableTables);
     } catch (error) {
       console.error('Erro ao carregar mesas:', error);

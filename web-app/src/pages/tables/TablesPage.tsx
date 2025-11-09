@@ -71,6 +71,14 @@ export default function TablesPage() {
     // TODO: Implementar visualização de histórico
   };
 
+  const handleOpenCommand = () => {
+    if (!selectedTable) return;
+    
+    // Fechar o modal e redirecionar para criação de comanda
+    setShowManagementModal(false);
+    navigate(`/commands/new?tableId=${selectedTable.id}`);
+  };
+
   const handleCloseService = () => {
     if (!selectedTable) return;
     
@@ -136,6 +144,7 @@ export default function TablesPage() {
           onStatusChange={handleStatusChange}
           onViewHistory={handleViewHistory}
           onCloseService={handleCloseService}
+          onOpenCommand={handleOpenCommand}
         />
       )}
     </div>

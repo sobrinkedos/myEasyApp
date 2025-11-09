@@ -23,6 +23,7 @@ interface TableManagementModalProps {
   onStatusChange: (status: TableStatus) => Promise<void>;
   onViewHistory: () => void;
   onCloseService: () => void;
+  onOpenCommand: () => void;
 }
 
 const STATUS_CONFIG: Record<
@@ -67,12 +68,19 @@ export function TableManagementModal({
   onStatusChange,
   onViewHistory,
   onCloseService,
+  onOpenCommand,
 }: TableManagementModalProps) {
   const [loading, setLoading] = useState(false);
   const currentConfig = STATUS_CONFIG[table.status];
 
   const handleStatusChange = async (newStatus: TableStatus) => {
     if (newStatus === table.status) return;
+    
+    // Se está mudando para "occupied" e não tem comanda, abrir fluxo de criação
+    if (newStatus === 'occupied' && !table.commandId) {
+      onOpenCommand();
+      return;
+    }
     
     try {
       setLoading(true);
