@@ -67,6 +67,8 @@ import NewOrderPage from '@/pages/commands/NewOrderPage';
 
 // Orders
 import OrdersListPage from '@/pages/orders/OrdersListPage';
+import CreateCounterOrderPage from '@/pages/orders/CreateCounterOrderPage';
+import PendingPaymentOrdersPage from '@/pages/orders/PendingPaymentOrdersPage';
 
 // Tables
 import TablesPage from '@/pages/tables/TablesPage';
@@ -80,6 +82,8 @@ import { CloseCashPage } from '@/pages/cash/CloseCashPage';
 import { CashTransactionsPage } from '@/pages/cash/CashTransactionsPage';
 import PendingCommandsPage from '@/pages/cash/PendingCommandsPage';
 import CommandPaymentPage from '@/pages/cash/CommandPaymentPage';
+import CounterOrderPaymentPage from '@/pages/cash/CounterOrderPaymentPage';
+import CounterOrderPaymentDetailPage from '@/pages/cash/CounterOrderPaymentDetailPage';
 
 // Error pages
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -363,6 +367,14 @@ const router = createBrowserRouter([
             element: <OrdersListPage />,
           },
           {
+            path: 'counter/new',
+            element: <CreateCounterOrderPage />,
+          },
+          {
+            path: 'counter/pending-payment',
+            element: <PendingPaymentOrdersPage />,
+          },
+          {
             path: ':id',
             element: <div>Order Detail Page - Coming soon</div>,
           },
@@ -390,6 +402,14 @@ const router = createBrowserRouter([
           {
             path: 'pending-commands',
             element: <PendingCommandsPage />,
+          },
+          {
+            path: 'pending-counter-orders',
+            element: <CounterOrderPaymentPage />,
+          },
+          {
+            path: 'counter-orders/:id/payment',
+            element: <CounterOrderPaymentDetailPage />,
           },
           {
             path: 'commands/:id/payment',

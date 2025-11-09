@@ -222,7 +222,7 @@ export function CashSessionPage() {
       )}
 
       {/* Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <button
           onClick={() => navigate(`/cash/sessions/${activeSession.id}/withdrawal`)}
           className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow text-left"
@@ -270,6 +270,23 @@ export function CashSessionPage() {
             <div>
               <h3 className="font-semibold text-gray-900">Comandas Pendentes</h3>
               <p className="text-sm text-gray-600">Receber pagamentos de comandas</p>
+            </div>
+          </div>
+        </button>
+
+        <button
+          onClick={() => navigate('/cash/pending-counter-orders')}
+          className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow text-left border-2 border-blue-200"
+        >
+          <div className="flex items-center">
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Pedidos Balcão</h3>
+              <p className="text-sm text-gray-600">Receber pagamentos de pedidos</p>
             </div>
           </div>
         </button>

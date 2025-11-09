@@ -20,7 +20,13 @@
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\""
   },
-  "keywords": ["restaurant", "api", "nodejs", "typescript", "prisma"],
+  "keywords": [
+    "restaurant",
+    "api",
+    "nodejs",
+    "typescript",
+    "prisma"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
@@ -38,6 +44,7 @@
     "socket.io": "^4.6.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
+    "uuid": "^13.0.0",
     "validator": "^13.11.0",
     "winston": "^3.11.0",
     "zod": "^3.22.4"

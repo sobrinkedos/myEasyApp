@@ -12,10 +12,15 @@ export const CreateCounterOrderItemSchema = z.object({
     message: 'ID do produto deve ser um UUID válido',
   }),
   quantity: z
-    .number()
-    .int({ message: 'Quantidade deve ser um número inteiro' })
-    .min(1, { message: 'Quantidade mínima é 1' })
-    .max(99, { message: 'Quantidade máxima é 99' }),
+    .union([z.number(), z.string()])
+    .transform((val) => (typeof val === 'string' ? parseInt(val, 10) : val))
+    .pipe(
+      z
+        .number()
+        .int({ message: 'Quantidade deve ser um número inteiro' })
+        .min(1, { message: 'Quantidade mínima é 1' })
+        .max(99, { message: 'Quantidade máxima é 99' })
+    ),
   notes: z
     .string()
     .max(200, { message: 'Observações devem ter no máximo 200 caracteres' })

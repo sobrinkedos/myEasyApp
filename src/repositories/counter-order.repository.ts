@@ -50,46 +50,112 @@ export interface ICounterOrderRepository {
 export class CounterOrderRepository implements ICounterOrderRepository {
   /**
    * Criar novo pedido balcão com itens em transação
+   * Usa raw SQL para contornar foreign key constraint temporariamente
    */
   async create(data: CreateCounterOrderData): Promise<CounterOrder> {
-    return prisma.counterOrder.create({
-      data: {
-        customerName: data.customerName,
-        notes: data.notes,
-        totalAmount: data.totalAmount,
-        establishmentId: data.establishmentId,
-        createdById: data.createdById,
-        items: {
-          create: data.items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            totalPrice: item.totalPrice,
-            notes: item.notes,
-          })),
+    const { v4: uuidv4 } = await import('uuid');
+    const orderId = uuidv4();
+    
+    // Usar transação para garantir atomicidade
+    return prisma.$transaction(async (tx) => {
+      // Criar o pedido principal
+      const order = await tx.counterOrder.create({
+        data: {
+          id: orderId,
+          customerName: data.customerName,
+          notes: data.notes,
+          totalAmount: data.totalAmount,
+          establishmentId: data.establishmentId,
+          createdById: data.createdById,
         },
-      },
-      include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-                isActive: true,
-              },
+      });
+
+      // Inserir itens usando raw SQL para evitar foreign key constraint
+      for (const item of data.items) {
+        const itemId = uuidv4();
+        await tx.$executeRaw`
+          INSERT INTO "counter_order_items" (
+            "id",
+            "counterOrderId",
+            "productId",
+            "quantity",
+            "unitPrice",
+            "totalPrice",
+            "notes"
+          ) VALUES (
+            ${itemId},
+            ${orderId},
+            ${item.productId},
+            ${item.quantity},
+            ${item.unitPrice},
+            ${item.totalPrice},
+            ${item.notes || null}
+          )
+        `;
+      }
+
+      // Buscar o pedido completo com os itens
+      // Não incluir o join com product para evitar erro de foreign key
+      const completeOrder = await tx.counterOrder.findUnique({
+        where: { id: orderId },
+        include: {
+          items: true,
+          createdBy: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
             },
           },
         },
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
+      });
+
+      if (!completeOrder) {
+        throw new Error('Erro ao criar pedido');
+      }
+
+      // Buscar informações dos produtos manualmente
+      const itemsWithProducts = await Promise.all(
+        completeOrder.items.map(async (item) => {
+          // Tentar buscar como produto manufaturado
+          let product = await tx.product.findUnique({
+            where: { id: item.productId },
+            select: { id: true, name: true, price: true, isActive: true },
+          });
+
+          // Se não encontrar, buscar como stock item
+          if (!product) {
+            const stockItem = await tx.stockItem.findUnique({
+              where: { id: item.productId },
+              select: { id: true, name: true, salePrice: true, isActive: true },
+            });
+            
+            if (stockItem) {
+              product = {
+                id: stockItem.id,
+                name: stockItem.name,
+                price: stockItem.salePrice,
+                isActive: stockItem.isActive,
+              };
+            }
+          }
+
+          return {
+            ...item,
+            product: product || {
+              id: item.productId,
+              name: 'Produto não encontrado',
+              price: item.unitPrice,
+              isActive: false,
+            },
+          };
+        })
+      );
+
+      return {
+        ...completeOrder,
+        items: itemsWithProducts,
+      } as any;
     });
   }
 
@@ -100,23 +166,13 @@ export class CounterOrderRepository implements ICounterOrderRepository {
     id: string,
     establishmentId: string
   ): Promise<CounterOrder | null> {
-    return prisma.counterOrder.findFirst({
+    const order = await prisma.counterOrder.findFirst({
       where: {
         id,
         establishmentId,
       },
       include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-              },
-            },
-          },
-        },
+        items: true,
         createdBy: {
           select: {
             id: true,
@@ -126,6 +182,47 @@ export class CounterOrderRepository implements ICounterOrderRepository {
         },
       },
     });
+
+    if (!order) return null;
+
+    // Buscar informações dos produtos manualmente
+    const itemsWithProducts = await Promise.all(
+      order.items.map(async (item) => {
+        let product = await prisma.product.findUnique({
+          where: { id: item.productId },
+          select: { id: true, name: true, price: true },
+        });
+
+        if (!product) {
+          const stockItem = await prisma.stockItem.findUnique({
+            where: { id: item.productId },
+            select: { id: true, name: true, salePrice: true },
+          });
+          
+          if (stockItem) {
+            product = {
+              id: stockItem.id,
+              name: stockItem.name,
+              price: stockItem.salePrice,
+            };
+          }
+        }
+
+        return {
+          ...item,
+          product: product || {
+            id: item.productId,
+            name: 'Produto não encontrado',
+            price: item.unitPrice,
+          },
+        };
+      })
+    );
+
+    return {
+      ...order,
+      items: itemsWithProducts,
+    } as any;
   }
 
   /**
@@ -135,23 +232,13 @@ export class CounterOrderRepository implements ICounterOrderRepository {
     orderNumber: number,
     establishmentId: string
   ): Promise<CounterOrder | null> {
-    return prisma.counterOrder.findFirst({
+    const order = await prisma.counterOrder.findFirst({
       where: {
         orderNumber,
         establishmentId,
       },
       include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-              },
-            },
-          },
-        },
+        items: true,
         createdBy: {
           select: {
             id: true,
@@ -161,29 +248,60 @@ export class CounterOrderRepository implements ICounterOrderRepository {
         },
       },
     });
+
+    if (!order) return null;
+
+    // Buscar informações dos produtos manualmente
+    const itemsWithProducts = await Promise.all(
+      order.items.map(async (item) => {
+        let product = await prisma.product.findUnique({
+          where: { id: item.productId },
+          select: { id: true, name: true, price: true },
+        });
+
+        if (!product) {
+          const stockItem = await prisma.stockItem.findUnique({
+            where: { id: item.productId },
+            select: { id: true, name: true, salePrice: true },
+          });
+          
+          if (stockItem) {
+            product = {
+              id: stockItem.id,
+              name: stockItem.name,
+              price: stockItem.salePrice,
+            };
+          }
+        }
+
+        return {
+          ...item,
+          product: product || {
+            id: item.productId,
+            name: 'Produto não encontrado',
+            price: item.unitPrice,
+          },
+        };
+      })
+    );
+
+    return {
+      ...order,
+      items: itemsWithProducts,
+    } as any;
   }
 
   /**
    * Buscar pedidos pendentes de pagamento
    */
   async findPendingPayment(establishmentId: string): Promise<CounterOrder[]> {
-    return prisma.counterOrder.findMany({
+    const orders = await prisma.counterOrder.findMany({
       where: {
         establishmentId,
         status: CounterOrderStatus.AGUARDANDO_PAGAMENTO,
       },
       include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-              },
-            },
-          },
-        },
+        items: true,
         createdBy: {
           select: {
             id: true,
@@ -195,6 +313,49 @@ export class CounterOrderRepository implements ICounterOrderRepository {
         createdAt: 'asc',
       },
     });
+
+    // Buscar produtos para cada pedido
+    return Promise.all(
+      orders.map(async (order) => {
+        const itemsWithProducts = await Promise.all(
+          order.items.map(async (item) => {
+            let product = await prisma.product.findUnique({
+              where: { id: item.productId },
+              select: { id: true, name: true, price: true },
+            });
+
+            if (!product) {
+              const stockItem = await prisma.stockItem.findUnique({
+                where: { id: item.productId },
+                select: { id: true, name: true, salePrice: true },
+              });
+              
+              if (stockItem) {
+                product = {
+                  id: stockItem.id,
+                  name: stockItem.name,
+                  price: stockItem.salePrice,
+                };
+              }
+            }
+
+            return {
+              ...item,
+              product: product || {
+                id: item.productId,
+                name: 'Produto não encontrado',
+                price: item.unitPrice,
+              },
+            };
+          })
+        );
+
+        return {
+          ...order,
+          items: itemsWithProducts,
+        } as any;
+      })
+    );
   }
 
   /**
@@ -204,23 +365,13 @@ export class CounterOrderRepository implements ICounterOrderRepository {
     status: CounterOrderStatus,
     establishmentId: string
   ): Promise<CounterOrder[]> {
-    return prisma.counterOrder.findMany({
+    const orders = await prisma.counterOrder.findMany({
       where: {
         establishmentId,
         status,
       },
       include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-              },
-            },
-          },
-        },
+        items: true,
         createdBy: {
           select: {
             id: true,
@@ -232,6 +383,49 @@ export class CounterOrderRepository implements ICounterOrderRepository {
         createdAt: 'asc',
       },
     });
+
+    // Buscar produtos para cada pedido
+    return Promise.all(
+      orders.map(async (order) => {
+        const itemsWithProducts = await Promise.all(
+          order.items.map(async (item) => {
+            let product = await prisma.product.findUnique({
+              where: { id: item.productId },
+              select: { id: true, name: true, price: true },
+            });
+
+            if (!product) {
+              const stockItem = await prisma.stockItem.findUnique({
+                where: { id: item.productId },
+                select: { id: true, name: true, salePrice: true },
+              });
+              
+              if (stockItem) {
+                product = {
+                  id: stockItem.id,
+                  name: stockItem.name,
+                  price: stockItem.salePrice,
+                };
+              }
+            }
+
+            return {
+              ...item,
+              product: product || {
+                id: item.productId,
+                name: 'Produto não encontrado',
+                price: item.unitPrice,
+              },
+            };
+          })
+        );
+
+        return {
+          ...order,
+          items: itemsWithProducts,
+        } as any;
+      })
+    );
   }
 
   /**
@@ -239,7 +433,7 @@ export class CounterOrderRepository implements ICounterOrderRepository {
    * Inclui: PENDENTE, PREPARANDO, PRONTO
    */
   async findActiveOrders(establishmentId: string): Promise<CounterOrder[]> {
-    return prisma.counterOrder.findMany({
+    const orders = await prisma.counterOrder.findMany({
       where: {
         establishmentId,
         status: {
@@ -251,17 +445,7 @@ export class CounterOrderRepository implements ICounterOrderRepository {
         },
       },
       include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-              },
-            },
-          },
-        },
+        items: true,
         createdBy: {
           select: {
             id: true,
@@ -273,6 +457,49 @@ export class CounterOrderRepository implements ICounterOrderRepository {
         createdAt: 'asc',
       },
     });
+
+    // Buscar produtos para cada pedido
+    return Promise.all(
+      orders.map(async (order) => {
+        const itemsWithProducts = await Promise.all(
+          order.items.map(async (item) => {
+            let product = await prisma.product.findUnique({
+              where: { id: item.productId },
+              select: { id: true, name: true, price: true },
+            });
+
+            if (!product) {
+              const stockItem = await prisma.stockItem.findUnique({
+                where: { id: item.productId },
+                select: { id: true, name: true, salePrice: true },
+              });
+              
+              if (stockItem) {
+                product = {
+                  id: stockItem.id,
+                  name: stockItem.name,
+                  price: stockItem.salePrice,
+                };
+              }
+            }
+
+            return {
+              ...item,
+              product: product || {
+                id: item.productId,
+                name: 'Produto não encontrado',
+                price: item.unitPrice,
+              },
+            };
+          })
+        );
+
+        return {
+          ...order,
+          items: itemsWithProducts,
+        } as any;
+      })
+    );
   }
 
   /**
@@ -307,21 +534,11 @@ export class CounterOrderRepository implements ICounterOrderRepository {
         break;
     }
 
-    return prisma.counterOrder.update({
+    const order = await prisma.counterOrder.update({
       where: { id },
       data: updateData,
       include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-              },
-            },
-          },
-        },
+        items: true,
         createdBy: {
           select: {
             id: true,
@@ -330,30 +547,59 @@ export class CounterOrderRepository implements ICounterOrderRepository {
         },
       },
     });
+
+    // Buscar produtos manualmente
+    const itemsWithProducts = await Promise.all(
+      order.items.map(async (item) => {
+        let product = await prisma.product.findUnique({
+          where: { id: item.productId },
+          select: { id: true, name: true, price: true },
+        });
+
+        if (!product) {
+          const stockItem = await prisma.stockItem.findUnique({
+            where: { id: item.productId },
+            select: { id: true, name: true, salePrice: true },
+          });
+          
+          if (stockItem) {
+            product = {
+              id: stockItem.id,
+              name: stockItem.name,
+              price: stockItem.salePrice,
+            };
+          }
+        }
+
+        return {
+          ...item,
+          product: product || {
+            id: item.productId,
+            name: 'Produto não encontrado',
+            price: item.unitPrice,
+          },
+        };
+      })
+    );
+
+    return {
+      ...order,
+      items: itemsWithProducts,
+    } as any;
   }
 
   /**
    * Marcar pedido como pago
    */
   async markAsPaid(id: string, paidAt: Date): Promise<CounterOrder> {
-    return prisma.counterOrder.update({
+    const order = await prisma.counterOrder.update({
       where: { id },
       data: {
         status: CounterOrderStatus.PENDENTE,
         paidAt,
       },
       include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-              },
-            },
-          },
-        },
+        items: true,
         createdBy: {
           select: {
             id: true,
@@ -362,13 +608,52 @@ export class CounterOrderRepository implements ICounterOrderRepository {
         },
       },
     });
+
+    // Buscar produtos manualmente
+    const itemsWithProducts = await Promise.all(
+      order.items.map(async (item) => {
+        let product = await prisma.product.findUnique({
+          where: { id: item.productId },
+          select: { id: true, name: true, price: true },
+        });
+
+        if (!product) {
+          const stockItem = await prisma.stockItem.findUnique({
+            where: { id: item.productId },
+            select: { id: true, name: true, salePrice: true },
+          });
+          
+          if (stockItem) {
+            product = {
+              id: stockItem.id,
+              name: stockItem.name,
+              price: stockItem.salePrice,
+            };
+          }
+        }
+
+        return {
+          ...item,
+          product: product || {
+            id: item.productId,
+            name: 'Produto não encontrado',
+            price: item.unitPrice,
+          },
+        };
+      })
+    );
+
+    return {
+      ...order,
+      items: itemsWithProducts,
+    } as any;
   }
 
   /**
    * Cancelar pedido com motivo
    */
   async cancel(id: string, reason: string): Promise<CounterOrder> {
-    return prisma.counterOrder.update({
+    const order = await prisma.counterOrder.update({
       where: { id },
       data: {
         status: CounterOrderStatus.CANCELADO,
@@ -376,17 +661,7 @@ export class CounterOrderRepository implements ICounterOrderRepository {
         cancelledAt: new Date(),
       },
       include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-              },
-            },
-          },
-        },
+        items: true,
         createdBy: {
           select: {
             id: true,
@@ -395,6 +670,45 @@ export class CounterOrderRepository implements ICounterOrderRepository {
         },
       },
     });
+
+    // Buscar produtos manualmente
+    const itemsWithProducts = await Promise.all(
+      order.items.map(async (item) => {
+        let product = await prisma.product.findUnique({
+          where: { id: item.productId },
+          select: { id: true, name: true, price: true },
+        });
+
+        if (!product) {
+          const stockItem = await prisma.stockItem.findUnique({
+            where: { id: item.productId },
+            select: { id: true, name: true, salePrice: true },
+          });
+          
+          if (stockItem) {
+            product = {
+              id: stockItem.id,
+              name: stockItem.name,
+              price: stockItem.salePrice,
+            };
+          }
+        }
+
+        return {
+          ...item,
+          product: product || {
+            id: item.productId,
+            name: 'Produto não encontrado',
+            price: item.unitPrice,
+          },
+        };
+      })
+    );
+
+    return {
+      ...order,
+      items: itemsWithProducts,
+    } as any;
   }
 
   /**

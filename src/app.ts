@@ -23,6 +23,7 @@ import stockMovementRoutes from '@/routes/stock-movement.routes';
 import cashRoutes from '@/routes/cash.routes';
 import commandRoutes from '@/routes/command.routes';
 import orderRoutes from '@/routes/order.routes';
+import counterOrderRoutes from '@/routes/counter-order.routes';
 import logger from '@/utils/logger';
 
 const app: Application = express();
@@ -158,6 +159,7 @@ app.use('/api/v1/stock/movements', stockMovementRoutes);
 app.use('/api/v1/cash', cashRoutes);
 app.use('/api/v1/commands', commandRoutes);
 app.use('/api/v1/orders', orderRoutes);
+app.use('/api/v1/counter-orders', counterOrderRoutes);
 
 // 404 handler
 app.use((req, res) => {

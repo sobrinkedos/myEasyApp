@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { commandService, Command } from '../../services/command.service';
-import { orderService } from '../../services/order.service';
+import { useNavigate } from 'react-router-dom';
+import {
+  counterOrderService,
+  CreateCounterOrderDTO,
+} from '../../services/counter-order.service';
 import api from '../../services/api';
 
 interface Product {
@@ -15,36 +17,32 @@ interface OrderItem {
   productId: string;
   product?: Product;
   quantity: number;
-  observations: string;
+  notes: string;
 }
 
-export default function NewOrderPage() {
-  const { id } = useParams<{ id: string }>();
+export default function CreateCounterOrderPage() {
   const navigate = useNavigate();
-  const [command, setCommand] = useState<Command | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [items, setItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [customerName, setCustomerName] = useState('');
+  const [orderNotes, setOrderNotes] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    if (id) {
-      loadData();
-    }
-  }, [id]);
+    loadProducts();
+  }, []);
 
-  const loadData = async () => {
+  const loadProducts = async () => {
     try {
-      const [commandRes, productsRes, stockItemsRes] = await Promise.all([
-        commandService.getById(id!),
+      const [productsRes, stockItemsRes] = await Promise.all([
         api.get('/products', { params: { limit: 1000, isActive: true } }),
         api.get('/stock/items', { params: { limit: 1000 } }),
       ]);
 
-      setCommand(commandRes.data);
-
+      // Combinar produtos manufaturados e produtos de revenda
       const manufacturedProducts = (productsRes.data.data || []).map(
         (p: any) => ({
           id: p.id,
@@ -64,6 +62,15 @@ export default function NewOrderPage() {
         }));
 
       const allProducts = [...manufacturedProducts, ...resaleProducts];
+      console.log(
+        'Produtos carregados:',
+        allProducts.length,
+        '(',
+        manufacturedProducts.length,
+        'manufaturados +',
+        resaleProducts.length,
+        'revenda)'
+      );
       setProducts(allProducts);
 
       const uniqueCategories = [
@@ -73,7 +80,8 @@ export default function NewOrderPage() {
       ];
       setCategories(uniqueCategories);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.error('Erro ao carregar produtos:', error);
+      alert('Erro ao carregar produtos');
     }
   };
 
@@ -95,7 +103,7 @@ export default function NewOrderPage() {
           productId: product.id,
           product,
           quantity: 1,
-          observations: '',
+          notes: '',
         },
       ]);
     }
@@ -104,7 +112,7 @@ export default function NewOrderPage() {
   const updateQuantity = (productId: string, quantity: number) => {
     if (quantity <= 0) {
       setItems(items.filter((item) => item.productId !== productId));
-    } else {
+    } else if (quantity <= 99) {
       setItems(
         items.map((item) =>
           item.productId === productId ? { ...item, quantity } : item
@@ -113,10 +121,10 @@ export default function NewOrderPage() {
     }
   };
 
-  const updateObservations = (productId: string, observations: string) => {
+  const updateNotes = (productId: string, notes: string) => {
     setItems(
       items.map((item) =>
-        item.productId === productId ? { ...item, observations } : item
+        item.productId === productId ? { ...item, notes } : item
       )
     );
   };
@@ -129,17 +137,64 @@ export default function NewOrderPage() {
 
     try {
       setLoading(true);
-      await orderService.create({
-        commandId: id!,
+
+      // Validar que todos os itens têm productId válido
+      const invalidItems = items.filter(item => !item.productId || item.productId.trim() === '');
+      if (invalidItems.length > 0) {
+        alert('Erro: Alguns itens não têm ID de produto válido');
+        console.error('Itens inválidos:', invalidItems);
+        return;
+      }
+
+      const data: CreateCounterOrderDTO = {
+        customerName: customerName.trim() || undefined,
+        notes: orderNotes.trim() || undefined,
         items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
-          observations: item.observations || undefined,
+          notes: item.notes?.trim() || undefined,
         })),
-      });
-      navigate(`/commands/${id}`);
+      };
+
+      console.log('Enviando pedido:', JSON.stringify(data, null, 2));
+      console.log('Itens detalhados:', items.map(i => ({
+        id: i.productId,
+        name: i.product?.name,
+        qty: i.quantity
+      })));
+
+      const response = await counterOrderService.create(data);
+
+      console.log('Resposta:', response);
+      alert(`Pedido #${response.data.orderNumber} criado com sucesso! Aguardando pagamento.`);
+      navigate('/orders/counter/pending-payment');
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Erro ao criar pedido');
+      console.error('Erro ao criar pedido:', error);
+      console.error('Detalhes do erro:', JSON.stringify(error.response?.data, null, 2));
+      console.error('Status:', error.response?.status);
+      console.error('Headers:', error.response?.headers);
+      
+      // Mensagem específica para erro de migration
+      if (error.response?.status === 400 && error.response?.data?.message?.includes('não identificado')) {
+        alert('Erro: Usuário ou estabelecimento não identificado. Faça login novamente.');
+        return;
+      }
+      
+      // Mensagem para erros de validação
+      if (error.response?.data?.errors) {
+        const errorList = error.response.data.errors
+          .map((e: any) => `${e.field}: ${e.message}`)
+          .join('\n');
+        alert(`Erros de validação:\n${errorList}`);
+        return;
+      }
+      
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.error
+        || error.message
+        || 'Erro ao criar pedido';
+      
+      alert(`Erro: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -147,7 +202,9 @@ export default function NewOrderPage() {
 
   const filteredProducts = products
     .filter((p) => !selectedCategory || p.category?.name === selectedCategory)
-    .filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    .filter((p) =>
+      p.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   const total = items.reduce(
     (sum, item) => sum + Number(item.product?.price || 0) * item.quantity,
@@ -158,25 +215,22 @@ export default function NewOrderPage() {
     <div className="p-6">
       <div className="mb-6">
         <button
-          onClick={() => navigate(`/commands/${id}`)}
+          onClick={() => navigate('/orders')}
           className="text-blue-600 hover:text-blue-700 mb-4"
         >
           ← Voltar
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">Novo Pedido</h1>
-        {command && (
-          <p className="text-gray-600">
-            {command.code} -{' '}
-            {command.table ? `Mesa ${command.table.number}` : 'Balcão'}
-          </p>
-        )}
+        <h1 className="text-2xl font-bold text-gray-900">Novo Pedido Balcão</h1>
+        <p className="text-gray-600">Pedido sem vinculação a mesa</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Produtos */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-lg shadow p-4">
             <h2 className="text-lg font-semibold mb-4">Produtos</h2>
 
+            {/* Campo de Busca */}
             <div className="mb-4">
               <input
                 type="text"
@@ -187,6 +241,7 @@ export default function NewOrderPage() {
               />
             </div>
 
+            {/* Filtro de Categorias */}
             <div className="mb-4 flex gap-2 flex-wrap">
               <button
                 onClick={() => setSelectedCategory('')}
@@ -213,14 +268,13 @@ export default function NewOrderPage() {
               ))}
             </div>
 
+            {/* Lista de Produtos */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[600px] overflow-y-auto">
               {filteredProducts.length === 0 ? (
                 <div className="col-span-full text-center py-12 text-gray-500">
                   {products.length === 0
-                    ? 'Nenhum produto cadastrado.'
-                    : searchTerm
-                    ? 'Nenhum produto encontrado com esse nome.'
-                    : 'Nenhum produto nesta categoria.'}
+                    ? 'Nenhum produto cadastrado. Cadastre produtos primeiro.'
+                    : 'Nenhum produto encontrado nesta categoria.'}
                 </div>
               ) : (
                 filteredProducts.map((product) => (
@@ -240,9 +294,30 @@ export default function NewOrderPage() {
           </div>
         </div>
 
+        {/* Carrinho */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow p-4 sticky top-6">
             <h2 className="text-lg font-semibold mb-4">Itens do Pedido</h2>
+
+            {/* Informações do Cliente */}
+            <div className="mb-4 space-y-2">
+              <input
+                type="text"
+                placeholder="Nome do cliente (opcional)"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                maxLength={100}
+                className="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <input
+                type="text"
+                placeholder="Observações do pedido (opcional)"
+                value={orderNotes}
+                onChange={(e) => setOrderNotes(e.target.value)}
+                maxLength={500}
+                className="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
 
             {items.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
@@ -301,11 +376,12 @@ export default function NewOrderPage() {
 
                       <input
                         type="text"
-                        placeholder="Observações..."
-                        value={item.observations}
+                        placeholder="Observações do item..."
+                        value={item.notes}
                         onChange={(e) =>
-                          updateObservations(item.productId, e.target.value)
+                          updateNotes(item.productId, e.target.value)
                         }
+                        maxLength={200}
                         className="w-full px-2 py-1 text-sm border rounded"
                       />
                     </div>
@@ -324,9 +400,9 @@ export default function NewOrderPage() {
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+                  className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
                 >
-                  {loading ? 'Enviando...' : 'Enviar Pedido'}
+                  {loading ? 'Criando...' : 'Criar Pedido Balcão'}
                 </button>
               </>
             )}
