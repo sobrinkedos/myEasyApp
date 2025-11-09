@@ -205,12 +205,13 @@ export function TableManagementModal({
 
         {/* Ações */}
         <div className="space-y-2">
-          {table.status === 'occupied' && table.commandId && (
+          {table.status === 'occupied' && (
             <Button
               variant="outline"
               fullWidth
               icon={<ClipboardList className="w-4 h-4" />}
               onClick={onViewOrders}
+              disabled={!table.commandId}
             >
               Ver Pedidos da Mesa
             </Button>
