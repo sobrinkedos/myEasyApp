@@ -424,6 +424,7 @@ model Establishment {
   cashRegisters CashRegister[]
   stockItems    StockItem[]
   counterOrders CounterOrder[]
+  tables        Table[]
 
   @@index([cnpj])
   @@map("establishments")
@@ -450,17 +451,21 @@ model AuditLog {
 }
 
 model Table {
-  id        String   @id @default(uuid())
-  number    Int      @unique
-  capacity  Int
-  status    String   @default("available")
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String        @id @default(uuid())
+  number          Int
+  capacity        Int
+  status          String        @default("available")
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  establishmentId String
+  establishment   Establishment @relation(fields: [establishmentId], references: [id])
 
   commands Command[]
 
+  @@unique([establishmentId, number])
   @@index([status, isActive])
+  @@index([establishmentId])
 }
 
 model Command {
@@ -764,6 +769,7 @@ model CounterOrder {
   customerName       String?            @db.VarChar(100)
   status             CounterOrderStatus @default(AGUARDANDO_PAGAMENTO)
   totalAmount        Decimal            @db.Decimal(10, 2)
+  paymentMethod      PaymentMethod?
   notes              String?            @db.VarChar(500)
   cancellationReason String?            @db.VarChar(200)
   
@@ -786,6 +792,7 @@ model CounterOrder {
   @@index([establishmentId, status])
   @@index([orderNumber])
   @@index([createdAt])
+  @@index([paymentMethod])
   @@map("counter_orders")
 }
 

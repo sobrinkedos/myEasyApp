@@ -272,26 +272,42 @@ export function DashboardPage() {
         {/* Vendas ao Longo do Tempo */}
         <div className="bg-white dark:bg-neutral-800 rounded-lg p-6 shadow-md">
           <h3 className="text-lg font-semibold mb-4">Vendas e Pedidos</h3>
-          <LineChart
-            data={salesData}
-            lines={[
-              { dataKey: 'vendas', name: 'Vendas (R$)', color: '#f97316' },
-              { dataKey: 'pedidos', name: 'Pedidos', color: '#3b82f6' },
-            ]}
-            xAxisKey="date"
-            height={300}
-          />
+          {salesData.length === 0 ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                Nenhuma venda nos últimos 7 dias
+              </p>
+            </div>
+          ) : (
+            <LineChart
+              data={salesData}
+              lines={[
+                { dataKey: 'vendas', name: 'Vendas (R$)', color: '#f97316' },
+                { dataKey: 'pedidos', name: 'Pedidos', color: '#3b82f6' },
+              ]}
+              xAxisKey="date"
+              height={300}
+            />
+          )}
         </div>
 
         {/* Vendas por Categoria */}
         <div className="bg-white dark:bg-neutral-800 rounded-lg p-6 shadow-md">
           <h3 className="text-lg font-semibold mb-4">Vendas por Categoria</h3>
-          <BarChart
-            data={categoryData}
-            bars={[{ dataKey: 'value', name: 'Vendas (R$)', color: '#10b981' }]}
-            xAxisKey="category"
-            height={300}
-          />
+          {categoryData.length === 0 ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                Nenhuma venda por categoria nos últimos 7 dias
+              </p>
+            </div>
+          ) : (
+            <BarChart
+              data={categoryData}
+              bars={[{ dataKey: 'value', name: 'Vendas (R$)', color: '#10b981' }]}
+              xAxisKey="category"
+              height={300}
+            />
+          )}
         </div>
       </div>
 
@@ -300,7 +316,15 @@ export function DashboardPage() {
         {/* Métodos de Pagamento */}
         <div className="bg-white dark:bg-neutral-800 rounded-lg p-6 shadow-md">
           <h3 className="text-lg font-semibold mb-4">Métodos de Pagamento</h3>
-          <PieChart data={paymentData} height={300} innerRadius={60} />
+          {paymentData.length === 0 ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 text-center">
+                Nenhum pagamento registrado nos últimos 7 dias
+              </p>
+            </div>
+          ) : (
+            <PieChart data={paymentData} height={300} innerRadius={60} />
+          )}
         </div>
 
         {/* Atividade Recente */}

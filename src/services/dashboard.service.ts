@@ -83,8 +83,8 @@ export class DashboardService {
       endOfDay(yesterday)
     );
 
-    // Mesas ocupadas (TODO: implementar quando Table tiver establishmentId)
-    const tablesData = { occupied: 0, total: 0 };
+    // Mesas ocupadas
+    const tablesData = await this.getTablesOccupancy(establishmentId);
 
     // Ticket médio
     const avgTicketToday = salesToday.count > 0 ? salesToday.total / salesToday.count : 0;
@@ -191,11 +191,49 @@ export class DashboardService {
 
   /**
    * Obter dados de métodos de pagamento
-   * TODO: Implementar quando CounterOrder tiver campo paymentMethod
    */
   async getPaymentMethodsData(establishmentId: string): Promise<PaymentMethodData[]> {
-    // Por enquanto, retornando dados vazios pois o modelo não tem paymentMethod
-    return [];
+    const today = new Date();
+
+    // Pagamentos de pedidos balcão
+    const counterPayments = await prisma.counterOrder.groupBy({
+      by: ['paymentMethod'],
+      where: {
+        establishmentId,
+        paidAt: {
+          gte: startOfDay(subDays(today, 7)),
+          lte: endOfDay(today),
+        },
+        paymentMethod: { not: null },
+      },
+      _sum: {
+        totalAmount: true,
+      },
+    });
+
+    // Consolidar dados
+    const paymentMap = new Map<string, number>();
+
+    counterPayments.forEach(payment => {
+      if (payment.paymentMethod) {
+        const current = paymentMap.get(payment.paymentMethod) || 0;
+        paymentMap.set(payment.paymentMethod, current + (payment._sum.totalAmount || 0));
+      }
+    });
+
+    const paymentLabels: Record<string, string> = {
+      CASH: 'Dinheiro',
+      CREDIT_CARD: 'Cartão Crédito',
+      DEBIT_CARD: 'Cartão Débito',
+      PIX: 'PIX',
+      DEBIT: 'Débito',
+      CREDIT: 'Crédito',
+    };
+
+    return Array.from(paymentMap.entries()).map(([method, value]) => ({
+      name: paymentLabels[method] || method,
+      value,
+    }));
   }
 
   /**
@@ -298,16 +336,22 @@ export class DashboardService {
     return counterOrders;
   }
 
-  // TODO: Implementar quando Table tiver establishmentId
-  // private async getTablesOccupancy(
-  //   establishmentId: string
-  // ): Promise<{ occupied: number; total: number }> {
-  //   const total = await prisma.table.count();
-  //   const occupied = await prisma.table.count({
-  //     where: { status: 'OCCUPIED' },
-  //   });
-  //   return { occupied, total };
-  // }
+  private async getTablesOccupancy(
+    establishmentId: string
+  ): Promise<{ occupied: number; total: number }> {
+    const total = await prisma.table.count({
+      where: { establishmentId },
+    });
+
+    const occupied = await prisma.table.count({
+      where: {
+        establishmentId,
+        status: 'OCCUPIED',
+      },
+    });
+
+    return { occupied, total };
+  }
 
   private calculateChangePercentage(current: number, previous: number): number {
     if (previous === 0) return current > 0 ? 100 : 0;
