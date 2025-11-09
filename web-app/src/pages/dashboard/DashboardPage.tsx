@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MetricCard } from '../../components/dashboard';
 import { LineChart, BarChart, PieChart } from '../../components/charts';
 import { PageHeader } from '../../components/layout/PageHeader';
@@ -12,80 +12,14 @@ import {
   Download,
   RefreshCw,
 } from 'lucide-react';
-
-// Dados de exemplo - em produção viriam da API
-const salesData = [
-  { date: '01/01', vendas: 4200, pedidos: 28 },
-  { date: '02/01', vendas: 3800, pedidos: 24 },
-  { date: '03/01', vendas: 5100, pedidos: 35 },
-  { date: '04/01', vendas: 4600, pedidos: 31 },
-  { date: '05/01', vendas: 6200, pedidos: 42 },
-  { date: '06/01', vendas: 5800, pedidos: 38 },
-  { date: '07/01', vendas: 7100, pedidos: 48 },
-];
-
-const categoryData = [
-  { category: 'Bebidas', value: 4500 },
-  { category: 'Pratos Principais', value: 8200 },
-  { category: 'Sobremesas', value: 2100 },
-  { category: 'Entradas', value: 3400 },
-  { category: 'Lanches', value: 2800 },
-];
-
-const paymentData = [
-  { name: 'Dinheiro', value: 3500 },
-  { name: 'Cartão Crédito', value: 8200 },
-  { name: 'Cartão Débito', value: 3100 },
-  { name: 'PIX', value: 4800 },
-];
-
-const sparklineData = [
-  { value: 10 },
-  { value: 15 },
-  { value: 13 },
-  { value: 17 },
-  { value: 21 },
-  { value: 18 },
-  { value: 25 },
-  { value: 28 },
-  { value: 24 },
-  { value: 30 },
-];
-
-const recentActivities = [
-  {
-    id: 1,
-    type: 'order',
-    message: 'Novo pedido #1234 - Mesa 5',
-    time: '2 minutos atrás',
-    icon: ShoppingCart,
-    color: 'text-primary-500',
-  },
-  {
-    id: 2,
-    type: 'payment',
-    message: 'Pagamento recebido - R$ 145,00',
-    time: '5 minutos atrás',
-    icon: DollarSign,
-    color: 'text-success',
-  },
-  {
-    id: 3,
-    type: 'table',
-    message: 'Mesa 8 liberada',
-    time: '12 minutos atrás',
-    icon: Users,
-    color: 'text-secondary-500',
-  },
-  {
-    id: 4,
-    type: 'order',
-    message: 'Pedido #1233 finalizado',
-    time: '18 minutos atrás',
-    icon: ShoppingCart,
-    color: 'text-primary-500',
-  },
-];
+import dashboardService, {
+  DashboardMetrics,
+  SalesChartData,
+  CategorySalesData,
+  PaymentMethodData,
+  RecentActivity,
+} from '../../services/dashboard.service';
+import { useToast } from '../../hooks/useToast';
 
 const quickActions = [
   { label: 'Novo Pedido', icon: ShoppingCart, color: 'primary' },
@@ -95,13 +29,107 @@ const quickActions = [
 ];
 
 export function DashboardPage() {
+  const toast = useToast();
   const [period, setPeriod] = useState<'today' | 'week' | 'month'>('today');
   const [loading, setLoading] = useState(false);
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [salesData, setSalesData] = useState<SalesChartData[]>([]);
+  const [categoryData, setCategoryData] = useState<CategorySalesData[]>([]);
+  const [paymentData, setPaymentData] = useState<PaymentMethodData[]>([]);
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+
+  const loadDashboardData = async () => {
+    setLoading(true);
+    try {
+      const [metricsData, salesChart, categorySales, paymentMethods, activities] =
+        await Promise.all([
+          dashboardService.getMetrics(),
+          dashboardService.getSalesChart(),
+          dashboardService.getCategorySales(),
+          dashboardService.getPaymentMethods(),
+          dashboardService.getRecentActivities(),
+        ]);
+
+      setMetrics(metricsData);
+      setSalesData(salesChart);
+      setCategoryData(categorySales);
+      setPaymentData(paymentMethods);
+      setRecentActivities(activities);
+    } catch (error: any) {
+      console.error('Erro ao carregar dados do dashboard:', error);
+      toast.error(error.response?.data?.message || 'Erro ao carregar dados do dashboard');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
 
   const handleRefresh = () => {
-    setLoading(true);
-    setTimeout(() => setLoading(false), 1000);
+    loadDashboardData();
   };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'order':
+        return ShoppingCart;
+      case 'payment':
+        return DollarSign;
+      case 'table':
+        return Users;
+      default:
+        return ShoppingCart;
+    }
+  };
+
+  const getActivityColor = (type: string) => {
+    switch (type) {
+      case 'order':
+        return 'text-primary-500';
+      case 'payment':
+        return 'text-success';
+      case 'table':
+        return 'text-secondary-500';
+      default:
+        return 'text-primary-500';
+    }
+  };
+
+  const getActivityBgColor = (type: string) => {
+    switch (type) {
+      case 'order':
+        return 'bg-primary-100 dark:bg-primary-900/20';
+      case 'payment':
+        return 'bg-success/10';
+      case 'table':
+        return 'bg-secondary-100 dark:bg-secondary-900/20';
+      default:
+        return 'bg-primary-100 dark:bg-primary-900/20';
+    }
+  };
+
+  // Dados de sparkline fictícios (podem ser removidos ou calculados dos dados reais)
+  const sparklineData = [
+    { value: 10 },
+    { value: 15 },
+    { value: 13 },
+    { value: 17 },
+    { value: 21 },
+    { value: 18 },
+    { value: 25 },
+    { value: 28 },
+    { value: 24 },
+    { value: 30 },
+  ];
 
   return (
     <div className="space-y-6">
@@ -159,34 +187,54 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
           title="Vendas do Dia"
-          value="R$ 12.450"
-          change={12.5}
+          value={metrics ? formatCurrency(metrics.sales.today) : 'R$ 0,00'}
+          change={metrics?.sales.changePercentage || 0}
           changeLabel="vs ontem"
           icon={DollarSign}
           iconColor="text-success"
           iconBgColor="bg-success/10"
           sparklineData={sparklineData}
-          trend="up"
+          trend={
+            !metrics
+              ? 'neutral'
+              : metrics.sales.changePercentage > 5
+              ? 'up'
+              : metrics.sales.changePercentage < -5
+              ? 'down'
+              : 'neutral'
+          }
           loading={loading}
         />
 
         <MetricCard
           title="Pedidos Ativos"
-          value={127}
-          change={-5.2}
+          value={metrics?.orders.active || 0}
+          change={metrics?.orders.changePercentage || 0}
           changeLabel="vs ontem"
           icon={ShoppingCart}
           iconColor="text-primary-500"
           iconBgColor="bg-primary-100 dark:bg-primary-900/20"
           sparklineData={sparklineData.map((d) => ({ value: 35 - d.value }))}
-          trend="down"
+          trend={
+            !metrics
+              ? 'neutral'
+              : metrics.orders.changePercentage > 5
+              ? 'up'
+              : metrics.orders.changePercentage < -5
+              ? 'down'
+              : 'neutral'
+          }
           loading={loading}
         />
 
         <MetricCard
           title="Mesas Ocupadas"
-          value="18/24"
-          change={8.3}
+          value={
+            metrics
+              ? `${metrics.tables.occupied}/${metrics.tables.total}`
+              : '0/0'
+          }
+          change={metrics?.tables.changePercentage || 0}
           changeLabel="vs ontem"
           icon={Users}
           iconColor="text-secondary-500"
@@ -197,8 +245,8 @@ export function DashboardPage() {
 
         <MetricCard
           title="Ticket Médio"
-          value="R$ 85,40"
-          change={0.3}
+          value={metrics ? formatCurrency(metrics.averageTicket.value) : 'R$ 0,00'}
+          change={metrics?.averageTicket.changePercentage || 0}
           changeLabel="vs ontem"
           icon={TrendingUp}
           iconColor="text-warning"
@@ -206,7 +254,15 @@ export function DashboardPage() {
           sparklineData={sparklineData.map((d) => ({
             value: d.value + Math.random() * 5 - 2.5,
           }))}
-          trend="neutral"
+          trend={
+            !metrics
+              ? 'neutral'
+              : metrics.averageTicket.changePercentage > 5
+              ? 'up'
+              : metrics.averageTicket.changePercentage < -5
+              ? 'down'
+              : 'neutral'
+          }
           loading={loading}
         />
       </div>
@@ -250,37 +306,37 @@ export function DashboardPage() {
         {/* Atividade Recente */}
         <div className="lg:col-span-2 bg-white dark:bg-neutral-800 rounded-lg p-6 shadow-md">
           <h3 className="text-lg font-semibold mb-4">Atividade Recente</h3>
-          <div className="space-y-4">
-            {recentActivities.map((activity) => {
-              const Icon = activity.icon;
-              return (
-                <div
-                  key={activity.id}
-                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors"
-                >
+          {recentActivities.length === 0 ? (
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 text-center py-8">
+              Nenhuma atividade recente
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {recentActivities.map((activity) => {
+                const Icon = getActivityIcon(activity.type);
+                const color = getActivityColor(activity.type);
+                const bgColor = getActivityBgColor(activity.type);
+                return (
                   <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      activity.color === 'text-primary-500'
-                        ? 'bg-primary-100 dark:bg-primary-900/20'
-                        : activity.color === 'text-success'
-                        ? 'bg-success/10'
-                        : 'bg-secondary-100 dark:bg-secondary-900/20'
-                    }`}
+                    key={activity.id}
+                    className="flex items-start gap-3 p-3 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors"
                   >
-                    <Icon className={`w-5 h-5 ${activity.color}`} />
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${bgColor}`}>
+                      <Icon className={`w-5 h-5 ${color}`} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                        {activity.message}
+                      </p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                        {activity.time}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                      {activity.message}
-                    </p>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                      {activity.time}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 

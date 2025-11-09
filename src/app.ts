@@ -24,6 +24,7 @@ import cashRoutes from '@/routes/cash.routes';
 import commandRoutes from '@/routes/command.routes';
 import orderRoutes from '@/routes/order.routes';
 import counterOrderRoutes from '@/routes/counter-order.routes';
+import dashboardRoutes from '@/routes/dashboard.routes';
 import logger from '@/utils/logger';
 
 const app: Application = express();
@@ -160,6 +161,7 @@ app.use('/api/v1/cash', cashRoutes);
 app.use('/api/v1/commands', commandRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/counter-orders', counterOrderRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
 
 // 404 handler
 app.use((req, res) => {
