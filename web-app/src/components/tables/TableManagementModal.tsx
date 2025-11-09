@@ -11,6 +11,7 @@ import {
   DollarSign,
   Users,
   Receipt,
+  ClipboardList,
 } from 'lucide-react';
 import { Table, TableStatus } from './TableGrid/TableGrid';
 import { formatDistanceToNow } from 'date-fns';
@@ -24,6 +25,7 @@ interface TableManagementModalProps {
   onViewHistory: () => void;
   onCloseService: () => void;
   onOpenCommand: () => void;
+  onViewOrders: () => void;
 }
 
 const STATUS_CONFIG: Record<
@@ -69,6 +71,7 @@ export function TableManagementModal({
   onViewHistory,
   onCloseService,
   onOpenCommand,
+  onViewOrders,
 }: TableManagementModalProps) {
   const [loading, setLoading] = useState(false);
   const currentConfig = STATUS_CONFIG[table.status];
@@ -202,6 +205,17 @@ export function TableManagementModal({
 
         {/* Ações */}
         <div className="space-y-2">
+          {table.status === 'occupied' && table.commandId && (
+            <Button
+              variant="outline"
+              fullWidth
+              icon={<ClipboardList className="w-4 h-4" />}
+              onClick={onViewOrders}
+            >
+              Ver Pedidos da Mesa
+            </Button>
+          )}
+
           <Button
             variant="outline"
             fullWidth

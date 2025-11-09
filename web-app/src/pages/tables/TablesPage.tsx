@@ -79,6 +79,17 @@ export default function TablesPage() {
     navigate(`/commands/new?tableId=${selectedTable.id}`);
   };
 
+  const handleViewOrders = () => {
+    if (!selectedTable) return;
+    
+    if (selectedTable.commandId) {
+      // Redirecionar para página da comanda onde estão os pedidos
+      navigate(`/commands/${selectedTable.commandId}`);
+    } else {
+      toast.warning('Nenhuma comanda encontrada para esta mesa');
+    }
+  };
+
   const handleCloseService = () => {
     if (!selectedTable) return;
     
@@ -145,6 +156,7 @@ export default function TablesPage() {
           onViewHistory={handleViewHistory}
           onCloseService={handleCloseService}
           onOpenCommand={handleOpenCommand}
+          onViewOrders={handleViewOrders}
         />
       )}
     </div>
