@@ -57,7 +57,7 @@ export default function NewCommandPage() {
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
+    <div className="p-6 w-full">
       <div className="mb-6">
         <button
           onClick={() => navigate('/commands')}
@@ -66,102 +66,34 @@ export default function NewCommandPage() {
           ← Voltar
         </button>
         <h1 className="text-2xl font-bold text-gray-900">Nova Comanda</h1>
+        <p className="text-gray-600 mt-1">Abrir comanda para atendimento em mesa</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
-        {/* Tipo */}
+      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6 w-full">
+        {/* Mesa */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tipo de Atendimento
+            Mesa *
           </label>
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              type="button"
-              onClick={() => setFormData({ ...formData, type: 'table', tableId: '', customerName: '', customerPhone: '' })}
-              className={`p-4 rounded-lg border-2 transition-colors ${
-                formData.type === 'table'
-                  ? 'border-blue-600 bg-blue-50'
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}
-            >
-              <div className="text-center">
-                <div className="text-2xl mb-2">🪑</div>
-                <div className="font-medium">Mesa</div>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => setFormData({ ...formData, type: 'counter', tableId: '' })}
-              className={`p-4 rounded-lg border-2 transition-colors ${
-                formData.type === 'counter'
-                  ? 'border-blue-600 bg-blue-50'
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}
-            >
-              <div className="text-center">
-                <div className="text-2xl mb-2">🛒</div>
-                <div className="font-medium">Balcão</div>
-              </div>
-            </button>
-          </div>
+          <select
+            value={formData.tableId}
+            onChange={(e) => setFormData({ ...formData, tableId: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required
+          >
+            <option value="">Selecione uma mesa</option>
+            {tables.map((table) => (
+              <option key={table.id} value={table.id}>
+                Mesa {table.number} (Capacidade: {table.capacity})
+              </option>
+            ))}
+          </select>
+          {tables.length === 0 && (
+            <p className="mt-2 text-sm text-red-600">
+              Nenhuma mesa disponível no momento
+            </p>
+          )}
         </div>
-
-        {/* Mesa (se tipo = table) */}
-        {formData.type === 'table' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Mesa *
-            </label>
-            <select
-              value={formData.tableId}
-              onChange={(e) => setFormData({ ...formData, tableId: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            >
-              <option value="">Selecione uma mesa</option>
-              {tables.map((table) => (
-                <option key={table.id} value={table.id}>
-                  Mesa {table.number} (Capacidade: {table.capacity})
-                </option>
-              ))}
-            </select>
-            {tables.length === 0 && (
-              <p className="mt-2 text-sm text-red-600">
-                Nenhuma mesa disponível no momento
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Dados do Cliente (se tipo = counter) */}
-        {formData.type === 'counter' && (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nome do Cliente
-              </label>
-              <input
-                type="text"
-                value={formData.customerName}
-                onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Nome do cliente (opcional)"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Telefone do Cliente
-              </label>
-              <input
-                type="tel"
-                value={formData.customerPhone}
-                onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="(00) 00000-0000"
-              />
-            </div>
-          </>
-        )}
 
         {/* Número de Pessoas */}
         <div>
