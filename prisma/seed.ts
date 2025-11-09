@@ -490,37 +490,175 @@ async function main() {
       },
     },
   });
-  
-  // Calcular custo total da receita
   await prisma.recipe.update({
     where: { id: fileComFritasRecipe.id },
+    data: { totalCost: 22.12, costPerPortion: 22.12 },
+  });
+
+  const hamburguerRecipe = await prisma.recipe.create({
     data: {
-      totalCost: 22.12,
-      costPerPortion: 22.12,
+      name: 'Hambúrguer Artesanal',
+      category: 'Lanches',
+      yield: 1,
+      yieldUnit: 'porção',
+      preparationTime: 15,
+      instructions: '1. Grelhe o hambúrguer\n2. Torre o pão\n3. Monte com queijo, alface e tomate',
+      ingredients: {
+        create: [
+          { ingredientId: createdIngredients['Filé Mignon'].id, quantity: 0.15, unit: 'kg', cost: 9.75 },
+          { ingredientId: createdIngredients['Pão Francês'].id, quantity: 1, unit: 'un', cost: 0.80 },
+          { ingredientId: createdIngredients['Queijo Mussarela'].id, quantity: 0.05, unit: 'kg', cost: 1.75 },
+          { ingredientId: createdIngredients['Alface'].id, quantity: 0.5, unit: 'un', cost: 1.25 },
+          { ingredientId: createdIngredients['Tomate'].id, quantity: 0.05, unit: 'kg', cost: 0.25 },
+        ],
+      },
     },
   });
-  console.log('✅ Receita "Filé com Fritas" criada');
+  await prisma.recipe.update({
+    where: { id: hamburguerRecipe.id },
+    data: { totalCost: 13.80, costPerPortion: 13.80 },
+  });
 
-  // 8. Criar produtos manufaturados
-  await prisma.product.create({
+  const saladaRecipe = await prisma.recipe.create({
     data: {
+      name: 'Salada Caesar',
+      category: 'Entradas',
+      yield: 1,
+      yieldUnit: 'porção',
+      preparationTime: 10,
+      instructions: '1. Lave e corte a alface\n2. Adicione tomate\n3. Finalize com queijo ralado',
+      ingredients: {
+        create: [
+          { ingredientId: createdIngredients['Alface'].id, quantity: 1, unit: 'un', cost: 2.50 },
+          { ingredientId: createdIngredients['Tomate'].id, quantity: 0.1, unit: 'kg', cost: 0.50 },
+          { ingredientId: createdIngredients['Queijo Mussarela'].id, quantity: 0.03, unit: 'kg', cost: 1.05 },
+        ],
+      },
+    },
+  });
+  await prisma.recipe.update({
+    where: { id: saladaRecipe.id },
+    data: { totalCost: 4.05, costPerPortion: 4.05 },
+  });
+
+  console.log('✅ Receitas criadas');
+
+  // 8. Criar produtos manufaturados com imagens
+  const products = [
+    {
       name: 'Filé com Fritas',
       description: 'Delicioso filé mignon grelhado acompanhado de batatas fritas crocantes',
-      price: 35.00,
+      price: 45.00,
       categoryId: createdCategories['Pratos Principais'].id,
       recipeId: fileComFritasRecipe.id,
       preparationTime: 30,
-      isActive: true,
+      imageUrl: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=400',
     },
-  });
-  console.log('✅ Produto "Filé com Fritas" criado');
+    {
+      name: 'Hambúrguer Artesanal',
+      description: 'Hambúrguer de carne nobre com queijo, alface e tomate no pão artesanal',
+      price: 28.00,
+      categoryId: createdCategories['Lanches'].id,
+      recipeId: hamburguerRecipe.id,
+      preparationTime: 15,
+      imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400',
+    },
+    {
+      name: 'Salada Caesar',
+      description: 'Salada fresca com alface, tomate e queijo parmesão',
+      price: 18.00,
+      categoryId: createdCategories['Entradas'].id,
+      recipeId: saladaRecipe.id,
+      preparationTime: 10,
+      imageUrl: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400',
+    },
+  ];
 
-  // 9. Criar itens de estoque (revenda)
+  for (const product of products) {
+    await prisma.product.create({ data: { ...product, isActive: true } });
+  }
+  console.log('✅ Produtos manufaturados criados');
+
+  // 9. Criar produtos de revenda (bebidas) com imagens
+  const beverageProducts = [
+    {
+      name: 'Cerveja Brahma 350ml',
+      description: 'Cerveja gelada em lata 350ml',
+      price: 8.00,
+      categoryId: createdCategories['Bebidas'].id,
+      imageUrl: 'https://images.unsplash.com/photo-1608270586620-248524c67de9?w=400',
+    },
+    {
+      name: 'Coca-Cola 350ml',
+      description: 'Refrigerante Coca-Cola lata 350ml',
+      price: 6.00,
+      categoryId: createdCategories['Bebidas'].id,
+      imageUrl: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400',
+    },
+    {
+      name: 'Água Mineral 500ml',
+      description: 'Água mineral sem gás 500ml',
+      price: 3.50,
+      categoryId: createdCategories['Bebidas'].id,
+      imageUrl: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=400',
+    },
+    {
+      name: 'Suco de Laranja Natural',
+      description: 'Suco natural de laranja 300ml',
+      price: 7.00,
+      categoryId: createdCategories['Bebidas'].id,
+      imageUrl: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400',
+    },
+    {
+      name: 'Café Expresso',
+      description: 'Café expresso tradicional',
+      price: 5.00,
+      categoryId: createdCategories['Bebidas'].id,
+      imageUrl: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?w=400',
+    },
+  ];
+
+  for (const product of beverageProducts) {
+    await prisma.product.create({ data: { ...product, isActive: true, preparationTime: 5 } });
+  }
+  console.log('✅ Produtos de bebidas criados');
+
+  // 10. Criar produtos de sobremesa com imagens
+  const dessertProducts = [
+    {
+      name: 'Pudim de Leite',
+      description: 'Pudim de leite condensado com calda de caramelo',
+      price: 12.00,
+      categoryId: createdCategories['Sobremesas'].id,
+      imageUrl: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400',
+    },
+    {
+      name: 'Brownie com Sorvete',
+      description: 'Brownie de chocolate quente com sorvete de creme',
+      price: 15.00,
+      categoryId: createdCategories['Sobremesas'].id,
+      imageUrl: 'https://images.unsplash.com/photo-1607920591413-4ec007e70023?w=400',
+    },
+    {
+      name: 'Petit Gateau',
+      description: 'Bolinho de chocolate com recheio cremoso e sorvete',
+      price: 18.00,
+      categoryId: createdCategories['Sobremesas'].id,
+      imageUrl: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=400',
+    },
+  ];
+
+  for (const product of dessertProducts) {
+    await prisma.product.create({ data: { ...product, isActive: true, preparationTime: 10 } });
+  }
+  console.log('✅ Produtos de sobremesas criados');
+
+  // 11. Criar itens de estoque (para controle de revenda)
   const stockItems = [
-    { name: 'Cerveja Brahma 350ml lata', category: 'Bebidas', unit: 'un', currentQuantity: 100, minimumQuantity: 20, costPrice: 3.50, salePrice: 8.00 },
-    { name: 'Refrigerante Coca-Cola 350ml lata', category: 'Bebidas', unit: 'un', currentQuantity: 80, minimumQuantity: 15, costPrice: 2.80, salePrice: 6.00 },
-    { name: 'Água Mineral 500ml', category: 'Bebidas', unit: 'un', currentQuantity: 120, minimumQuantity: 30, costPrice: 1.20, salePrice: 3.50 },
-    { name: 'Suco Natural Laranja 300ml', category: 'Bebidas', unit: 'un', currentQuantity: 40, minimumQuantity: 10, costPrice: 3.00, salePrice: 7.00 },
+    { name: 'Cerveja Brahma 350ml lata', category: 'Bebidas', unit: 'un', currentQuantity: 100, minimumQuantity: 20, costPrice: 3.50, salePrice: 8.00, imageUrl: 'https://images.unsplash.com/photo-1608270586620-248524c67de9?w=400' },
+    { name: 'Refrigerante Coca-Cola 350ml lata', category: 'Bebidas', unit: 'un', currentQuantity: 80, minimumQuantity: 15, costPrice: 2.80, salePrice: 6.00, imageUrl: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400' },
+    { name: 'Água Mineral 500ml', category: 'Bebidas', unit: 'un', currentQuantity: 120, minimumQuantity: 30, costPrice: 1.20, salePrice: 3.50, imageUrl: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=400' },
+    { name: 'Suco Natural Laranja 300ml', category: 'Bebidas', unit: 'un', currentQuantity: 40, minimumQuantity: 10, costPrice: 3.00, salePrice: 7.00, imageUrl: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400' },
   ];
 
   for (const item of stockItems) {
@@ -533,26 +671,28 @@ async function main() {
   }
   console.log('✅ Itens de estoque criados');
 
-  // 10. Criar mesas
+  // 12. Criar mesas
   const tables = [
-    { number: 1, capacity: 2 },
-    { number: 2, capacity: 4 },
-    { number: 3, capacity: 4 },
-    { number: 4, capacity: 6 },
-    { number: 5, capacity: 2 },
-    { number: 6, capacity: 8 },
+    { number: 1, capacity: 2, establishmentId: establishment.id },
+    { number: 2, capacity: 4, establishmentId: establishment.id },
+    { number: 3, capacity: 4, establishmentId: establishment.id },
+    { number: 4, capacity: 6, establishmentId: establishment.id },
+    { number: 5, capacity: 2, establishmentId: establishment.id },
+    { number: 6, capacity: 8, establishmentId: establishment.id },
+    { number: 7, capacity: 4, establishmentId: establishment.id },
+    { number: 8, capacity: 4, establishmentId: establishment.id },
   ];
 
   for (const table of tables) {
     await prisma.table.upsert({
-      where: { number: table.number },
+      where: { establishmentId_number: { establishmentId: table.establishmentId, number: table.number } },
       update: {},
       create: table,
     });
   }
   console.log('✅ Mesas criadas');
 
-  // 11. Criar caixa
+  // 13. Criar caixa
   await prisma.cashRegister.upsert({
     where: { number_establishmentId: { number: 1, establishmentId: establishment.id } },
     update: {},
