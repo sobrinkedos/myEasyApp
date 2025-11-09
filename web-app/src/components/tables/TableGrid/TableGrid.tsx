@@ -18,18 +18,12 @@ export interface Table {
 interface TableGridProps {
   tables: Table[];
   onTableClick?: (table: Table) => void;
-  onOpenCommand?: (table: Table) => void;
-  onCleanTable?: (table: Table) => void;
-  onReserveTable?: (table: Table) => void;
   loading?: boolean;
 }
 
 export const TableGrid = ({
   tables,
   onTableClick,
-  onOpenCommand,
-  onCleanTable,
-  onReserveTable,
   loading = false,
 }: TableGridProps) => {
   if (loading) {
@@ -97,9 +91,6 @@ export const TableGrid = ({
             <TableCard
               table={table}
               onClick={() => onTableClick?.(table)}
-              onOpenCommand={() => onOpenCommand?.(table)}
-              onCleanTable={() => onCleanTable?.(table)}
-              onReserveTable={() => onReserveTable?.(table)}
             />
           </motion.div>
         ))}

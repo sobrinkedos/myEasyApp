@@ -1,2 +1,2 @@
 export * from './TableGrid';
-export * from './ReserveTableModal';
+export * from './TableManagementModal';

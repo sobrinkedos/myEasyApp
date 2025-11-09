@@ -1,6 +1,5 @@
 import { Table, TableStatus } from './TableGrid';
 import { Users, Clock, DollarSign, Sparkles, Receipt } from 'lucide-react';
-import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -8,9 +7,6 @@ import { ptBR } from 'date-fns/locale';
 interface TableCardProps {
   table: Table;
   onClick?: () => void;
-  onOpenCommand?: () => void;
-  onCleanTable?: () => void;
-  onReserveTable?: () => void;
 }
 
 const STATUS_CONFIG: Record<
@@ -53,13 +49,7 @@ const STATUS_CONFIG: Record<
   },
 };
 
-export const TableCard = ({
-  table,
-  onClick,
-  onOpenCommand,
-  onCleanTable,
-  onReserveTable,
-}: TableCardProps) => {
+export const TableCard = ({ table, onClick }: TableCardProps) => {
   const config = STATUS_CONFIG[table.status];
 
   const getOccupiedTime = () => {
@@ -72,7 +62,8 @@ export const TableCard = ({
 
   return (
     <div
-      className={`relative rounded-lg border-2 p-4 transition-all ${config.bgColor} ${config.borderColor} hover:shadow-lg`}
+      onClick={onClick}
+      className={`relative rounded-lg border-2 p-4 transition-all cursor-pointer ${config.bgColor} ${config.borderColor} hover:shadow-lg`}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
@@ -140,73 +131,7 @@ export const TableCard = ({
         )}
       </div>
 
-      {/* Ações Rápidas */}
-      <div className="flex gap-2">
-        {table.status === 'available' && onOpenCommand && (
-          <Button
-            variant="primary"
-            size="sm"
-            fullWidth
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('Button clicked - Abrir Comanda');
-              onOpenCommand();
-            }}
-          >
-            Abrir Comanda
-          </Button>
-        )}
 
-        {table.status === 'occupied' && onOpenCommand && (
-          <Button
-            variant="primary"
-            size="sm"
-            fullWidth
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('Button clicked - Ver Comanda');
-              onOpenCommand();
-            }}
-          >
-            Ver Comanda
-          </Button>
-        )}
-
-        {table.status === 'cleaning' && onCleanTable && (
-          <Button
-            variant="primary"
-            size="sm"
-            fullWidth
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('Button clicked - Marcar Limpa');
-              onCleanTable();
-            }}
-            className="bg-success hover:bg-success/90"
-          >
-            Marcar Limpa
-          </Button>
-        )}
-
-        {table.status === 'available' && onReserveTable && (
-          <Button
-            variant="outline"
-            size="sm"
-            fullWidth
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('Button clicked - Reservar');
-              onReserveTable();
-            }}
-          >
-            Reservar
-          </Button>
-        )}
-      </div>
     </div>
   );
 };

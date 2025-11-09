@@ -2,21 +2,22 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { tableService, Table as ServiceTable } from '../../services/table.service';
 import TableFormModal from './TableFormModal';
-import { TableGrid, Table as GridTable, ReserveTableModal } from '../../components/tables';
+import { TableGrid, Table as GridTable } from '../../components/tables';
+import { TableManagementModal } from '../../components/tables/TableManagementModal';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
-import { Plus } from 'lucide-react';
+import { Plus, Settings } from 'lucide-react';
 import { useToast } from '../../hooks/useToast';
+import { TableStatus } from '../../components/tables/TableGrid/TableGrid';
 
 export default function TablesPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const [tables, setTables] = useState<ServiceTable[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedTable, setSelectedTable] = useState<ServiceTable | null>(null);
-  const [showReserveModal, setShowReserveModal] = useState(false);
-  const [tableToReserve, setTableToReserve] = useState<GridTable | null>(null);
+  const [showFormModal, setShowFormModal] = useState(false);
+  const [showManagementModal, setShowManagementModal] = useState(false);
+  const [selectedTable, setSelectedTable] = useState<GridTable | null>(null);
 
   useEffect(() => {
     loadTables();
@@ -35,83 +36,49 @@ export default function TablesPage() {
   };
 
   const handleNew = () => {
-    setSelectedTable(null);
-    setShowModal(true);
+    setShowFormModal(true);
   };
 
-  const handleSuccess = () => {
-    setShowModal(false);
-    setSelectedTable(null);
+  const handleFormSuccess = () => {
+    setShowFormModal(false);
     loadTables();
   };
 
   const handleTableClick = (table: GridTable) => {
-    // Encontrar a mesa original para editar
-    const originalTable = tables.find((t) => t.id === table.id);
-    if (originalTable) {
-      setSelectedTable(originalTable);
-      setShowModal(true);
-    }
+    setSelectedTable(table);
+    setShowManagementModal(true);
   };
 
-  const handleOpenCommand = async (table: GridTable) => {
-    console.log('handleOpenCommand called', table);
-    
-    if (table.status === 'available') {
-      // Abrir nova comanda
-      toast.info('Funcionalidade de abrir comanda em desenvolvimento');
-      // TODO: Implementar criação de comanda
-      // navigate(`/commands/new?tableId=${table.id}`);
-    } else if (table.status === 'occupied') {
-      if (table.commandId) {
-        // Ver comanda existente
-        navigate(`/commands/${table.commandId}`);
-      } else {
-        // Fallback: ir para lista de comandas
-        toast.warning('Comanda não encontrada. Redirecionando para lista de comandas...');
-        navigate('/commands');
-      }
-    }
-  };
-
-  const handleCleanTable = async (table: GridTable) => {
-    try {
-      await tableService.update(table.id, { status: 'available' });
-      toast.success('Mesa marcada como limpa');
-      loadTables();
-    } catch (error) {
-      console.error('Erro ao limpar mesa:', error);
-      toast.error('Erro ao limpar mesa');
-    }
-  };
-
-  const handleReserveTable = (table: GridTable) => {
-    setTableToReserve(table);
-    setShowReserveModal(true);
-  };
-
-  const handleConfirmReserve = async (data: {
-    customerName: string;
-    date?: string;
-    time?: string;
-  }) => {
-    if (!tableToReserve) return;
+  const handleStatusChange = async (newStatus: TableStatus) => {
+    if (!selectedTable) return;
 
     try {
-      await tableService.update(tableToReserve.id, {
-        status: 'reserved',
-        // reservedFor: data.customerName, // Adicionar campo se necessário na API
-      });
-      toast.success(
-        `Mesa ${tableToReserve.number} reservada para ${data.customerName}`
-      );
+      await tableService.update(selectedTable.id, { status: newStatus });
+      toast.success(`Status da mesa ${selectedTable.number} alterado para ${newStatus}`);
       loadTables();
-      setShowReserveModal(false);
-      setTableToReserve(null);
+      setShowManagementModal(false);
+      setSelectedTable(null);
     } catch (error) {
-      console.error('Erro ao reservar mesa:', error);
-      toast.error('Erro ao reservar mesa');
+      console.error('Erro ao alterar status da mesa:', error);
+      toast.error('Erro ao alterar status da mesa');
       throw error;
+    }
+  };
+
+  const handleViewHistory = () => {
+    if (!selectedTable) return;
+    toast.info('Funcionalidade de histórico em desenvolvimento');
+    // TODO: Implementar visualização de histórico
+  };
+
+  const handleCloseService = () => {
+    if (!selectedTable) return;
+    
+    if (selectedTable.commandId) {
+      // Redirecionar para página de pagamento da comanda
+      navigate(`/cash/commands/${selectedTable.commandId}/payment`);
+    } else {
+      toast.warning('Nenhuma comanda encontrada para esta mesa');
     }
   };
 
@@ -148,28 +115,27 @@ export default function TablesPage() {
         tables={gridTables}
         loading={loading}
         onTableClick={handleTableClick}
-        onOpenCommand={handleOpenCommand}
-        onCleanTable={handleCleanTable}
-        onReserveTable={handleReserveTable}
       />
 
-      {showModal && (
+      {showFormModal && (
         <TableFormModal
-          table={selectedTable}
-          onClose={() => setShowModal(false)}
-          onSuccess={handleSuccess}
+          table={null}
+          onClose={() => setShowFormModal(false)}
+          onSuccess={handleFormSuccess}
         />
       )}
 
-      {showReserveModal && tableToReserve && (
-        <ReserveTableModal
-          isOpen={showReserveModal}
+      {showManagementModal && selectedTable && (
+        <TableManagementModal
+          isOpen={showManagementModal}
           onClose={() => {
-            setShowReserveModal(false);
-            setTableToReserve(null);
+            setShowManagementModal(false);
+            setSelectedTable(null);
           }}
-          onConfirm={handleConfirmReserve}
-          tableNumber={tableToReserve.number}
+          table={selectedTable}
+          onStatusChange={handleStatusChange}
+          onViewHistory={handleViewHistory}
+          onCloseService={handleCloseService}
         />
       )}
     </div>
