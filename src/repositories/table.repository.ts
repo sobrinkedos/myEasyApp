@@ -13,10 +13,36 @@ export interface UpdateTableDTO {
 }
 
 export class TableRepository {
-  async findAll(): Promise<Table[]> {
-    return prisma.table.findMany({
+  async findAll(): Promise<any[]> {
+    const tables = await prisma.table.findMany({
       where: { isActive: true },
       orderBy: { number: 'asc' },
+      include: {
+        commands: {
+          where: {
+            status: {
+              in: ['open', 'pending_payment'],
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 1,
+        },
+      },
+    });
+
+    // Transformar para incluir dados da comanda ativa
+    return tables.map((table) => {
+      const activeCommand = table.commands[0];
+      return {
+        ...table,
+        commandId: activeCommand?.id,
+        commandNumber: activeCommand?.commandNumber,
+        occupiedSince: activeCommand?.createdAt,
+        totalAmount: activeCommand?.totalAmount || 0,
+        commands: undefined, // Remover array de commands
+      };
     });
   }
 
