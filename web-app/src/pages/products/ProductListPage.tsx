@@ -1,8 +1,31 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit, Trash2, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Grid3x3,
+  List,
+  Filter,
+  Copy,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import api from '../../services/api';
 import { getImageUrl } from '../../config/constants';
+import { PageHeader } from '../../components/layout/PageHeader';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
+import { Badge } from '../../components/ui/Badge';
+import { Card } from '../../components/ui/Card';
+import { EmptyState } from '../../components/feedback/EmptyState';
+import { LoadingSpinner } from '../../components/loading';
+import { useToast } from '../../hooks/useToast';
 
 interface Product {
   id: string;
@@ -27,10 +50,14 @@ interface Product {
 
 export function ProductListPage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [priceRange, setPriceRange] = useState<'all' | 'low' | 'medium' | 'high'>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
   useEffect(() => {
     loadProducts();
@@ -70,20 +97,65 @@ export function ProductListPage() {
 
     try {
       await api.delete(`/products/${id}`);
+      showToast('Produto excluído com sucesso', 'success');
       loadProducts();
     } catch (error) {
       console.error('Erro ao excluir produto:', error);
-      alert('Erro ao excluir produto');
+      showToast('Erro ao excluir produto', 'error');
+    }
+  };
+
+  const handleDuplicate = async (product: Product) => {
+    try {
+      const newProduct = {
+        ...product,
+        name: `${product.name} (Cópia)`,
+        id: undefined,
+      };
+      await api.post('/products', newProduct);
+      showToast('Produto duplicado com sucesso', 'success');
+      loadProducts();
+    } catch (error) {
+      console.error('Erro ao duplicar produto:', error);
+      showToast('Erro ao duplicar produto', 'error');
+    }
+  };
+
+  const handleToggleStatus = async (product: Product) => {
+    try {
+      await api.patch(`/products/${product.id}`, {
+        isActive: !product.isActive,
+      });
+      showToast(
+        `Produto ${!product.isActive ? 'ativado' : 'desativado'} com sucesso`,
+        'success'
+      );
+      loadProducts();
+    } catch (error) {
+      console.error('Erro ao alterar status:', error);
+      showToast('Erro ao alterar status do produto', 'error');
     }
   };
 
   const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !categoryFilter || product.categoryId === categoryFilter;
-    return matchesSearch && matchesCategory;
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'active' && product.isActive) ||
+      (statusFilter === 'inactive' && !product.isActive);
+    const matchesPrice =
+      priceRange === 'all' ||
+      (priceRange === 'low' && product.price < 20) ||
+      (priceRange === 'medium' && product.price >= 20 && product.price < 50) ||
+      (priceRange === 'high' && product.price >= 50);
+
+    return matchesSearch && matchesCategory && matchesStatus && matchesPrice;
   });
 
-  const categories = Array.from(new Set(products.map(p => p.category.name)));
+  const categories = Array.from(new Set(products.map((p) => p.category.name)));
 
   const getMarginStatus = (product: Product) => {
     if (!product.currentMargin || !product.targetMargin) return null;
@@ -97,158 +169,364 @@ export function ProductListPage() {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Produtos</h1>
-        <button
-          onClick={() => navigate('/products/new')}
-          className="flex items-center bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Novo Produto
-        </button>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Produtos"
+        subtitle={`${filteredProducts.length} ${
+          filteredProducts.length === 1 ? 'produto encontrado' : 'produtos encontrados'
+        }`}
+        actions={
+          <Button
+            variant="primary"
+            icon={<Plus className="w-4 h-4" />}
+            onClick={() => navigate('/products/new')}
+          >
+            Novo Produto
+          </Button>
+        }
+      />
 
-      {/* Filtros */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <input
-              type="text"
-              placeholder="Buscar produtos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+      {/* Filtros e Controles */}
+      <Card className="p-4">
+        <div className="flex flex-col gap-4">
+          {/* Linha 1: Busca e Toggle de Visualização */}
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <Input
+                type="text"
+                placeholder="Buscar por nome ou descrição..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                prefixIcon={<Search className="w-4 h-4" />}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'grid' ? 'primary' : 'outline'}
+                size="md"
+                icon={<Grid3x3 className="w-4 h-4" />}
+                onClick={() => setViewMode('grid')}
+              >
+                Grid
+              </Button>
+              <Button
+                variant={viewMode === 'table' ? 'primary' : 'outline'}
+                size="md"
+                icon={<List className="w-4 h-4" />}
+                onClick={() => setViewMode('table')}
+              >
+                Lista
+              </Button>
+            </div>
+          </div>
+
+          {/* Linha 2: Filtros Avançados */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Select
+              label="Categoria"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              options={[
+                { value: '', label: 'Todas as categorias' },
+                ...categories.map((cat) => ({ value: cat, label: cat })),
+              ]}
+            />
+
+            <Select
+              label="Status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              options={[
+                { value: 'all', label: 'Todos' },
+                { value: 'active', label: 'Ativos' },
+                { value: 'inactive', label: 'Inativos' },
+              ]}
+            />
+
+            <Select
+              label="Faixa de Preço"
+              value={priceRange}
+              onChange={(e) => setPriceRange(e.target.value as any)}
+              options={[
+                { value: 'all', label: 'Todos os preços' },
+                { value: 'low', label: 'Até R$ 20' },
+                { value: 'medium', label: 'R$ 20 - R$ 50' },
+                { value: 'high', label: 'Acima de R$ 50' },
+              ]}
             />
           </div>
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-          >
-            <option value="">Todas as categorias</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
         </div>
-      </div>
+      </Card>
 
       {/* Lista de Produtos */}
       {loading ? (
-        <div className="bg-white rounded-lg shadow p-6 text-center">
-          <p className="text-gray-600">Carregando produtos...</p>
+        <div className="flex justify-center items-center py-12">
+          <LoadingSpinner size="lg" />
         </div>
       ) : filteredProducts.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-6 text-center">
-          <p className="text-gray-600">Nenhum produto encontrado</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <EmptyState
+          title="Nenhum produto encontrado"
+          description={
+            searchTerm || categoryFilter || statusFilter !== 'all' || priceRange !== 'all'
+              ? 'Tente ajustar os filtros para encontrar produtos'
+              : 'Comece criando seu primeiro produto'
+          }
+          action={
+            <Button
+              variant="primary"
+              icon={<Plus className="w-4 h-4" />}
+              onClick={() => navigate('/products/new')}
+            >
+              Criar Primeiro Produto
+            </Button>
+          }
+        />
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProducts.map((product) => {
             const marginStatus = getMarginStatus(product);
-            
+
             return (
-              <div key={product.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
-                {product.imageUrl && (
-                  <img
-                    src={getImageUrl(product.imageUrl)}
-                    alt={product.name}
-                    className="w-full h-48 object-cover rounded-t-lg"
-                  />
-                )}
-                
-                <div className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
-                      <p className="text-sm text-gray-500">{product.category.name}</p>
+              <Card
+                key={product.id}
+                className="overflow-hidden hover:shadow-lg transition-shadow group"
+              >
+                {/* Imagem do Produto */}
+                <div className="relative h-48 bg-neutral-100 dark:bg-neutral-700">
+                  {product.imageUrl ? (
+                    <img
+                      src={getImageUrl(product.imageUrl)}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <DollarSign className="w-16 h-16 text-neutral-300 dark:text-neutral-600" />
                     </div>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      product.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
+                  )}
+                  {/* Badge de Status */}
+                  <div className="absolute top-2 right-2">
+                    <Badge color={product.isActive ? 'success' : 'neutral'}>
                       {product.isActive ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Conteúdo do Card */}
+                <div className="p-4 space-y-3">
+                  {/* Cabeçalho */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-1">
+                      {product.name}
+                    </h3>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                      {product.category.name}
+                    </p>
+                  </div>
+
+                  {/* Descrição */}
+                  {product.description && (
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2">
+                      {product.description}
+                    </p>
+                  )}
+
+                  {/* Preço */}
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-primary-500">
+                      R$ {product.price.toFixed(2)}
                     </span>
                   </div>
 
-                  {product.description && (
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
+                  {/* Informações de Receita */}
+                  {product.recipe && (
+                    <div className="space-y-2 pt-2 border-t border-neutral-200 dark:border-neutral-700">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-neutral-600 dark:text-neutral-400">Custo:</span>
+                        <span className="font-medium">
+                          R$ {product.recipe.costPerPortion.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-neutral-600 dark:text-neutral-400">Lucro:</span>
+                        <span className="font-medium text-success">
+                          R$ {(product.price - product.recipe.costPerPortion).toFixed(2)}
+                        </span>
+                      </div>
+                      {product.currentMargin && marginStatus && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-neutral-600 dark:text-neutral-400">
+                            Margem:
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <marginStatus.icon
+                              className={`w-4 h-4 ${marginStatus.color}`}
+                            />
+                            <span className={`font-bold ${marginStatus.color}`}>
+                              {product.currentMargin.toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
 
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Preço de Venda:</span>
-                      <span className="text-lg font-bold text-gray-900">
-                        R$ {product.price.toFixed(2)}
-                      </span>
-                    </div>
-
-                    {product.recipe && (
-                      <>
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-gray-600">Custo (CMV):</span>
-                          <span className="font-semibold text-gray-700">
-                            R$ {product.recipe.costPerPortion.toFixed(2)}
-                          </span>
-                        </div>
-
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-gray-600">Lucro/Unidade:</span>
-                          <span className="font-semibold text-green-600">
-                            R$ {(product.price - product.recipe.costPerPortion).toFixed(2)}
-                          </span>
-                        </div>
-
-                        {product.currentMargin && (
-                          <div className={`flex justify-between items-center p-2 rounded ${marginStatus?.bg}`}>
-                            <span className="text-sm font-medium">Margem Atual:</span>
-                            <div className="flex items-center">
-                              {marginStatus && <marginStatus.icon className={`h-4 w-4 mr-1 ${marginStatus.color}`} />}
-                              <span className={`font-bold ${marginStatus?.color}`}>
-                                {product.currentMargin.toFixed(1)}%
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        {product.suggestedPrice && product.suggestedPrice !== product.price && (
-                          <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
-                            💡 Preço sugerido: R$ {product.suggestedPrice.toFixed(2)}
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
+                  {/* Ações */}
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      fullWidth
+                      icon={<DollarSign className="w-4 h-4" />}
                       onClick={() => navigate(`/products/${product.id}`)}
-                      className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                      <DollarSign className="h-4 w-4 mr-1" />
                       Detalhes
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      icon={<Edit className="w-4 h-4" />}
                       onClick={() => navigate(`/products/${product.id}/edit`)}
-                      className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      icon={<Copy className="w-4 h-4" />}
+                      onClick={() => handleDuplicate(product)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      icon={
+                        product.isActive ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )
+                      }
+                      onClick={() => handleToggleStatus(product)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      icon={<Trash2 className="w-4 h-4" />}
                       onClick={() => handleDelete(product.id)}
-                      className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                      className="text-error hover:bg-error/10"
+                    />
                   </div>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
+      ) : (
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-neutral-50 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Produto</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Categoria</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">Preço</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">Custo</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">Margem</th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold">Status</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-700">
+                {filteredProducts.map((product) => {
+                  const marginStatus = getMarginStatus(product);
+                  return (
+                    <tr
+                      key={product.id}
+                      className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded bg-neutral-100 dark:bg-neutral-700 flex-shrink-0 overflow-hidden">
+                            {product.imageUrl ? (
+                              <img
+                                src={getImageUrl(product.imageUrl)}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <DollarSign className="w-6 h-6 text-neutral-400" />
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium text-neutral-900 dark:text-neutral-100">
+                              {product.name}
+                            </p>
+                            {product.description && (
+                              <p className="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-1">
+                                {product.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm">{product.category.name}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-primary-500">
+                        R$ {product.price.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm">
+                        {product.recipe
+                          ? `R$ ${product.recipe.costPerPortion.toFixed(2)}`
+                          : '-'}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {product.currentMargin && marginStatus ? (
+                          <div className="flex items-center justify-end gap-1">
+                            <marginStatus.icon
+                              className={`w-4 h-4 ${marginStatus.color}`}
+                            />
+                            <span className={`font-medium ${marginStatus.color}`}>
+                              {product.currentMargin.toFixed(1)}%
+                            </span>
+                          </div>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <Badge color={product.isActive ? 'success' : 'neutral'}>
+                          {product.isActive ? 'Ativo' : 'Inativo'}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<DollarSign className="w-4 h-4" />}
+                            onClick={() => navigate(`/products/${product.id}`)}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<Edit className="w-4 h-4" />}
+                            onClick={() => navigate(`/products/${product.id}/edit`)}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<Trash2 className="w-4 h-4" />}
+                            onClick={() => handleDelete(product.id)}
+                            className="text-error hover:bg-error/10"
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
     </div>
   );

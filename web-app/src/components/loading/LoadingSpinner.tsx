@@ -1,36 +1,59 @@
-interface LoadingSpinnerProps {
-  size?: 'sm' | 'md' | 'lg';
-  color?: 'orange' | 'blue' | 'white';
-  text?: string;
+import React from 'react';
+import { motion } from 'framer-motion';
+import clsx from 'clsx';
+
+export type SpinnerSize = 'sm' | 'md' | 'lg' | 'xl';
+export type SpinnerColor = 'primary' | 'secondary' | 'white' | 'neutral';
+
+export interface LoadingSpinnerProps {
+  size?: SpinnerSize;
+  color?: SpinnerColor;
+  className?: string;
+  label?: string;
 }
 
-const sizeClasses = {
-  sm: 'h-4 w-4',
-  md: 'h-8 w-8',
-  lg: 'h-12 w-12',
-};
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
+  size = 'md',
+  color = 'primary',
+  className,
+  label,
+}) => {
+  // Classes de tamanho
+  const sizeClasses = {
+    sm: 'w-4 h-4 border-2',
+    md: 'w-8 h-8 border-2',
+    lg: 'w-12 h-12 border-3',
+    xl: 'w-16 h-16 border-4',
+  };
 
-const colorClasses = {
-  orange: 'border-orange-600',
-  blue: 'border-blue-600',
-  white: 'border-white',
-};
+  // Classes de cor
+  const colorClasses = {
+    primary: 'border-primary-500 border-t-transparent',
+    secondary: 'border-secondary-500 border-t-transparent',
+    white: 'border-white border-t-transparent',
+    neutral: 'border-neutral-500 border-t-transparent dark:border-neutral-400',
+  };
 
-export function LoadingSpinner({ size = 'md', color = 'orange', text }: LoadingSpinnerProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3">
-      <div className={`animate-spin rounded-full border-b-2 ${sizeClasses[size]} ${colorClasses[color]}`}></div>
-      {text && <p className="text-sm text-gray-600">{text}</p>}
+    <div className={clsx('flex flex-col items-center justify-center gap-3', className)}>
+      <motion.div
+        className={clsx('rounded-full', sizeClasses[size], colorClasses[color])}
+        animate={{ rotate: 360 }}
+        transition={{
+          duration: 0.8,
+          repeat: Infinity,
+          ease: 'linear',
+        }}
+        role="status"
+        aria-label={label || 'Carregando'}
+      />
+      {label && (
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">{label}</p>
+      )}
     </div>
   );
-}
+};
 
-export function LoadingOverlay({ text }: { text?: string }) {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6">
-        <LoadingSpinner size="lg" text={text} />
-      </div>
-    </div>
-  );
-}
+LoadingSpinner.displayName = 'LoadingSpinner';
+
+export default LoadingSpinner;

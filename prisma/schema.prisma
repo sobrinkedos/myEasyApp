@@ -58,6 +58,7 @@ model User {
   transfersReceived       CashTransfer[]          @relation("Receiver")
   appraisalsCreated       StockAppraisal[]        @relation("AppraisalUser")
   appraisalsApproved      StockAppraisal[]        @relation("AppraisalApprover")
+  counterOrders          CounterOrder[]
 
   @@unique([email, establishmentId])
   @@index([email])
@@ -331,11 +332,12 @@ model Product {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  category    Category            @relation(fields: [categoryId], references: [id])
-  recipe      Recipe?             @relation(fields: [recipeId], references: [id])
-  ingredients ProductIngredient[]
-  orderItems  OrderItem[]
-  cmvProducts CMVProduct[]
+  category         Category            @relation(fields: [categoryId], references: [id])
+  recipe           Recipe?             @relation(fields: [recipeId], references: [id])
+  ingredients      ProductIngredient[]
+  orderItems       OrderItem[]
+  cmvProducts      CMVProduct[]
+  counterOrderItems CounterOrderItem[]
 
   @@index([categoryId])
   @@index([recipeId])
@@ -421,6 +423,7 @@ model Establishment {
   roles         Role[]
   cashRegisters CashRegister[]
   stockItems    StockItem[]
+  counterOrders CounterOrder[]
 
   @@index([cnpj])
   @@map("establishments")
@@ -740,4 +743,65 @@ model CMVProduct {
   @@index([periodId])
   @@index([productId])
   @@map("cmv_products")
+}
+
+// ============================================
+// Counter Orders (Pedidos Balcão) Models
+// ============================================
+
+enum CounterOrderStatus {
+  AGUARDANDO_PAGAMENTO
+  PENDENTE
+  PREPARANDO
+  PRONTO
+  ENTREGUE
+  CANCELADO
+}
+
+model CounterOrder {
+  id                 String             @id @default(uuid())
+  orderNumber        Int                @default(autoincrement())
+  customerName       String?            @db.VarChar(100)
+  status             CounterOrderStatus @default(AGUARDANDO_PAGAMENTO)
+  totalAmount        Decimal            @db.Decimal(10, 2)
+  notes              String?            @db.VarChar(500)
+  cancellationReason String?            @db.VarChar(200)
+  
+  // Timestamps
+  createdAt          DateTime           @default(now())
+  paidAt             DateTime?
+  startedAt          DateTime?
+  readyAt            DateTime?
+  deliveredAt        DateTime?
+  cancelledAt        DateTime?
+  
+  // Relações
+  items              CounterOrderItem[]
+  establishmentId    String
+  establishment      Establishment      @relation(fields: [establishmentId], references: [id])
+  createdById        String
+  createdBy          User               @relation(fields: [createdById], references: [id])
+  
+  @@unique([establishmentId, orderNumber])
+  @@index([establishmentId, status])
+  @@index([orderNumber])
+  @@index([createdAt])
+  @@map("counter_orders")
+}
+
+model CounterOrderItem {
+  id             String       @id @default(uuid())
+  quantity       Int
+  unitPrice      Decimal      @db.Decimal(10, 2)
+  totalPrice     Decimal      @db.Decimal(10, 2)
+  notes          String?      @db.VarChar(200)
+  
+  // Relações
+  counterOrderId String
+  counterOrder   CounterOrder @relation(fields: [counterOrderId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product      @relation(fields: [productId], references: [id])
+  
+  @@index([counterOrderId])
+  @@map("counter_order_items")
 }

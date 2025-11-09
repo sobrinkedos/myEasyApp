@@ -4,10 +4,17 @@ export interface Table {
   id: string;
   number: number;
   capacity: number;
-  status: 'available' | 'occupied' | 'reserved';
+  status: 'available' | 'occupied' | 'reserved' | 'cleaning';
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  // Campos relacionados à comanda (quando mesa está ocupada)
+  commandId?: string;
+  commandNumber?: string;
+  occupiedSince?: string;
+  totalAmount?: number;
+  // Campo para reserva
+  reservedFor?: string;
 }
 
 export interface CreateTableDTO {
