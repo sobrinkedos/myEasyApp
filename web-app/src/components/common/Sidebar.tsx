@@ -176,12 +176,12 @@ export function Sidebar({
     navigate('/auth/login');
   };
 
-  const sidebarWidth = collapsed ? 'w-20' : 'w-72';
+  const sidebarWidth = collapsed ? 'w-20' : 'w-64';
 
   const content = (
     <motion.div
       initial={false}
-      animate={{ width: collapsed ? 80 : 288 }}
+      animate={{ width: collapsed ? 80 : 256 }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
       className="flex flex-col h-full bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800"
     >
@@ -294,10 +294,10 @@ export function Sidebar({
 
         {/* Drawer */}
         <motion.aside
-          initial={{ x: -288 }}
-          animate={{ x: open ? 0 : -288 }}
+          initial={{ x: -256 }}
+          animate={{ x: open ? 0 : -256 }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
-          className="fixed inset-y-0 left-0 z-50 w-72 lg:hidden"
+          className="fixed inset-y-0 left-0 z-50 w-64 lg:hidden"
         >
           {content}
         </motion.aside>
