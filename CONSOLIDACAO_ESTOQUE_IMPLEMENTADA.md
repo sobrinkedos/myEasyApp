@@ -296,7 +296,9 @@ POST /api/v1/cmv/periods/:id/close
 ### Pendente
 - [ ] Criar testes unitários
 - [ ] Criar testes de integração
-- [ ] Implementar frontend
+- [x] Implementar frontend - Página de estoque consolidado
+- [ ] Atualizar página de conferência (adicionar checkboxes)
+- [ ] Atualizar dashboard de CMV (mostrar breakdown)
 - [ ] Atualizar documentação de usuário
 
 ---
@@ -422,3 +424,54 @@ Agora que o backend está 100% funcional, o próximo passo é criar as interface
 2. Visualizar estoque consolidado
 3. Ver breakdown de CMV por tipo
 4. Gerar relatórios consolidados
+
+
+---
+
+## 🎨 Atualização v1.2 - Frontend Iniciado!
+
+### Página de Estoque Consolidado Criada! ✅
+
+**Rota**: `/stock/consolidated`
+
+**Funcionalidades implementadas**:
+- ✅ Cards de resumo com métricas principais
+  - Total de itens
+  - Valor total do estoque
+  - Itens com estoque baixo
+  - Itens vencendo
+  
+- ✅ Filtros avançados
+  - Por tipo: Todos / Insumos / Revenda
+  - Por status: Normal / Baixo / Vencendo
+  - Busca por nome, código de barras ou SKU
+  
+- ✅ Breakdown por tipo
+  - Card de Insumos com quantidade e valor
+  - Card de Revenda com quantidade e valor
+  
+- ✅ Tabelas separadas
+  - Tabela de Insumos com todas as informações
+  - Tabela de Revenda com categoria
+  - Indicadores visuais de status (cores)
+  - Hover effects para melhor UX
+  
+- ✅ Empty state quando não há resultados
+
+**Como acessar**:
+```
+http://localhost:5173/stock/consolidated
+```
+
+**Screenshot das funcionalidades**:
+- Cards de resumo no topo
+- Filtros em linha
+- Breakdown de valores por tipo
+- Tabelas responsivas com dados completos
+- Status coloridos (verde/amarelo/vermelho)
+
+### Próximos passos do frontend:
+1. [ ] Atualizar AppraisalFormPage para incluir checkboxes de tipo
+2. [ ] Criar página de CMV com breakdown
+3. [ ] Adicionar link no menu de navegação
+4. [ ] Criar relatórios consolidados

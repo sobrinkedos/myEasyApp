@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/services/api';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@/hooks/useToast';
 import { Search, Package, AlertTriangle, Calendar } from 'lucide-react';
 
 interface ConsolidatedStockItem {
@@ -39,6 +39,7 @@ interface ConsolidatedStockData {
 }
 
 export function ConsolidatedStockPage() {
+  const { showToast } = useToast();
   const [data, setData] = useState<ConsolidatedStockData | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'ingredient' | 'stock_item'>('all');
@@ -66,7 +67,7 @@ export function ConsolidatedStockPage() {
       setData(response.data);
     } catch (error) {
       console.error('Erro ao carregar estoque:', error);
-      toast.error('Erro ao carregar estoque consolidado');
+      showToast('Erro ao carregar estoque consolidado', 'error');
     } finally {
       setLoading(false);
     }
@@ -86,7 +87,7 @@ export function ConsolidatedStockPage() {
       setData(response.data);
     } catch (error) {
       console.error('Erro ao buscar:', error);
-      toast.error('Erro ao buscar itens');
+      showToast('Erro ao buscar itens', 'error');
     } finally {
       setLoading(false);
     }
