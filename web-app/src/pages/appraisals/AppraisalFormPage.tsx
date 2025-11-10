@@ -10,10 +10,18 @@ export function AppraisalFormPage() {
     date: new Date().toISOString().split('T')[0],
     type: 'daily' as 'daily' | 'weekly' | 'monthly',
     notes: '',
+    includeIngredients: true,
+    includeStockItems: false,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validar que pelo menos um tipo foi selecionado
+    if (!formData.includeIngredients && !formData.includeStockItems) {
+      alert('Selecione pelo menos um tipo de item para conferir');
+      return;
+    }
     
     try {
       setLoading(true);
@@ -22,8 +30,11 @@ export function AppraisalFormPage() {
       const dateTime = new Date(formData.date + 'T00:00:00').toISOString();
       
       const payload = {
-        ...formData,
         date: dateTime,
+        type: formData.type,
+        notes: formData.notes,
+        includeIngredients: formData.includeIngredients,
+        includeStockItems: formData.includeStockItems,
       };
       
       const response = await api.post('/appraisals', payload);
@@ -91,6 +102,49 @@ export function AppraisalFormPage() {
           </p>
         </div>
 
+        {/* Tipos de Itens */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            Itens a Conferir *
+          </label>
+          <div className="space-y-3">
+            <label className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+              <input
+                type="checkbox"
+                checked={formData.includeIngredients}
+                onChange={(e) => setFormData({ ...formData, includeIngredients: e.target.checked })}
+                className="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+              />
+              <div className="flex-1">
+                <div className="font-medium text-gray-900">Insumos (Produção)</div>
+                <div className="text-sm text-gray-600">
+                  Ingredientes utilizados na produção de pratos e receitas
+                </div>
+              </div>
+            </label>
+
+            <label className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+              <input
+                type="checkbox"
+                checked={formData.includeStockItems}
+                onChange={(e) => setFormData({ ...formData, includeStockItems: e.target.checked })}
+                className="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+              />
+              <div className="flex-1">
+                <div className="font-medium text-gray-900">Itens de Revenda</div>
+                <div className="text-sm text-gray-600">
+                  Produtos vendidos diretamente sem manipulação
+                </div>
+              </div>
+            </label>
+          </div>
+          {!formData.includeIngredients && !formData.includeStockItems && (
+            <p className="text-sm text-red-600 mt-2">
+              ⚠️ Selecione pelo menos um tipo de item para conferir
+            </p>
+          )}
+        </div>
+
         {/* Observações */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -110,8 +164,14 @@ export function AppraisalFormPage() {
           <h3 className="text-sm font-medium text-blue-900 mb-2">ℹ️ Próximos Passos</h3>
           <ul className="text-sm text-blue-800 space-y-1">
             <li>• O sistema capturará automaticamente o estoque teórico atual</li>
+            {formData.includeIngredients && (
+              <li>• Insumos de produção serão incluídos na conferência</li>
+            )}
+            {formData.includeStockItems && (
+              <li>• Itens de revenda serão incluídos na conferência</li>
+            )}
             <li>• Você será direcionado para a tela de contagem</li>
-            <li>• Insira as quantidades físicas de cada ingrediente</li>
+            <li>• Insira as quantidades físicas de cada item</li>
             <li>• O sistema calculará as divergências automaticamente</li>
           </ul>
         </div>
