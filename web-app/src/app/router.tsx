@@ -43,6 +43,7 @@ import { StockFormPage } from '@/pages/stock/StockFormPage';
 import { StockDetailPage } from '@/pages/stock/StockDetailPage';
 import { StockBulkEntryPage } from '@/pages/stock/StockBulkEntryPage';
 import { StockLowStockPage } from '@/pages/stock/StockLowStockPage';
+import { ConsolidatedStockPage } from '@/pages/stock/ConsolidatedStockPage';
 
 // Appraisals
 import { AppraisalListPage } from '@/pages/appraisals/AppraisalListPage';
@@ -246,6 +247,10 @@ const router = createBrowserRouter([
           {
             path: 'low-stock',
             element: <StockLowStockPage />,
+          },
+          {
+            path: 'consolidated',
+            element: <ConsolidatedStockPage />,
           },
           {
             path: ':id',
