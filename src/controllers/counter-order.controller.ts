@@ -224,6 +224,7 @@ export class CounterOrderController {
       const { id } = req.params;
       const validatedData = UpdateCounterOrderStatusSchema.parse(req.body);
       const establishmentId = (req as any).user?.establishmentId;
+      const userId = (req as any).user?.userId || (req as any).user?.id;
 
       if (!establishmentId) {
         throw new ValidationError('Estabelecimento não identificado');
@@ -232,7 +233,8 @@ export class CounterOrderController {
       const order = await this.service.updateOrderStatus(
         id,
         validatedData.status,
-        establishmentId
+        establishmentId,
+        userId
       );
 
       res.status(200).json({

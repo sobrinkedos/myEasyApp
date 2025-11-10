@@ -115,17 +115,38 @@ export class OrderService {
     const stockCheck = await this.stockIntegrationService.checkStockAvailability(fullOrder);
 
     if (!stockCheck.success) {
+      // Montar mensagem de erro com ingredientes e stock items insuficientes
+      const insufficientMessages = [];
+      
+      if (stockCheck.insufficientItems.length > 0) {
+        insufficientMessages.push(
+          ...stockCheck.insufficientItems.map(
+            (item) => `${item.ingredientName} (disponível: ${item.available}, necessário: ${item.required})`
+          )
+        );
+      }
+      
+      if (stockCheck.insufficientStockItems.length > 0) {
+        insufficientMessages.push(
+          ...stockCheck.insufficientStockItems.map(
+            (item) => `${item.stockItemName} (disponível: ${item.available}, necessário: ${item.required})`
+          )
+        );
+      }
+
       // Cancel the order if stock is insufficient
       await this.repository.update(order.id, {
         status: 'cancelled',
         cancelledAt: new Date(),
-        cancellationReason: `Estoque insuficiente: ${stockCheck.insufficientItems
-          .map((item) => `${item.ingredientName} (disponível: ${item.available}, necessário: ${item.required})`)
-          .join(', ')}`,
+        cancellationReason: `Estoque insuficiente: ${insufficientMessages.join(', ')}`,
       });
 
-      const itemNames = stockCheck.insufficientItems.map((i) => i.ingredientName).join(', ');
-      throw new BadRequestError(`Estoque insuficiente para: ${itemNames}`);
+      const allInsufficientNames = [
+        ...stockCheck.insufficientItems.map((i) => i.ingredientName),
+        ...stockCheck.insufficientStockItems.map((i) => i.stockItemName),
+      ].join(', ');
+      
+      throw new BadRequestError(`Estoque insuficiente para: ${allInsufficientNames}`);
     }
 
     // Invalidate cache
@@ -166,8 +187,11 @@ export class OrderService {
       const stockResult = await this.stockIntegrationService.deductStockForOrder(order, userId);
 
       if (!stockResult.success) {
-        const itemNames = stockResult.insufficientItems.map((i) => i.ingredientName).join(', ');
-        throw new BadRequestError(`Estoque insuficiente para: ${itemNames}`);
+        const allInsufficientNames = [
+          ...stockResult.insufficientItems.map((i) => i.ingredientName),
+          ...stockResult.insufficientStockItems.map((i) => i.stockItemName),
+        ].join(', ');
+        throw new BadRequestError(`Estoque insuficiente para: ${allInsufficientNames}`);
       }
     }
 

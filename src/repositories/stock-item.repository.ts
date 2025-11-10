@@ -7,4 +7,11 @@ export class StockItemRepository {
       where: { id },
     });
   }
+
+  async updateQuantity(id: string, newQuantity: number): Promise<StockItem> {
+    return prisma.stockItem.update({
+      where: { id },
+      data: { currentQuantity: newQuantity },
+    });
+  }
 }

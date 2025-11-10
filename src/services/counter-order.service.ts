@@ -9,6 +9,7 @@ import { StockItemRepository } from '@/repositories/stock-item.repository';
 import { PaymentQueueService } from '@/services/payment-queue.service';
 import { KanbanIntegrationService } from '@/services/kanban-integration.service';
 import { CounterOrderNotificationService } from '@/services/counter-order-notification.service';
+import { StockIntegrationService } from '@/services/stock-integration.service';
 import {
   CounterOrderStatus,
   CounterOrderResponse,
@@ -64,7 +65,8 @@ export interface ICounterOrderService {
   updateOrderStatus(
     id: string,
     status: CounterOrderStatus,
-    establishmentId: string
+    establishmentId: string,
+    userId?: string
   ): Promise<CounterOrderResponse>;
   confirmPayment(
     id: string,
@@ -91,6 +93,7 @@ export class CounterOrderService implements ICounterOrderService {
   private paymentQueueService: PaymentQueueService;
   private kanbanService: KanbanIntegrationService;
   private notificationService: CounterOrderNotificationService;
+  private stockIntegrationService: StockIntegrationService;
 
   constructor() {
     this.repository = new CounterOrderRepository();
@@ -99,6 +102,7 @@ export class CounterOrderService implements ICounterOrderService {
     this.paymentQueueService = new PaymentQueueService();
     this.kanbanService = new KanbanIntegrationService();
     this.notificationService = new CounterOrderNotificationService();
+    this.stockIntegrationService = new StockIntegrationService();
   }
 
   /**
@@ -196,6 +200,43 @@ export class CounterOrderService implements ICounterOrderService {
 
       console.log('CounterOrderService - Pedido criado:', order.id);
 
+      // Verificar disponibilidade de estoque
+      const stockCheck = await this.stockIntegrationService.checkStockAvailability(order);
+
+      if (!stockCheck.success) {
+        // Montar mensagem de erro com ingredientes e stock items insuficientes
+        const insufficientMessages = [];
+        
+        if (stockCheck.insufficientItems.length > 0) {
+          insufficientMessages.push(
+            ...stockCheck.insufficientItems.map(
+              (item) => `${item.ingredientName} (disponível: ${item.available}, necessário: ${item.required})`
+            )
+          );
+        }
+        
+        if (stockCheck.insufficientStockItems.length > 0) {
+          insufficientMessages.push(
+            ...stockCheck.insufficientStockItems.map(
+              (item) => `${item.stockItemName} (disponível: ${item.available}, necessário: ${item.required})`
+            )
+          );
+        }
+
+        // Cancelar o pedido se estoque insuficiente
+        await this.repository.cancel(
+          order.id,
+          `Estoque insuficiente: ${insufficientMessages.join(', ')}`
+        );
+
+        const allInsufficientNames = [
+          ...stockCheck.insufficientItems.map((i) => i.ingredientName),
+          ...stockCheck.insufficientStockItems.map((i) => i.stockItemName),
+        ].join(', ');
+        
+        throw new BadRequestError(`Estoque insuficiente para: ${allInsufficientNames}`);
+      }
+
       // Enviar para fila de pagamento
       await this.paymentQueueService.addToPaymentQueue(order);
 
@@ -259,7 +300,8 @@ export class CounterOrderService implements ICounterOrderService {
   async updateOrderStatus(
     id: string,
     status: CounterOrderStatus,
-    establishmentId: string
+    establishmentId: string,
+    userId?: string
   ): Promise<CounterOrderResponse> {
     const order = await this.repository.findById(id, establishmentId);
 
@@ -270,6 +312,31 @@ export class CounterOrderService implements ICounterOrderService {
     // Validar transição de status
     if (!isValidStatusTransition(order.status, status)) {
       throw new InvalidStatusTransitionError(order.status, status);
+    }
+
+    // Deduzir estoque quando mudar para PREPARANDO
+    if (status === CounterOrderStatus.PREPARANDO && order.status === CounterOrderStatus.PENDENTE) {
+      if (!userId) {
+        throw new BadRequestError('userId é obrigatório para deduzir estoque');
+      }
+
+      console.log('CounterOrderService - Deduzindo estoque para pedido:', order.id);
+      
+      const stockResult = await this.stockIntegrationService.deductStockForOrder(order, userId);
+
+      if (!stockResult.success) {
+        const allInsufficientNames = [
+          ...stockResult.insufficientItems.map((i) => i.ingredientName),
+          ...stockResult.insufficientStockItems.map((i) => i.stockItemName),
+        ].join(', ');
+        throw new BadRequestError(`Estoque insuficiente para: ${allInsufficientNames}`);
+      }
+
+      console.log('CounterOrderService - Estoque deduzido com sucesso:', {
+        orderId: order.id,
+        ingredientsDeducted: stockResult.deductedItems.length,
+        stockItemsDeducted: stockResult.deductedStockItems.length,
+      });
     }
 
     const updatedOrder = await this.repository.updateStatus(id, status);

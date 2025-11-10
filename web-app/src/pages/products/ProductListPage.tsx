@@ -397,18 +397,6 @@ export function ProductListPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      icon={
-                        product.isActive ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )
-                      }
-                      onClick={() => handleToggleStatus(product)}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
                       icon={<Trash2 className="w-4 h-4" />}
                       onClick={() => handleDelete(product.id)}
                       className="text-error hover:bg-error/10"
