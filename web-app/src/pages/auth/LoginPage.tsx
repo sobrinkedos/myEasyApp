@@ -34,12 +34,10 @@ export function LoginPage() {
       console.log('⏳ Chamando função login...');
       await login({ email, password });
       console.log('✅ Login retornou com sucesso!');
+      console.log('🚀 Redirecionando para:', from);
       
-      // Pequeno delay para garantir que o estado foi atualizado
-      setTimeout(() => {
-        console.log('🚀 Navegando para:', from);
-        navigate(from, { replace: true });
-      }, 100);
+      // Usar window.location para garantir limpeza completa do estado
+      window.location.href = from;
     } catch (err: any) {
       console.error('❌ Erro capturado no handleSubmit:', err);
       setError(err.message || 'Erro ao fazer login');

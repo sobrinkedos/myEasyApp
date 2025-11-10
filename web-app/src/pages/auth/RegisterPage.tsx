@@ -186,13 +186,14 @@ export function RegisterPage() {
         console.log('🎉 Registro bem-sucedido!');
         console.log('🔑 Token:', response.data.data.token);
         
-        // Salvar token
+        // Salvar token e usuário
         localStorage.setItem('token', response.data.data.token);
-        console.log('💾 Token salvo no localStorage');
+        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        console.log('💾 Token e usuário salvos no localStorage');
         
-        // Redirecionar para dashboard
+        // Limpar histórico e redirecionar para dashboard
         console.log('🚀 Redirecionando para dashboard...');
-        navigate('/dashboard', { replace: true });
+        window.location.href = '/dashboard';
       } else {
         console.warn('⚠️ Resposta não indica sucesso:', response.data);
       }
