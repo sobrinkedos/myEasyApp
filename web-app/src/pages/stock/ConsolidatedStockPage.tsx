@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '@/services/api';
+import api from '@/services/api';
 import { useToast } from '@/hooks/useToast';
 import { Search, Package, AlertTriangle, Calendar } from 'lucide-react';
 
