@@ -81,3 +81,8 @@ export class AuthMiddleware {
     };
   };
 }
+
+// Export singleton instance for convenience
+const authMiddleware = new AuthMiddleware();
+export const authenticate = authMiddleware.authenticate;
+export const authorize = authMiddleware.authorize;
