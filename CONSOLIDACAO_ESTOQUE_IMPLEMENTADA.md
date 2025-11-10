@@ -297,8 +297,9 @@ POST /api/v1/cmv/periods/:id/close
 - [ ] Criar testes unitários
 - [ ] Criar testes de integração
 - [x] Implementar frontend - Página de estoque consolidado
-- [ ] Atualizar página de conferência (adicionar checkboxes)
+- [x] Atualizar página de conferência (adicionar checkboxes)
 - [ ] Atualizar dashboard de CMV (mostrar breakdown)
+- [ ] Adicionar link no menu de navegação
 - [ ] Atualizar documentação de usuário
 
 ---
@@ -475,3 +476,57 @@ http://localhost:5173/stock/consolidated
 2. [ ] Criar página de CMV com breakdown
 3. [ ] Adicionar link no menu de navegação
 4. [ ] Criar relatórios consolidados
+
+
+---
+
+## 🎨 Atualização v1.3 - AppraisalFormPage Atualizado! ✅
+
+### Seleção de Tipos de Itens Implementada!
+
+**Funcionalidades adicionadas**:
+- ✅ Checkboxes para selecionar tipos de itens
+  - Insumos (Produção)
+  - Itens de Revenda
+  
+- ✅ Validação de seleção
+  - Pelo menos um tipo deve ser selecionado
+  - Mensagem de erro visual se nenhum selecionado
+  
+- ✅ UI melhorada
+  - Cards clicáveis para cada opção
+  - Descrição clara de cada tipo
+  - Hover effects
+  
+- ✅ Feedback dinâmico
+  - Info box atualiza conforme seleção
+  - Mostra quais tipos serão incluídos
+  
+- ✅ Integração com API
+  - Envia `includeIngredients` e `includeStockItems`
+  - Backend processa corretamente
+
+**Como usar**:
+1. Acesse `/appraisals/new`
+2. Selecione a data e tipo de conferência
+3. Marque os tipos de itens desejados:
+   - ✅ Insumos (padrão: marcado)
+   - ☐ Itens de Revenda (padrão: desmarcado)
+4. Adicione observações (opcional)
+5. Clique em "Criar e Iniciar Contagem"
+
+**Resultado**:
+- Sistema captura estoque teórico dos tipos selecionados
+- Redireciona para tela de contagem
+- Itens aparecem separados por tipo
+
+### Status do Frontend: 35% ✅
+
+**Concluído**:
+- ✅ Página de Estoque Consolidado
+- ✅ AppraisalFormPage com seleção de tipos
+
+**Próximo**:
+- [ ] Atualizar AppraisalCountPage (mostrar tipo do item)
+- [ ] Criar CMV Dashboard com breakdown
+- [ ] Adicionar link no menu
