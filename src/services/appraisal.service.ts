@@ -21,7 +21,11 @@ export class AppraisalService {
     this.repository = new AppraisalRepository();
   }
 
-  async create(data: CreateAppraisalDTO): Promise<StockAppraisal> {
+  async create(data: CreateAppraisalDTO & {
+    includeIngredients?: boolean;
+    includeStockItems?: boolean;
+    establishmentId?: string;
+  }): Promise<StockAppraisal> {
     // Validate type
     if (!VALID_TYPES.includes(data.type)) {
       throw new ValidationError('Tipo de conferência inválido', {
@@ -38,11 +42,19 @@ export class AppraisalService {
       throw new NotFoundError('Usuário');
     }
 
+    // Default: include ingredients, exclude stock items
+    const includeIngredients = data.includeIngredients !== false;
+    const includeStockItems = data.includeStockItems === true;
+
     // Create appraisal
     const appraisal = await this.repository.create(data);
 
-    // Capture theoretical stock for all ingredients
-    await this.captureTheoreticalStock(appraisal.id);
+    // Capture theoretical stock
+    await this.captureTheoreticalStock(appraisal.id, {
+      includeIngredients,
+      includeStockItems,
+      establishmentId: data.establishmentId || user.establishmentId,
+    });
 
     return appraisal;
   }
@@ -112,7 +124,10 @@ export class AppraisalService {
     await this.repository.delete(id);
   }
 
-  async addItem(appraisalId: string, data: CreateAppraisalItemDTO): Promise<StockAppraisalItem> {
+  async addItem(appraisalId: string, data: CreateAppraisalItemDTO & {
+    itemType?: 'ingredient' | 'stock_item';
+    stockItemId?: string;
+  }): Promise<StockAppraisalItem> {
     // Check if appraisal exists
     const appraisal = await this.getById(appraisalId);
 
@@ -121,13 +136,33 @@ export class AppraisalService {
       throw new BusinessRuleError('Não é possível adicionar itens a uma conferência aprovada');
     }
 
-    // Validate ingredient exists
-    const ingredient = await prisma.ingredient.findUnique({
-      where: { id: data.ingredientId },
-    });
+    const itemType = data.itemType || 'ingredient';
 
-    if (!ingredient) {
-      throw new NotFoundError('Ingrediente');
+    // Validate item exists based on type
+    if (itemType === 'ingredient') {
+      if (!data.ingredientId) {
+        throw new ValidationError('ID do ingrediente é obrigatório');
+      }
+
+      const ingredient = await prisma.ingredient.findUnique({
+        where: { id: data.ingredientId },
+      });
+
+      if (!ingredient) {
+        throw new NotFoundError('Ingrediente');
+      }
+    } else if (itemType === 'stock_item') {
+      if (!data.stockItemId) {
+        throw new ValidationError('ID do item de estoque é obrigatório');
+      }
+
+      const stockItem = await prisma.stockItem.findUnique({
+        where: { id: data.stockItemId },
+      });
+
+      if (!stockItem) {
+        throw new NotFoundError('Item de estoque');
+      }
     }
 
     // Validate quantities
@@ -143,12 +178,15 @@ export class AppraisalService {
       });
     }
 
-    return this.repository.addItem(appraisalId, data);
+    return this.repository.addItem(appraisalId, {
+      ...data,
+      itemType,
+    });
   }
 
   async updateItem(
     appraisalId: string,
-    ingredientId: string,
+    itemId: string,
     data: UpdateAppraisalItemDTO
   ): Promise<StockAppraisalItem> {
     // Check if appraisal exists
@@ -166,10 +204,10 @@ export class AppraisalService {
       });
     }
 
-    return this.repository.updateItem(appraisalId, ingredientId, data);
+    return this.repository.updateItem(appraisalId, itemId, data);
   }
 
-  async removeItem(appraisalId: string, ingredientId: string): Promise<void> {
+  async removeItem(appraisalId: string, itemId: string): Promise<void> {
     // Check if appraisal exists
     const appraisal = await this.getById(appraisalId);
 
@@ -178,7 +216,7 @@ export class AppraisalService {
       throw new BusinessRuleError('Não é possível remover itens de uma conferência aprovada');
     }
 
-    await this.repository.removeItem(appraisalId, ingredientId);
+    await this.repository.removeItem(appraisalId, itemId);
   }
 
   calculateDivergence(
@@ -347,36 +385,80 @@ export class AppraisalService {
   private async adjustStock(appraisalId: string): Promise<void> {
     const items = await this.repository.findItemsByAppraisalId(appraisalId);
 
-    // Update each ingredient's current quantity to match physical quantity
+    // Update each item's current quantity to match physical quantity
     for (const item of items) {
       if (item.physicalQuantity !== null) {
-        await prisma.ingredient.update({
-          where: { id: item.ingredientId },
-          data: {
-            currentQuantity: item.physicalQuantity,
-          },
-        });
+        if (item.itemType === 'ingredient' && item.ingredientId) {
+          await prisma.ingredient.update({
+            where: { id: item.ingredientId },
+            data: {
+              currentQuantity: item.physicalQuantity,
+            },
+          });
+        } else if (item.itemType === 'stock_item' && item.stockItemId) {
+          await prisma.stockItem.update({
+            where: { id: item.stockItemId },
+            data: {
+              currentQuantity: item.physicalQuantity,
+            },
+          });
+        }
       }
     }
   }
 
-  private async captureTheoreticalStock(appraisalId: string): Promise<void> {
-    // Get all ingredients with current stock
-    const ingredients = await prisma.ingredient.findMany({
-      select: {
-        id: true,
-        currentQuantity: true,
-        averageCost: true,
-      },
-    });
+  private async captureTheoreticalStock(
+    appraisalId: string,
+    options: {
+      includeIngredients?: boolean;
+      includeStockItems?: boolean;
+      establishmentId?: string;
+    } = {}
+  ): Promise<void> {
+    const { includeIngredients = true, includeStockItems = false, establishmentId } = options;
 
-    // Add each ingredient as an item in the appraisal
-    for (const ingredient of ingredients) {
-      await this.repository.addItem(appraisalId, {
-        ingredientId: ingredient.id,
-        theoreticalQuantity: Number(ingredient.currentQuantity),
-        unitCost: Number(ingredient.averageCost),
+    // Capture ingredients
+    if (includeIngredients) {
+      const ingredients = await prisma.ingredient.findMany({
+        select: {
+          id: true,
+          currentQuantity: true,
+          averageCost: true,
+        },
       });
+
+      for (const ingredient of ingredients) {
+        await this.repository.addItem(appraisalId, {
+          ingredientId: ingredient.id,
+          itemType: 'ingredient',
+          theoreticalQuantity: Number(ingredient.currentQuantity),
+          unitCost: Number(ingredient.averageCost),
+        });
+      }
+    }
+
+    // Capture stock items
+    if (includeStockItems && establishmentId) {
+      const stockItems = await prisma.stockItem.findMany({
+        where: {
+          establishmentId,
+          isActive: true,
+        },
+        select: {
+          id: true,
+          currentQuantity: true,
+          costPrice: true,
+        },
+      });
+
+      for (const item of stockItems) {
+        await this.repository.addItem(appraisalId, {
+          stockItemId: item.id,
+          itemType: 'stock_item',
+          theoreticalQuantity: Number(item.currentQuantity),
+          unitCost: Number(item.costPrice),
+        });
+      }
     }
   }
 }

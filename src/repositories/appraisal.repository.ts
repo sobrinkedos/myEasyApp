@@ -29,7 +29,9 @@ export interface AppraisalFilters {
 }
 
 export interface CreateAppraisalItemDTO {
-  ingredientId: string;
+  ingredientId?: string;
+  stockItemId?: string;
+  itemType?: 'ingredient' | 'stock_item';
   theoreticalQuantity: number;
   unitCost: number;
 }
@@ -42,11 +44,16 @@ export interface UpdateAppraisalItemDTO {
 
 export type AppraisalWithItems = StockAppraisal & {
   items: (StockAppraisalItem & {
-    ingredient: {
+    ingredient?: {
       id: string;
       name: string;
       unit: string;
-    };
+    } | null;
+    stockItem?: {
+      id: string;
+      name: string;
+      unit: string;
+    } | null;
   })[];
   user: {
     id: string;
@@ -112,6 +119,13 @@ export class AppraisalRepository {
                 unit: true,
               },
             },
+            stockItem: {
+              select: {
+                id: true,
+                name: true,
+                unit: true,
+              },
+            },
           },
         },
         user: {
@@ -140,6 +154,13 @@ export class AppraisalRepository {
         items: {
           include: {
             ingredient: {
+              select: {
+                id: true,
+                name: true,
+                unit: true,
+              },
+            },
+            stockItem: {
               select: {
                 id: true,
                 name: true,
@@ -187,6 +208,8 @@ export class AppraisalRepository {
       data: {
         appraisalId,
         ingredientId: data.ingredientId,
+        stockItemId: data.stockItemId,
+        itemType: data.itemType || 'ingredient',
         theoreticalQuantity: data.theoreticalQuantity,
         unitCost: data.unitCost,
       },
@@ -195,17 +218,12 @@ export class AppraisalRepository {
 
   async updateItem(
     appraisalId: string,
-    ingredientId: string,
+    itemId: string,
     data: UpdateAppraisalItemDTO
   ): Promise<StockAppraisalItem> {
-    // Calculate difference and percentage if physicalQuantity is provided
+    // Find item by id
     const item = await prisma.stockAppraisalItem.findUnique({
-      where: {
-        appraisalId_ingredientId: {
-          appraisalId,
-          ingredientId,
-        },
-      },
+      where: { id: itemId },
     });
 
     if (!item) {
@@ -230,24 +248,14 @@ export class AppraisalRepository {
     }
 
     return prisma.stockAppraisalItem.update({
-      where: {
-        appraisalId_ingredientId: {
-          appraisalId,
-          ingredientId,
-        },
-      },
+      where: { id: itemId },
       data: updateData,
     });
   }
 
-  async removeItem(appraisalId: string, ingredientId: string): Promise<void> {
+  async removeItem(appraisalId: string, itemId: string): Promise<void> {
     await prisma.stockAppraisalItem.delete({
-      where: {
-        appraisalId_ingredientId: {
-          appraisalId,
-          ingredientId,
-        },
-      },
+      where: { id: itemId },
     });
   }
 

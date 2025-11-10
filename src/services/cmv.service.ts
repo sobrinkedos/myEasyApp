@@ -679,4 +679,171 @@ export class CMVService {
 
     return Number(lastAppraisal.totalPhysical);
   }
+
+  /**
+   * Calculate consolidated CMV (Ingredients + Stock Items)
+   */
+  async calculateConsolidatedCMV(periodId: string, establishmentId: string): Promise<{
+    ingredients: {
+      openingStock: number;
+      purchases: number;
+      closingStock: number;
+      cmv: number;
+      cmvPercentage: number;
+    };
+    stockItems: {
+      openingStock: number;
+      purchases: number;
+      closingStock: number;
+      cmv: number;
+      cmvPercentage: number;
+    };
+    consolidated: {
+      openingStock: number;
+      purchases: number;
+      closingStock: number;
+      cmv: number;
+      revenue: number;
+      cmvPercentage: number;
+      grossMargin: number;
+      grossMarginPercentage: number;
+    };
+  }> {
+    const period = await this.getById(periodId);
+
+    // Calculate ingredients CMV (existing logic)
+    const ingredientsOpeningStock = await this.captureOpeningStockIngredients();
+    const ingredientsPurchases = await this.capturePurchasesFromTransactions(periodId);
+    const ingredientsClosingStock = await this.captureClosingStockIngredients();
+    const ingredientsCMV = ingredientsOpeningStock + ingredientsPurchases - ingredientsClosingStock;
+
+    // Calculate stock items CMV
+    const stockItemsOpeningStock = await this.captureOpeningStockItems(establishmentId);
+    const stockItemsPurchases = await this.captureStockItemsPurchases(periodId, establishmentId);
+    const stockItemsClosingStock = await this.captureClosingStockItems(establishmentId);
+    const stockItemsCMV = stockItemsOpeningStock + stockItemsPurchases - stockItemsClosingStock;
+
+    // Calculate consolidated values
+    const consolidatedOpeningStock = ingredientsOpeningStock + stockItemsOpeningStock;
+    const consolidatedPurchases = ingredientsPurchases + stockItemsPurchases;
+    const consolidatedClosingStock = ingredientsClosingStock + stockItemsClosingStock;
+    const consolidatedCMV = ingredientsCMV + stockItemsCMV;
+
+    // Get revenue
+    const revenue = await this.calculateRevenue(periodId);
+
+    // Calculate percentages
+    const ingredientsCMVPercentage = revenue > 0 ? (ingredientsCMV / revenue) * 100 : 0;
+    const stockItemsCMVPercentage = revenue > 0 ? (stockItemsCMV / revenue) * 100 : 0;
+    const consolidatedCMVPercentage = revenue > 0 ? (consolidatedCMV / revenue) * 100 : 0;
+    const grossMargin = revenue - consolidatedCMV;
+    const grossMarginPercentage = revenue > 0 ? (grossMargin / revenue) * 100 : 0;
+
+    // Update period with consolidated values
+    await this.repository.update(periodId, {
+      openingStockIngredients: ingredientsOpeningStock,
+      openingStockItems: stockItemsOpeningStock,
+      openingStock: consolidatedOpeningStock,
+      purchasesIngredients: ingredientsPurchases,
+      purchasesStockItems: stockItemsPurchases,
+      purchases: consolidatedPurchases,
+      closingStockIngredients: ingredientsClosingStock,
+      closingStockItems: stockItemsClosingStock,
+      closingStock: consolidatedClosingStock,
+      cmvIngredients: ingredientsCMV,
+      cmvStockItems: stockItemsCMV,
+      cmv: consolidatedCMV,
+      revenue,
+      cmvPercentage: consolidatedCMVPercentage,
+    });
+
+    return {
+      ingredients: {
+        openingStock: ingredientsOpeningStock,
+        purchases: ingredientsPurchases,
+        closingStock: ingredientsClosingStock,
+        cmv: ingredientsCMV,
+        cmvPercentage: ingredientsCMVPercentage,
+      },
+      stockItems: {
+        openingStock: stockItemsOpeningStock,
+        purchases: stockItemsPurchases,
+        closingStock: stockItemsClosingStock,
+        cmv: stockItemsCMV,
+        cmvPercentage: stockItemsCMVPercentage,
+      },
+      consolidated: {
+        openingStock: consolidatedOpeningStock,
+        purchases: consolidatedPurchases,
+        closingStock: consolidatedClosingStock,
+        cmv: consolidatedCMV,
+        revenue,
+        cmvPercentage: consolidatedCMVPercentage,
+        grossMargin,
+        grossMarginPercentage,
+      },
+    };
+  }
+
+  private async captureOpeningStockIngredients(): Promise<number> {
+    const ingredients = await prisma.ingredient.findMany({
+      select: {
+        currentQuantity: true,
+        averageCost: true,
+      },
+    });
+
+    return ingredients.reduce((sum, ingredient) => {
+      return sum + Number(ingredient.currentQuantity) * Number(ingredient.averageCost);
+    }, 0);
+  }
+
+  private async captureClosingStockIngredients(): Promise<number> {
+    return this.captureOpeningStockIngredients();
+  }
+
+  private async captureOpeningStockItems(establishmentId: string): Promise<number> {
+    const stockItems = await prisma.stockItem.findMany({
+      where: { establishmentId, isActive: true },
+      select: {
+        currentQuantity: true,
+        costPrice: true,
+      },
+    });
+
+    return stockItems.reduce((sum, item) => {
+      return sum + Number(item.currentQuantity) * Number(item.costPrice);
+    }, 0);
+  }
+
+  private async captureClosingStockItems(establishmentId: string): Promise<number> {
+    return this.captureOpeningStockItems(establishmentId);
+  }
+
+  private async captureStockItemsPurchases(
+    periodId: string,
+    establishmentId: string
+  ): Promise<number> {
+    const period = await this.getById(periodId);
+
+    const movements = await prisma.stockMovement.findMany({
+      where: {
+        type: 'entrada',
+        createdAt: {
+          gte: period.startDate,
+          lte: period.endDate,
+        },
+        stockItem: {
+          establishmentId,
+        },
+      },
+      select: {
+        totalCost: true,
+      },
+    });
+
+    return movements.reduce((sum, movement) => {
+      return sum + (movement.totalCost ? Number(movement.totalCost) : 0);
+    }, 0);
+  }
 }
