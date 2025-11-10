@@ -4,7 +4,10 @@ import { ArrowLeft, Save, Search, AlertTriangle, CheckCircle } from 'lucide-reac
 import api from '@/services/api';
 
 interface AppraisalItem {
-  ingredientId: string;
+  id: string;
+  ingredientId?: string;
+  stockItemId?: string;
+  itemType: 'ingredient' | 'stock_item';
   theoreticalQuantity: number;
   physicalQuantity: number;
   difference: number;
@@ -13,11 +16,16 @@ interface AppraisalItem {
   totalDifference: number;
   reason?: string;
   notes?: string;
-  ingredient: {
+  ingredient?: {
     id: string;
     name: string;
     unit: string;
     currentStock: number;
+  };
+  stockItem?: {
+    id: string;
+    name: string;
+    unit: string;
   };
 }
 
@@ -58,10 +66,11 @@ export function AppraisalCountPage() {
         differencePercentage: Number(item.differencePercentage || 0),
         unitCost: Number(item.unitCost),
         totalDifference: Number(item.totalDifference || 0),
-        ingredient: {
+        ingredient: item.ingredient ? {
           ...item.ingredient,
-          currentStock: Number(item.ingredient.currentStock),
-        },
+          currentStock: Number(item.ingredient.currentStock || 0),
+        } : undefined,
+        stockItem: item.stockItem || undefined,
       }));
       
       setAppraisal(data);
@@ -75,11 +84,11 @@ export function AppraisalCountPage() {
     }
   };
 
-  const handlePhysicalQuantityChange = async (ingredientId: string, value: string) => {
+  const handlePhysicalQuantityChange = async (itemId: string, value: string) => {
     const physicalQuantity = parseFloat(value) || 0;
     
     const updatedItems = items.map(item => {
-      if (item.ingredientId === ingredientId) {
+      if (item.id === itemId) {
         const difference = physicalQuantity - item.theoreticalQuantity;
         const differencePercentage = item.theoreticalQuantity > 0
           ? (difference / item.theoreticalQuantity) * 100
@@ -101,7 +110,7 @@ export function AppraisalCountPage() {
 
     // Auto-save
     try {
-      await api.put(`/appraisals/${id}/items/${ingredientId}`, {
+      await api.put(`/appraisals/${id}/items/${itemId}`, {
         physicalQuantity,
       });
     } catch (error) {
@@ -109,14 +118,14 @@ export function AppraisalCountPage() {
     }
   };
 
-  const handleReasonChange = async (ingredientId: string, reason: string) => {
+  const handleReasonChange = async (itemId: string, reason: string) => {
     const updatedItems = items.map(item =>
-      item.ingredientId === ingredientId ? { ...item, reason } : item
+      item.id === itemId ? { ...item, reason } : item
     );
     setItems(updatedItems);
 
     try {
-      await api.put(`/appraisals/${id}/items/${ingredientId}`, { reason });
+      await api.put(`/appraisals/${id}/items/${itemId}`, { reason });
     } catch (error) {
       console.error('Erro ao salvar motivo:', error);
     }
@@ -160,9 +169,21 @@ export function AppraisalCountPage() {
     }).format(value);
   };
 
+  const getItemName = (item: AppraisalItem) => {
+    return item.ingredient?.name || item.stockItem?.name || '';
+  };
+
+  const getItemUnit = (item: AppraisalItem) => {
+    return item.ingredient?.unit || item.stockItem?.unit || '';
+  };
+
   const filteredItems = items.filter(item =>
-    item.ingredient.name.toLowerCase().includes(searchTerm.toLowerCase())
+    getItemName(item).toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Separar itens por tipo
+  const ingredientItems = filteredItems.filter(i => i.itemType === 'ingredient');
+  const stockItemItems = filteredItems.filter(i => i.itemType === 'stock_item');
 
   const stats = {
     total: items.length,
@@ -253,76 +274,161 @@ export function AppraisalCountPage() {
         </div>
       </div>
 
-      {/* Items List */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ingrediente</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Teórico</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Físico</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Divergência</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Valor</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Motivo</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredItems.map((item) => (
-                <tr key={item.ingredientId} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <div>
-                      <p className="font-medium text-gray-900">{item.ingredient.name}</p>
-                      <p className="text-sm text-gray-500">{item.ingredient.unit}</p>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="text-gray-900">{item.theoreticalQuantity.toFixed(2)}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={item.physicalQuantity || ''}
-                      onChange={(e) => handlePhysicalQuantityChange(item.ingredientId, e.target.value)}
-                      placeholder="0.00"
-                      className="w-24 px-2 py-1 text-right border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    />
-                  </td>
-                  <td className="px-4 py-3">
-                    {item.physicalQuantity > 0 && (
-                      <div className={`inline-flex items-center gap-2 px-2 py-1 rounded ${getDivergenceColor(item.differencePercentage)}`}>
-                        <span>{getDivergenceIcon(item.differencePercentage)}</span>
-                        <span className="font-medium">
-                          {item.differencePercentage >= 0 ? '+' : ''}{item.differencePercentage.toFixed(1)}%
-                        </span>
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {item.physicalQuantity > 0 && (
-                      <span className={`font-medium ${item.totalDifference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {item.totalDifference >= 0 ? '+' : ''}{formatCurrency(item.totalDifference)}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {Math.abs(item.differencePercentage) > 10 && (
-                      <input
-                        type="text"
-                        value={item.reason || ''}
-                        onChange={(e) => handleReasonChange(item.ingredientId, e.target.value)}
-                        placeholder="Motivo da divergência..."
-                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      />
-                    )}
-                  </td>
+      {/* Items List - Insumos */}
+      {ingredientItems.length > 0 && (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-6 py-4 bg-blue-50 border-b border-blue-200">
+            <h2 className="text-lg font-semibold text-blue-900">
+              Insumos (Produção) - {ingredientItems.length} itens
+            </h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Teórico</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Físico</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Divergência</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Valor</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Motivo</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {ingredientItems.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <div>
+                        <p className="font-medium text-gray-900">{getItemName(item)}</p>
+                        <p className="text-sm text-gray-500">{getItemUnit(item)}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="text-gray-900">{item.theoreticalQuantity.toFixed(2)}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={item.physicalQuantity || ''}
+                        onChange={(e) => handlePhysicalQuantityChange(item.id, e.target.value)}
+                        placeholder="0.00"
+                        className="w-24 px-2 py-1 text-right border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      {item.physicalQuantity > 0 && (
+                        <div className={`inline-flex items-center gap-2 px-2 py-1 rounded ${getDivergenceColor(item.differencePercentage)}`}>
+                          <span>{getDivergenceIcon(item.differencePercentage)}</span>
+                          <span className="font-medium">
+                            {item.differencePercentage >= 0 ? '+' : ''}{item.differencePercentage.toFixed(1)}%
+                          </span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {item.physicalQuantity > 0 && (
+                        <span className={`font-medium ${item.totalDifference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {item.totalDifference >= 0 ? '+' : ''}{formatCurrency(item.totalDifference)}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {Math.abs(item.differencePercentage) > 10 && (
+                        <input
+                          type="text"
+                          value={item.reason || ''}
+                          onChange={(e) => handleReasonChange(item.id, e.target.value)}
+                          placeholder="Motivo da divergência..."
+                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        />
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Items List - Revenda */}
+      {stockItemItems.length > 0 && (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-6 py-4 bg-green-50 border-b border-green-200">
+            <h2 className="text-lg font-semibold text-green-900">
+              Itens de Revenda - {stockItemItems.length} itens
+            </h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Teórico</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Físico</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Divergência</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Valor</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Motivo</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {stockItemItems.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <div>
+                        <p className="font-medium text-gray-900">{getItemName(item)}</p>
+                        <p className="text-sm text-gray-500">{getItemUnit(item)}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="text-gray-900">{item.theoreticalQuantity.toFixed(2)}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={item.physicalQuantity || ''}
+                        onChange={(e) => handlePhysicalQuantityChange(item.id, e.target.value)}
+                        placeholder="0.00"
+                        className="w-24 px-2 py-1 text-right border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      {item.physicalQuantity > 0 && (
+                        <div className={`inline-flex items-center gap-2 px-2 py-1 rounded ${getDivergenceColor(item.differencePercentage)}`}>
+                          <span>{getDivergenceIcon(item.differencePercentage)}</span>
+                          <span className="font-medium">
+                            {item.differencePercentage >= 0 ? '+' : ''}{item.differencePercentage.toFixed(1)}%
+                          </span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {item.physicalQuantity > 0 && (
+                        <span className={`font-medium ${item.totalDifference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {item.totalDifference >= 0 ? '+' : ''}{formatCurrency(item.totalDifference)}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {Math.abs(item.differencePercentage) > 10 && (
+                        <input
+                          type="text"
+                          value={item.reason || ''}
+                          onChange={(e) => handleReasonChange(item.id, e.target.value)}
+                          placeholder="Motivo da divergência..."
+                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        />
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Warning */}
       {stats.critical > 0 && (
