@@ -288,11 +288,14 @@ POST /api/v1/cmv/periods/:id/close
 - [x] Criar rotas consolidadas
 - [x] Registrar rotas no app
 - [x] Documentar solução
+- [x] Atualizar AppraisalService
+- [x] Atualizar AppraisalRepository
+- [x] Atualizar CMVService com cálculo consolidado
+- [x] Adicionar métodos para capturar estoque por tipo
 
 ### Pendente
-- [ ] Atualizar AppraisalService
-- [ ] Atualizar CMVService
-- [ ] Criar testes
+- [ ] Criar testes unitários
+- [ ] Criar testes de integração
 - [ ] Implementar frontend
 - [ ] Atualizar documentação de usuário
 
@@ -330,5 +333,92 @@ POST /api/v1/cmv/periods/:id/close
 ---
 
 **Data de implementação**: 10/11/2025  
-**Versão**: 1.0  
-**Status**: Backend implementado, frontend pendente
+**Última atualização**: 10/11/2025  
+**Versão**: 1.1  
+**Status**: Backend 100% implementado, frontend pendente
+
+---
+
+## 🎉 Atualização v1.1 - Backend Completo!
+
+### O que foi adicionado:
+
+#### AppraisalService
+✅ Suporte para incluir StockItems em conferências  
+✅ Opções `includeIngredients` e `includeStockItems` ao criar conferência  
+✅ Ajuste automático de estoque para ambos os tipos  
+✅ Validação de itens por tipo (ingredient ou stock_item)  
+
+#### AppraisalRepository
+✅ Atualizado para trabalhar com `itemId` ao invés de `ingredientId`  
+✅ Suporte para relações com StockItem  
+✅ Inclusão de stockItem nos includes  
+
+#### CMVService
+✅ Método `calculateConsolidatedCMV()` implementado  
+✅ Cálculo separado de CMV para Ingredients e StockItems  
+✅ Atualização automática do período com valores consolidados  
+✅ Métodos auxiliares para capturar estoque e compras por tipo  
+
+### Como usar agora:
+
+#### 1. Criar conferência incluindo ambos os tipos
+
+```typescript
+POST /api/v1/appraisals
+{
+  "date": "2025-11-30",
+  "type": "monthly",
+  "userId": "user-uuid",
+  "includeIngredients": true,
+  "includeStockItems": true,  // ← Novo!
+  "establishmentId": "establishment-uuid"
+}
+```
+
+#### 2. Calcular CMV consolidado
+
+```typescript
+// No controller ou service
+const cmvService = new CMVService();
+const consolidatedCMV = await cmvService.calculateConsolidatedCMV(
+  periodId,
+  establishmentId
+);
+
+// Retorna:
+{
+  ingredients: {
+    openingStock: 12350.00,
+    purchases: 8500.00,
+    closingStock: 11200.00,
+    cmv: 9650.00,
+    cmvPercentage: 32.5
+  },
+  stockItems: {
+    openingStock: 3070.50,
+    purchases: 2400.00,
+    closingStock: 2800.00,
+    cmv: 2670.50,
+    cmvPercentage: 9.0
+  },
+  consolidated: {
+    openingStock: 15420.50,
+    purchases: 10900.00,
+    closingStock: 14000.00,
+    cmv: 12320.50,
+    revenue: 29700.00,
+    cmvPercentage: 41.5,
+    grossMargin: 17379.50,
+    grossMarginPercentage: 58.5
+  }
+}
+```
+
+### Próximo passo: Frontend
+
+Agora que o backend está 100% funcional, o próximo passo é criar as interfaces no frontend para:
+1. Selecionar tipos de itens ao criar conferência
+2. Visualizar estoque consolidado
+3. Ver breakdown de CMV por tipo
+4. Gerar relatórios consolidados
