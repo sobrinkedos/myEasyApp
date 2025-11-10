@@ -530,3 +530,59 @@ http://localhost:5173/stock/consolidated
 - [ ] Atualizar AppraisalCountPage (mostrar tipo do item)
 - [ ] Criar CMV Dashboard com breakdown
 - [ ] Adicionar link no menu
+
+
+---
+
+## 🎨 Atualização v1.4 - AppraisalCountPage Atualizado! ✅
+
+### Contagem com Suporte a Tipos Implementada!
+
+**Funcionalidades adicionadas**:
+- ✅ Suporte completo para ambos os tipos de itens
+  - Insumos (ingredient)
+  - Itens de Revenda (stock_item)
+  
+- ✅ Tabelas separadas por tipo
+  - Header azul para Insumos
+  - Header verde para Revenda
+  - Contador de itens por tipo
+  
+- ✅ Funções auxiliares
+  - `getItemName()` - Nome do item independente do tipo
+  - `getItemUnit()` - Unidade do item independente do tipo
+  
+- ✅ Atualização de IDs
+  - Usa `item.id` ao invés de `ingredientId`
+  - Compatível com novo schema
+  
+- ✅ Interface melhorada
+  - Separação visual clara
+  - Cores distintas por tipo
+  - Mesma funcionalidade para ambos
+
+**Como funciona**:
+1. Crie uma conferência com tipos selecionados
+2. Sistema captura itens dos tipos escolhidos
+3. Página de contagem mostra tabelas separadas
+4. Insira quantidades físicas
+5. Sistema calcula divergências
+6. Complete a conferência
+
+**Resultado**:
+- Visualização clara por tipo
+- Contagem organizada
+- Divergências calculadas corretamente
+- Salvamento automático
+
+### Status do Frontend: 45% ✅
+
+**Concluído**:
+- ✅ Página de Estoque Consolidado
+- ✅ AppraisalFormPage com seleção de tipos
+- ✅ AppraisalCountPage com suporte a tipos
+
+**Próximo**:
+- [ ] Criar CMV Dashboard com breakdown
+- [ ] Adicionar link no menu de navegação
+- [ ] Atualizar AppraisalReviewPage
