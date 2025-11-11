@@ -11,7 +11,6 @@
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "test:e2e": "jest --config jest.e2e.config.js",
-    
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "db:migrate": "node scripts/check-environment.js migrate && prisma migrate dev",
@@ -20,16 +19,13 @@
     "db:seed": "node scripts/check-environment.js seed && ts-node prisma/seed.ts",
     "db:backup": "node scripts/backup-database.js",
     "db:backup:list": "node scripts/backup-database.js list",
-    
     "migrate:deploy": "prisma migrate deploy",
     "migrate:status": "prisma migrate status",
-    
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:prod": "prisma migrate deploy",
     "prisma:seed": "ts-node prisma/seed.ts",
     "prisma:studio": "prisma studio",
-    
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\""
@@ -45,6 +41,7 @@
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^5.7.0",
+    "axios": "^1.13.2",
     "bcrypt": "^5.1.1",
     "compression": "^1.7.4",
     "cors": "^2.8.5",

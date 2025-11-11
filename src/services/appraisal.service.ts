@@ -321,8 +321,16 @@ export class AppraisalService {
     const items = await this.repository.findItemsByAppraisalId(appraisalId);
 
     // Validate that all items have been counted
-    const uncountedItems = items.filter((item) => item.physicalQuantity === null);
+    // physicalQuantity can be 0 (zero), but cannot be null or undefined
+    const uncountedItems = items.filter((item) => item.physicalQuantity === null || item.physicalQuantity === undefined);
     if (uncountedItems.length > 0) {
+      // Log uncounted items for debugging
+      console.log('Uncounted items:', uncountedItems.map(i => ({
+        id: i.id,
+        name: i.ingredient?.name || i.stockItem?.name || 'Unknown',
+        physicalQuantity: i.physicalQuantity,
+      })));
+      
       throw new BusinessRuleError(
         `Existem ${uncountedItems.length} itens não contados. Todos os itens devem ser contados antes de completar a conferência.`
       );

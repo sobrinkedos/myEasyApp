@@ -32,12 +32,16 @@ export class AppraisalController {
       }
 
       const userId = req.user!.userId;
+      const establishmentId = req.user!.establishmentId;
 
       const appraisal = await this.service.create({
         date: new Date(validation.data.date),
         type: validation.data.type,
         userId,
         notes: validation.data.notes,
+        includeIngredients: validation.data.includeIngredients,
+        includeStockItems: validation.data.includeStockItems,
+        establishmentId,
       });
 
       res.status(201).json({

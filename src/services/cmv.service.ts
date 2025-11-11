@@ -239,12 +239,25 @@ export class CMVService {
             averageCost: true,
           },
         },
+        stockItem: {
+          select: {
+            costPrice: true,
+          },
+        },
       },
     });
 
     // Calculate total purchase value
     const totalPurchases = transactions.reduce((sum, transaction) => {
-      const value = Number(transaction.quantity) * Number(transaction.ingredient.averageCost);
+      let unitCost = 0;
+      
+      if (transaction.ingredient) {
+        unitCost = Number(transaction.ingredient.averageCost);
+      } else if (transaction.stockItem) {
+        unitCost = Number(transaction.stockItem.costPrice);
+      }
+      
+      const value = Number(transaction.quantity) * unitCost;
       return sum + value;
     }, 0);
 
@@ -254,8 +267,9 @@ export class CMVService {
   async getPurchaseHistory(periodId: string): Promise<{
     transactions: Array<{
       id: string;
-      ingredientId: string;
-      ingredientName: string;
+      ingredientId?: string;
+      stockItemId?: string;
+      itemName: string;
       quantity: number;
       unitCost: number;
       totalCost: number;
@@ -283,20 +297,41 @@ export class CMVService {
             averageCost: true,
           },
         },
+        stockItem: {
+          select: {
+            id: true,
+            name: true,
+            costPrice: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
 
     // Map transactions to response format
-    const mappedTransactions = transactions.map((transaction) => ({
-      id: transaction.id,
-      ingredientId: transaction.ingredient.id,
-      ingredientName: transaction.ingredient.name,
-      quantity: Number(transaction.quantity),
-      unitCost: Number(transaction.ingredient.averageCost),
-      totalCost: Number(transaction.quantity) * Number(transaction.ingredient.averageCost),
-      date: transaction.createdAt,
-    }));
+    const mappedTransactions = transactions.map((transaction) => {
+      let itemName = '';
+      let unitCost = 0;
+      
+      if (transaction.ingredient) {
+        itemName = transaction.ingredient.name;
+        unitCost = Number(transaction.ingredient.averageCost);
+      } else if (transaction.stockItem) {
+        itemName = transaction.stockItem.name;
+        unitCost = Number(transaction.stockItem.costPrice);
+      }
+      
+      return {
+        id: transaction.id,
+        ingredientId: transaction.ingredientId || undefined,
+        stockItemId: transaction.stockItemId || undefined,
+        itemName,
+        quantity: Number(transaction.quantity),
+        unitCost,
+        totalCost: Number(transaction.quantity) * unitCost,
+        date: transaction.createdAt,
+      };
+    });
 
     // Calculate total purchases
     const totalPurchases = mappedTransactions.reduce((sum, transaction) => {
@@ -483,43 +518,50 @@ export class CMVService {
   }
 
   async saveProductCMV(periodId: string): Promise<void> {
-    // Calculate product CMV
-    const products = await this.calculateProductCMV(periodId);
+    try {
+      // Calculate product CMV
+      console.log('[CMV] Calculando CMV por produto...');
+      const products = await this.calculateProductCMV(periodId);
+      console.log(`[CMV] ${products.length} produtos calculados`);
 
-    // Save each product to the database
-    for (const product of products) {
-      // Check if product already exists for this period
-      const existing = await prisma.cMVProduct.findUnique({
-        where: {
-          periodId_productId: {
-            periodId,
-            productId: product.productId,
+      // Save each product to the database
+      for (const product of products) {
+        // Check if product already exists for this period
+        const existing = await prisma.cMVProduct.findUnique({
+          where: {
+            periodId_productId: {
+              periodId,
+              productId: product.productId,
+            },
           },
-        },
-      });
+        });
 
-      if (existing) {
-        // Update existing
-        await this.repository.updateProduct(periodId, product.productId, {
-          quantitySold: product.quantitySold,
-          revenue: product.revenue,
-          cost: product.cost,
-          cmv: product.cmv,
-          margin: product.margin,
-          marginPercentage: product.marginPercentage,
-        });
-      } else {
-        // Create new
-        await this.repository.addProduct(periodId, {
-          productId: product.productId,
-          quantitySold: product.quantitySold,
-          revenue: product.revenue,
-          cost: product.cost,
-          cmv: product.cmv,
-          margin: product.margin,
-          marginPercentage: product.marginPercentage,
-        });
+        if (existing) {
+          // Update existing
+          await this.repository.updateProduct(periodId, product.productId, {
+            quantitySold: product.quantitySold,
+            revenue: product.revenue,
+            cost: product.cost,
+            cmv: product.cmv,
+            margin: product.margin,
+            marginPercentage: product.marginPercentage,
+          });
+        } else {
+          // Create new
+          await this.repository.addProduct(periodId, {
+            productId: product.productId,
+            quantitySold: product.quantitySold,
+            revenue: product.revenue,
+            cost: product.cost,
+            cmv: product.cmv,
+            margin: product.margin,
+            marginPercentage: product.marginPercentage,
+          });
+        }
       }
+    } catch (error) {
+      console.error('[CMV] Erro em saveProductCMV:', error);
+      throw error;
     }
   }
 
@@ -549,80 +591,109 @@ export class CMVService {
   }
 
   async closePeriod(periodId: string, closingAppraisalId?: string): Promise<CMVPeriod> {
-    // Get period
-    const period = await this.getById(periodId);
+    try {
+      console.log('[CMV] Iniciando fechamento do período:', periodId);
+      
+      // Get period
+      const period = await this.getById(periodId);
+      console.log('[CMV] Período encontrado:', period.id);
 
-    // Validate that period is open
-    if (period.status !== 'open') {
-      throw new BusinessRuleError('Apenas períodos abertos podem ser fechados');
-    }
-
-    // Get closing stock from appraisal or calculate current stock
-    let closingStock: number;
-
-    if (closingAppraisalId) {
-      // Validate that appraisal exists and is approved
-      const appraisal = await prisma.stockAppraisal.findUnique({
-        where: { id: closingAppraisalId },
-      });
-
-      if (!appraisal) {
-        throw new NotFoundError('Conferência de estoque');
+      // Validate that period is open
+      if (period.status !== 'open') {
+        throw new BusinessRuleError('Apenas períodos abertos podem ser fechados');
       }
 
-      if (appraisal.status !== 'approved') {
-        throw new BusinessRuleError(
-          'Conferência de estoque deve estar aprovada para fechar o período'
-        );
-      }
+      // Get closing stock from appraisal or calculate current stock
+      let closingStock: number;
 
-      closingStock = Number(appraisal.totalPhysical);
-    } else {
-      // Find the most recent approved appraisal
-      const lastAppraisal = await prisma.stockAppraisal.findFirst({
-        where: { 
-          status: 'approved',
-          approvedAt: {
-            gte: period.startDate,
-            lte: period.endDate,
+      if (closingAppraisalId) {
+        console.log('[CMV] Buscando conferência de fechamento:', closingAppraisalId);
+        
+        // Validate that appraisal exists and is approved
+        const appraisal = await prisma.stockAppraisal.findUnique({
+          where: { id: closingAppraisalId },
+        });
+
+        if (!appraisal) {
+          throw new NotFoundError('Conferência de estoque');
+        }
+
+        if (appraisal.status !== 'approved') {
+          throw new BusinessRuleError(
+            'Conferência de estoque deve estar aprovada para fechar o período'
+          );
+        }
+
+        closingStock = Number(appraisal.totalPhysical);
+        console.log('[CMV] Estoque de fechamento:', closingStock);
+      } else {
+        console.log('[CMV] Buscando última conferência aprovada no período');
+        
+        // Find the most recent approved appraisal
+        const lastAppraisal = await prisma.stockAppraisal.findFirst({
+          where: { 
+            status: 'approved',
+            approvedAt: {
+              gte: period.startDate,
+              lte: period.endDate,
+            },
           },
-        },
-        orderBy: { approvedAt: 'desc' },
-      });
+          orderBy: { approvedAt: 'desc' },
+        });
 
-      if (!lastAppraisal) {
-        throw new BusinessRuleError(
-          'É necessário realizar uma conferência de estoque final antes de fechar o período'
-        );
+        if (!lastAppraisal) {
+          throw new BusinessRuleError(
+            'É necessário realizar uma conferência de estoque final antes de fechar o período'
+          );
+        }
+
+        closingStock = Number(lastAppraisal.totalPhysical);
+        console.log('[CMV] Estoque de fechamento:', closingStock);
       }
 
-      closingStock = Number(lastAppraisal.totalPhysical);
+      // Capture purchases from transactions
+      console.log('[CMV] Capturando compras...');
+      const purchases = await this.capturePurchasesFromTransactions(periodId);
+      console.log('[CMV] Compras capturadas:', purchases);
+
+      // Calculate revenue
+      console.log('[CMV] Calculando receita...');
+      const revenue = await this.calculateRevenue(periodId);
+      console.log('[CMV] Receita calculada:', revenue);
+
+      // Calculate CMV
+      console.log('[CMV] Calculando CMV...');
+      const cmvData = await this.calculateCMV(periodId);
+      console.log('[CMV] CMV calculado:', cmvData);
+
+      // Save product CMV data
+      console.log('[CMV] Salvando CMV por produto...');
+      try {
+        await this.saveProductCMV(periodId);
+        console.log('[CMV] CMV por produto salvo');
+      } catch (error) {
+        console.error('[CMV] Erro ao salvar CMV por produto:', error);
+        throw new BusinessRuleError(`Erro ao salvar CMV por produto: ${error.message}`);
+      }
+
+      // Update period with final values
+      console.log('[CMV] Atualizando período...');
+      const updatedPeriod = await this.repository.update(periodId, {
+        closingStock,
+        purchases,
+        revenue,
+        cmv: cmvData.cmv,
+        cmvPercentage: cmvData.cmvPercentage,
+        status: 'closed',
+        closedAt: new Date(),
+      });
+
+      console.log('[CMV] Período fechado com sucesso');
+      return updatedPeriod;
+    } catch (error) {
+      console.error('[CMV] Erro ao fechar período:', error);
+      throw error;
     }
-
-    // Capture purchases from transactions
-    const purchases = await this.capturePurchasesFromTransactions(periodId);
-
-    // Calculate revenue
-    const revenue = await this.calculateRevenue(periodId);
-
-    // Calculate CMV
-    const cmvData = await this.calculateCMV(periodId);
-
-    // Save product CMV data
-    await this.saveProductCMV(periodId);
-
-    // Update period with final values
-    const updatedPeriod = await this.repository.update(periodId, {
-      closingStock,
-      purchases,
-      revenue,
-      cmv: cmvData.cmv,
-      cmvPercentage: cmvData.cmvPercentage,
-      status: 'closed',
-      closedAt: new Date(),
-    });
-
-    return updatedPeriod;
   }
 
   private async calculateRevenue(periodId: string): Promise<number> {

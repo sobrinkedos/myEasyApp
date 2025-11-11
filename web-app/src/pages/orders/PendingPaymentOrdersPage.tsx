@@ -53,7 +53,7 @@ export default function PendingPaymentOrdersPage() {
     if (!reason) return;
 
     try {
-      await counterOrderService.cancel(orderId, reason);
+      await counterOrderService.cancel(orderId, { reason });
       alert('Pedido cancelado com sucesso');
       setSelectedOrder(null);
       await loadPendingOrders();

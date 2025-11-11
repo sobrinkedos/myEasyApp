@@ -264,6 +264,7 @@ export class AppraisalRepository {
       where: { appraisalId },
       include: {
         ingredient: true,
+        stockItem: true,
       },
     });
   }

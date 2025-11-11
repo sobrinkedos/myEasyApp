@@ -4,7 +4,10 @@ import { ArrowLeft, Download, Edit, CheckCircle, Clock, AlertCircle } from 'luci
 import api from '@/services/api';
 
 interface AppraisalItem {
-  ingredientId: string;
+  id: string;
+  ingredientId?: string;
+  stockItemId?: string;
+  itemType: 'ingredient' | 'stock_item';
   theoreticalQuantity: number;
   physicalQuantity: number;
   difference: number;
@@ -12,10 +15,14 @@ interface AppraisalItem {
   unitCost: number;
   totalDifference: number;
   reason?: string;
-  ingredient: {
+  ingredient?: {
     name: string;
     unit: string;
-  };
+  } | null;
+  stockItem?: {
+    name: string;
+    unit: string;
+  } | null;
 }
 
 interface Appraisal {
@@ -268,14 +275,18 @@ export function AppraisalDetailPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {appraisal.items.map((item) => (
-                <tr key={item.ingredientId} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium text-gray-900">{item.ingredient.name}</p>
-                      <p className="text-sm text-gray-500">{item.ingredient.unit}</p>
-                    </div>
-                  </td>
+              {appraisal.items.map((item) => {
+                const itemName = item.ingredient?.name || item.stockItem?.name || 'Item desconhecido';
+                const itemUnit = item.ingredient?.unit || item.stockItem?.unit || '';
+                
+                return (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div>
+                        <p className="font-medium text-gray-900">{itemName}</p>
+                        <p className="text-sm text-gray-500">{itemUnit}</p>
+                      </div>
+                    </td>
                   <td className="px-6 py-4 text-right text-gray-900">
                     {item.theoreticalQuantity.toFixed(2)}
                   </td>
@@ -292,11 +303,12 @@ export function AppraisalDetailPage() {
                       {item.totalDifference >= 0 ? '+' : ''}{formatCurrency(item.totalDifference)}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm text-gray-700">{item.reason || '-'}</p>
-                  </td>
-                </tr>
-              ))}
+                    <td className="px-6 py-4">
+                      <p className="text-sm text-gray-700">{item.reason || '-'}</p>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

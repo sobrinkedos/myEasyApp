@@ -102,13 +102,27 @@ npm run test:e2e
 npm test -- --coverage
 ```
 
-## 📚 Documentação da API
+## 📚 Documentação
+
+### Documentação da API
 
 Após iniciar a aplicação, acesse a documentação Swagger em:
 
 ```
 http://localhost:3000/api/docs
 ```
+
+### Documentação Técnica
+
+Para entender a arquitetura completa do sistema, todas as tecnologias utilizadas e como elas interagem, consulte:
+
+- **[Arquitetura do Sistema](docs/SYSTEM_ARCHITECTURE.md)** - Documentação completa e didática de todas as tecnologias, ferramentas e componentes do sistema
+
+Outros documentos técnicos disponíveis em `/docs`:
+- [Gestão de Caixa](docs/CASH_MANAGEMENT_README.md)
+- [Gestão de Estoque](docs/STOCK_CONSOLIDATION_PROPOSAL.md)
+- [CMV e Apuração](docs/STOCK_APPRAISAL_CMV_README.md)
+- [Guia Rápido de Banco de Dados](docs/DATABASE_QUICK_GUIDE.md)
 
 ## 🐳 Docker
 

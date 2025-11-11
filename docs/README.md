@@ -1,278 +1,237 @@
-# Documentação - Sistema de Estabelecimento Multi-tenant
+# Documentação do Sistema - Restaurant API Core
 
-## 📚 Índice de Documentação
+## 📖 Documentação Principal
 
-### 🚀 Início Rápido
-- **[QUICK_START_ESTABLISHMENT.md](QUICK_START_ESTABLISHMENT.md)** - Guia rápido com exemplos práticos de uso da API
+### 🏗️ [Arquitetura do Sistema](SYSTEM_ARCHITECTURE.md)
+**📌 COMECE AQUI - Documentação completa e didática de todas as tecnologias do sistema**
 
-### 📖 Documentação Completa
-- **[ESTABLISHMENT_API.md](ESTABLISHMENT_API.md)** - Documentação completa de todos os endpoints da API de Estabelecimento
+Este é o documento principal que explica de forma clara e didática:
+- ✅ Runtime e linguagem (Node.js 20, TypeScript 5)
+- ✅ Framework web e middlewares (Express, helmet, CORS, compression, rate limiting)
+- ✅ Camada de persistência (PostgreSQL 16, Prisma ORM 5, Redis 7)
+- ✅ Sistema de segurança (JWT, bcrypt, RBAC, auth/authorization)
+- ✅ Validação e utilitários (Zod, Winston, Multer, date-fns, uuid, validator)
+- ✅ Stack do frontend (React 18, Vite 5, TailwindCSS 3, React Query 5, Axios, etc)
+- ✅ Infraestrutura e Docker (containerização, docker-compose, variáveis de ambiente)
+- ✅ Modelos de dados (User, Role, Product, Order, Cash, CMV, etc)
+- ✅ Tratamento de erros (hierarquia de erros, error middleware, códigos HTTP)
+- ✅ Estratégia de testes (unitários, integração, E2E, coverage)
+- ✅ Fluxo de requisição completo (com exemplos práticos)
+- ✅ Deployment e produção (CI/CD, monitoramento, graceful shutdown, otimizações)
+- ✅ Diagramas arquiteturais (Mermaid)
+- ✅ Tabelas resumo de todas as tecnologias
 
-### 🔧 Detalhes Técnicos
-- **[MULTI_TENANT_CHANGES.md](MULTI_TENANT_CHANGES.md)** - Detalhes das mudanças implementadas para o sistema multi-tenant
-- **[ESTABLISHMENT_CRUD_SUMMARY.md](ESTABLISHMENT_CRUD_SUMMARY.md)** - Resumo técnico da implementação completa
-
----
-
-## 🎯 O que é o Sistema Multi-tenant?
-
-O sistema foi desenvolvido para permitir que **múltiplos estabelecimentos** (restaurantes, bares, lanchonetes) usem a mesma aplicação de forma **isolada e segura**.
-
-### Características Principais
-
-✅ **Registro Automático**
-- Ao se registrar, o usuário cria automaticamente seu estabelecimento
-- O primeiro usuário se torna administrador do estabelecimento
-
-✅ **Isolamento de Dados**
-- Cada estabelecimento tem seus próprios dados
-- Usuários não podem acessar dados de outros estabelecimentos
-- Identificação via token JWT
-
-✅ **Gestão Simplificada**
-- Admin pode editar dados do estabelecimento
-- Upload de logo personalizado
-- Configurações fiscais específicas
+**👉 Recomendado para**: 
+- Novos desenvolvedores que querem entender o sistema
+- Arquitetos avaliando a stack tecnológica
+- Desenvolvedores implementando novas features
+- DevOps configurando infraestrutura
 
 ---
 
-## 🏗️ Arquitetura
+## 📚 Documentação por Módulo
+
+### 💰 Gestão de Caixa
+- [Cash Management API](CASH_MANAGEMENT_API.md) - Documentação completa da API de gestão de caixa
+- [Cash Management README](CASH_MANAGEMENT_README.md) - Guia de uso do módulo de caixa
+- [Cash Management Quickstart](CASH_MANAGEMENT_QUICKSTART.md) - Início rápido
+- [Cash Management Implementation Status](CASH_MANAGEMENT_IMPLEMENTATION_STATUS.md) - Status da implementação
+- [Cash Setup](CASH_SETUP.md) - Configuração inicial
+
+### 🏢 Gestão de Estabelecimentos
+- [Establishment API](ESTABLISHMENT_API.md) - API de estabelecimentos
+- [Establishment CRUD Summary](ESTABLISHMENT_CRUD_SUMMARY.md) - Resumo das operações CRUD
+- [Quick Start Establishment](QUICK_START_ESTABLISHMENT.md) - Início rápido
+- [Multi-Tenant Changes](MULTI_TENANT_CHANGES.md) - Mudanças para multi-tenancy
+
+### 📦 Gestão de Estoque e CMV
+- [Stock Appraisal CMV API](STOCK_APPRAISAL_CMV_API.md) - API de apuração e CMV
+- [Stock Appraisal CMV README](STOCK_APPRAISAL_CMV_README.md) - Guia completo
+- [Stock Appraisal CMV User Guide](STOCK_APPRAISAL_CMV_USER_GUIDE.md) - Guia do usuário
+- [Stock Appraisal CMV Workflows](STOCK_APPRAISAL_CMV_WORKFLOWS.md) - Fluxos de trabalho
+- [Stock Appraisal CMV FAQ](STOCK_APPRAISAL_CMV_FAQ.md) - Perguntas frequentes
+- [Stock Consolidation Proposal](STOCK_CONSOLIDATION_PROPOSAL.md) - Proposta de consolidação
+- [Stock Consolidation Implementation](STOCK_CONSOLIDATION_IMPLEMENTATION.md) - Implementação
+- [Stock Transactions Implementation](STOCK_TRANSACTIONS_IMPLEMENTATION.md) - Transações de estoque
+- [Sistema Completo CMV](SISTEMA_COMPLETO_CMV.md) - Visão geral do sistema CMV
+
+### 🗄️ Banco de Dados
+- [Database Quick Guide](DATABASE_QUICK_GUIDE.md) - Guia rápido do banco de dados
+- [Database Migration Strategy](DATABASE_MIGRATION_STRATEGY.md) - Estratégia de migrations
+
+---
+
+## 🚀 Como Usar Esta Documentação
+
+### 👨‍💻 Para Novos Desenvolvedores
+1. **Leia o [README principal](../README.md)** do projeto para entender o básico
+2. **📖 Estude a [Arquitetura do Sistema](SYSTEM_ARCHITECTURE.md)** - Este é o documento mais importante! Ele explica todas as tecnologias de forma didática
+3. Configure seu ambiente seguindo o guia de instalação
+4. Explore a documentação Swagger em `http://localhost:3000/api/docs`
+5. Leia a documentação específica do módulo que vai trabalhar
+
+### 🔨 Para Implementar Features
+1. **Consulte a [Arquitetura do Sistema](SYSTEM_ARCHITECTURE.md)** para entender:
+   - Padrão de camadas (Routes → Controllers → Services → Repositories)
+   - Como fazer validação com Zod
+   - Como implementar autenticação e autorização
+   - Como usar cache com Redis
+   - Como escrever testes
+2. Leia a documentação específica do módulo
+3. Siga os padrões de código estabelecidos
+4. Escreva testes seguindo a estratégia documentada
+
+### 🏗️ Para Arquitetos e Tech Leads
+1. **Revise a [Arquitetura do Sistema](SYSTEM_ARCHITECTURE.md)** para entender:
+   - Stack tecnológico completo
+   - Decisões arquiteturais e justificativas
+   - Padrões de segurança implementados
+   - Estratégia de testes e qualidade
+   - Infraestrutura e deployment
+2. Avalie os diagramas arquiteturais
+3. Consulte as tabelas resumo de tecnologias
+
+### 🐛 Para Troubleshooting
+1. Verifique os FAQs dos módulos específicos
+2. Consulte os guias de implementação
+3. Revise os logs da aplicação em `logs/`
+4. Use o Prisma Studio para inspecionar dados: `npx prisma studio`
+5. Consulte a seção de tratamento de erros na [Arquitetura do Sistema](SYSTEM_ARCHITECTURE.md)
+
+### 📡 Para Entender a API
+1. **Acesse a documentação Swagger** em `http://localhost:3000/api/docs`
+2. Consulte os arquivos de API específicos nesta pasta
+3. Veja exemplos de requisições nos guias de quickstart
+4. Entenda o fluxo de requisição na [Arquitetura do Sistema](SYSTEM_ARCHITECTURE.md)
+
+### 🚀 Para DevOps e Deploy
+1. **Leia a seção de Deployment** na [Arquitetura do Sistema](SYSTEM_ARCHITECTURE.md)
+2. Consulte a configuração Docker e docker-compose
+3. Revise as variáveis de ambiente necessárias
+4. Entenda o processo de CI/CD
+5. Configure monitoramento e health checks
+
+---
+
+## 🎯 Estrutura da Documentação
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      FRONTEND (Web/Mobile)                   │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                         API REST                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │     Auth     │  │ Establishment│  │   Products   │      │
-│  │   /register  │  │     /GET     │  │   /orders    │      │
-│  │    /login    │  │     /PUT     │  │   /tables    │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    CAMADA DE NEGÓCIO                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   Services   │  │ Repositories │  │  Validators  │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                       BANCO DE DADOS                         │
-│                                                               │
-│  Establishment 1          Establishment 2                    │
-│  ├── Users                ├── Users                          │
-│  ├── Products             ├── Products                       │
-│  ├── Orders               ├── Orders                         │
-│  └── Tables               └── Tables                         │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🔐 Fluxo de Autenticação
-
-```
-1. Usuário acessa /register
-   ↓
-2. Preenche dados pessoais + estabelecimento
-   ↓
-3. Sistema cria:
-   - Estabelecimento
-   - Usuário Admin
-   - Role Admin
-   ↓
-4. Retorna Token JWT
-   {
-     userId: "uuid",
-     email: "user@example.com",
-     establishmentId: "uuid",  ← Identifica o tenant
-     roles: ["admin"]
-   }
-   ↓
-5. Token usado em todas as requisições
-   ↓
-6. Sistema identifica estabelecimento pelo token
-```
-
----
-
-## 📋 Endpoints Principais
-
-### Autenticação
-- `POST /api/v1/auth/register` - Registrar estabelecimento + admin
-- `POST /api/v1/auth/login` - Login
-
-### Estabelecimento
-- `GET /api/v1/establishment` - Buscar dados
-- `PUT /api/v1/establishment` - Atualizar (admin)
-- `POST /api/v1/establishment/logo` - Upload logo (admin)
-
----
-
-## 🚦 Como Começar
-
-### 1. Leia o Guia Rápido
-Comece com **[QUICK_START_ESTABLISHMENT.md](QUICK_START_ESTABLISHMENT.md)** para ver exemplos práticos.
-
-### 2. Consulte a API Completa
-Veja **[ESTABLISHMENT_API.md](ESTABLISHMENT_API.md)** para detalhes de todos os endpoints.
-
-### 3. Entenda as Mudanças
-Leia **[MULTI_TENANT_CHANGES.md](MULTI_TENANT_CHANGES.md)** para entender a arquitetura.
-
-### 4. Explore o Código
-Veja **[ESTABLISHMENT_CRUD_SUMMARY.md](ESTABLISHMENT_CRUD_SUMMARY.md)** para detalhes técnicos.
-
----
-
-## 🧪 Testando
-
-### Executar Testes
-```bash
-# Todos os testes
-npm test
-
-# Apenas testes de registro
-npm test -- auth-register.test.ts
-
-# Apenas testes de estabelecimento
-npm test -- establishment.test.ts
-```
-
-### Swagger UI
-Acesse: `http://localhost:3000/api/docs`
-
----
-
-## 📊 Estrutura de Dados
-
-### Establishment
-```typescript
-{
-  id: string
-  name: string
-  cnpj: string (14 dígitos)
-  address: {
-    street: string
-    number: string
-    complement?: string
-    neighborhood: string
-    city: string
-    state: string (2 chars)
-    zipCode: string
-  }
-  phone: string
-  email: string
-  logoUrl?: string
-  taxSettings: {
-    taxRegime: 'simples' | 'presumido' | 'real'
-    icmsRate: number (0-100)
-    issRate: number (0-100)
-    pisRate: number (0-100)
-    cofinsRate: number (0-100)
-  }
-  createdAt: DateTime
-  updatedAt: DateTime
-}
-```
-
-### User
-```typescript
-{
-  id: string
-  email: string
-  name: string
-  phone?: string
-  establishmentId: string  ← Vinculação ao tenant
-  isActive: boolean
-  roles: Role[]
-}
+docs/
+├── SYSTEM_ARCHITECTURE.md          ⭐ DOCUMENTO PRINCIPAL
+├── README.md                        ← Você está aqui
+│
+├── Cash Management/                 💰 Gestão de Caixa
+│   ├── CASH_MANAGEMENT_API.md
+│   ├── CASH_MANAGEMENT_README.md
+│   └── ...
+│
+├── Establishment/                   🏢 Estabelecimentos
+│   ├── ESTABLISHMENT_API.md
+│   ├── MULTI_TENANT_CHANGES.md
+│   └── ...
+│
+├── Stock & CMV/                     📦 Estoque e CMV
+│   ├── STOCK_APPRAISAL_CMV_README.md
+│   ├── STOCK_CONSOLIDATION_PROPOSAL.md
+│   └── ...
+│
+└── Database/                        🗄️ Banco de Dados
+    ├── DATABASE_QUICK_GUIDE.md
+    └── DATABASE_MIGRATION_STRATEGY.md
 ```
 
 ---
 
-## 🔒 Segurança
+## 🛠️ Tecnologias Principais
 
-### Validações
-- ✅ Senha forte obrigatória
-- ✅ CNPJ válido e único
-- ✅ Email válido e único
-- ✅ Validação de todos os campos
-
-### Autenticação
-- ✅ JWT com 7 dias de validade
-- ✅ Token contém establishmentId
-- ✅ Middleware de autenticação
-
-### Autorização
-- ✅ Role-based access control (RBAC)
-- ✅ Apenas admin pode editar estabelecimento
-- ✅ Isolamento de dados por tenant
-
-### Auditoria
-- ✅ Log de todas as operações
-- ✅ Rastreamento de usuário e timestamp
-- ✅ Estado anterior e novo estado
-
----
-
-## 🛠️ Tecnologias
-
-- **Node.js 20** - Runtime
-- **TypeScript 5** - Linguagem
-- **Express.js 4** - Framework web
-- **Prisma ORM 5** - ORM
+### Backend
+- **Node.js 20 LTS** - Runtime JavaScript
+- **TypeScript 5.3** - Linguagem tipada
+- **Express.js 4.18** - Framework web
+- **Prisma ORM 5.7** - ORM type-safe
 - **PostgreSQL 16** - Banco de dados
-- **JWT** - Autenticação
-- **Zod** - Validação
-- **Jest** - Testes
+- **Redis 7** - Cache e sessões
+
+### Frontend
+- **React 18.2** - Biblioteca UI
+- **Vite 5.0** - Build tool
+- **TailwindCSS 3.4** - CSS framework
+- **React Query 5.17** - State management
+- **TypeScript 5.3** - Linguagem tipada
+
+### Infraestrutura
+- **Docker** - Containerização
+- **docker-compose** - Orquestração
+- **Nginx** - Reverse proxy (produção)
+
+**📖 Para detalhes completos de cada tecnologia, consulte a [Arquitetura do Sistema](SYSTEM_ARCHITECTURE.md)**
 
 ---
 
-## 📞 Suporte
+## 📞 Links Úteis
 
 ### Documentação
-- Swagger: `http://localhost:3000/api/docs`
-- Logs: `logs/combined.log`
+- **[Arquitetura do Sistema](SYSTEM_ARCHITECTURE.md)** - Documentação técnica completa
+- **Swagger UI**: `http://localhost:3000/api/docs`
+- **Prisma Studio**: `npx prisma studio`
+- **Health Check**: `http://localhost:3000/health`
+
+### Logs
+- **Combined**: `logs/combined.log`
+- **Errors**: `logs/error.log`
 
 ### Comandos Úteis
 ```bash
-npm run dev          # Iniciar servidor
-npm test             # Executar testes
-npm run lint         # Verificar código
-npm run format       # Formatar código
+# Desenvolvimento
+npm run dev              # Iniciar servidor com hot-reload
+npm run prisma:studio    # Abrir Prisma Studio
+
+# Testes
+npm test                 # Executar todos os testes
+npm run test:watch       # Testes em watch mode
+npm test -- --coverage   # Com cobertura
+
+# Qualidade
+npm run lint             # Verificar código
+npm run lint:fix         # Corrigir automaticamente
+npm run format           # Formatar com Prettier
+
+# Banco de Dados
+npm run prisma:generate  # Gerar Prisma Client
+npm run prisma:migrate   # Executar migrations
+npm run prisma:seed      # Popular banco
+
+# Docker
+docker-compose up -d     # Iniciar serviços
+docker-compose logs -f   # Ver logs
+docker-compose down      # Parar serviços
 ```
 
 ---
 
-## ✅ Status do Projeto
+## 📝 Contribuindo
 
-**Sistema Multi-tenant:** ✅ Completo e Testado
+Ao adicionar nova documentação:
 
-**Funcionalidades Implementadas:**
-- ✅ Registro automático de estabelecimento
-- ✅ Criação de usuário admin
-- ✅ Isolamento de dados por tenant
-- ✅ Edição de estabelecimento
-- ✅ Upload de logo
-- ✅ Validações completas
-- ✅ Auditoria
-- ✅ Testes automatizados
-- ✅ Documentação completa
+1. **Documentação de módulos**: Adicione na pasta apropriada
+2. **Mudanças arquiteturais**: Atualize [SYSTEM_ARCHITECTURE.md](SYSTEM_ARCHITECTURE.md)
+3. **Novos endpoints**: Documente no Swagger e no arquivo de API do módulo
+4. **Atualize este README**: Adicione links para novos documentos
 
 ---
 
-## 📝 Licença
+## ✅ Status da Documentação
 
-Este projeto é parte do sistema Restaurant Management API Core.
+| Documento | Status | Última Atualização |
+|-----------|--------|-------------------|
+| Arquitetura do Sistema | ✅ Completo | Janeiro 2024 |
+| Cash Management | ✅ Completo | 2024 |
+| Establishment | ✅ Completo | 2024 |
+| Stock & CMV | ✅ Completo | 2024 |
+| Database | ✅ Completo | 2024 |
 
 ---
 
-**Última atualização:** 2024
-**Versão da API:** 1.0.0
+**Última atualização**: Janeiro 2024  
+**Versão da API**: 1.0.0  
+**Mantido por**: Equipe de Desenvolvimento

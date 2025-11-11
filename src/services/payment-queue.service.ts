@@ -61,8 +61,11 @@ export class PaymentQueueService implements IPaymentQueueService {
    */
   async removeFromPaymentQueue(orderId: string): Promise<void> {
     try {
+      console.log('[PaymentQueue] Removendo pedido da fila:', orderId);
+      
       // Buscar em todas as filas (pode ser otimizado se soubermos o establishmentId)
       const keys = await redis.keys(`${this.QUEUE_PREFIX}:*`);
+      console.log('[PaymentQueue] Filas encontradas:', keys.length);
 
       for (const key of keys) {
         const removed = await redis.zrem(key, orderId);
@@ -71,10 +74,14 @@ export class PaymentQueueService implements IPaymentQueueService {
             orderId,
             queueKey: key,
           });
+          console.log('[PaymentQueue] Pedido removido da fila:', key);
           break;
         }
       }
+      
+      console.log('[PaymentQueue] Remoção concluída');
     } catch (error) {
+      console.error('[PaymentQueue] Erro ao remover da fila:', error);
       logger.error('Erro ao remover pedido da fila de pagamento', {
         orderId,
         error: error instanceof Error ? error.message : 'Unknown error',

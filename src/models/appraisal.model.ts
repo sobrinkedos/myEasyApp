@@ -7,6 +7,8 @@ export const createAppraisalSchema = z.object({
     errorMap: () => ({ message: 'Tipo deve ser daily, weekly ou monthly' }),
   }),
   notes: z.string().max(500, 'Observações não podem exceder 500 caracteres').optional(),
+  includeIngredients: z.boolean().optional().default(true),
+  includeStockItems: z.boolean().optional().default(false),
 });
 
 export const updateAppraisalSchema = z.object({

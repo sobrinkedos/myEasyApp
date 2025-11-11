@@ -462,24 +462,39 @@ export class CounterOrderService implements ICounterOrderService {
     reason: string,
     establishmentId: string
   ): Promise<void> {
-    const order = await this.repository.findById(id, establishmentId);
+    try {
+      console.log('[CounterOrder] Iniciando cancelamento:', id);
+      
+      const order = await this.repository.findById(id, establishmentId);
 
-    if (!order) {
-      throw new OrderNotFoundError(id);
+      if (!order) {
+        throw new OrderNotFoundError(id);
+      }
+
+      console.log('[CounterOrder] Pedido encontrado, status:', order.status);
+
+      // Validar que não foi pago
+      if (order.status !== CounterOrderStatus.AGUARDANDO_PAGAMENTO) {
+        throw new CannotCancelPaidOrderError(id);
+      }
+
+      console.log('[CounterOrder] Cancelando no banco...');
+      const cancelledOrder = await this.repository.cancel(id, reason);
+      console.log('[CounterOrder] Pedido cancelado no banco');
+
+      // Remover da fila de pagamento
+      console.log('[CounterOrder] Removendo da fila de pagamento...');
+      await this.paymentQueueService.removeFromPaymentQueue(id);
+      console.log('[CounterOrder] Removido da fila');
+
+      // Notificar cancelamento
+      console.log('[CounterOrder] Enviando notificação...');
+      await this.notificationService.notifyOrderCancelled(cancelledOrder, reason);
+      console.log('[CounterOrder] Cancelamento concluído');
+    } catch (error) {
+      console.error('[CounterOrder] Erro ao cancelar pedido:', error);
+      throw error;
     }
-
-    // Validar que não foi pago
-    if (order.status !== CounterOrderStatus.AGUARDANDO_PAGAMENTO) {
-      throw new CannotCancelPaidOrderError(id);
-    }
-
-    const cancelledOrder = await this.repository.cancel(id, reason);
-
-    // Remover da fila de pagamento
-    await this.paymentQueueService.removeFromPaymentQueue(id);
-
-    // Notificar cancelamento
-    await this.notificationService.notifyOrderCancelled(cancelledOrder, reason);
   }
 
   /**
