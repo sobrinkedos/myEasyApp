@@ -70,6 +70,7 @@ import NewOrderPage from '@/pages/commands/NewOrderPage';
 import OrdersListPage from '@/pages/orders/OrdersListPage';
 import CreateCounterOrderPage from '@/pages/orders/CreateCounterOrderPage';
 import PendingPaymentOrdersPage from '@/pages/orders/PendingPaymentOrdersPage';
+import DeliveredOrdersPage from '@/pages/orders/DeliveredOrdersPage';
 
 // Tables
 import TablesPage from '@/pages/tables/TablesPage';
@@ -370,6 +371,10 @@ const router = createBrowserRouter([
           {
             index: true,
             element: <OrdersListPage />,
+          },
+          {
+            path: 'delivered',
+            element: <DeliveredOrdersPage />,
           },
           {
             path: 'counter/new',

@@ -220,6 +220,12 @@ export default function OrdersListPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Pedidos - Kanban</h1>
         <div className="flex gap-3">
+          <button
+            onClick={() => navigate('/orders/delivered')}
+            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 font-medium"
+          >
+            📦 Entregues
+          </button>
           {pendingPaymentCount > 0 && (
             <button
               onClick={() => navigate('/orders/counter/pending-payment')}
