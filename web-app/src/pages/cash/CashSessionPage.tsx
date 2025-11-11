@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '@/services/api';
+import { counterOrderService } from '@/services/counter-order.service';
 
 interface CashSession {
   id: string;
@@ -37,16 +38,31 @@ interface SessionBalance {
   currentBalance: number;
 }
 
+interface PendingCounts {
+  commands: number;
+  counterOrders: number;
+}
+
 export function CashSessionPage() {
   const navigate = useNavigate();
   const [activeSession, setActiveSession] = useState<CashSession | null>(null);
   const [balance, setBalance] = useState<SessionBalance | null>(null);
+  const [pendingCounts, setPendingCounts] = useState<PendingCounts>({ commands: 0, counterOrders: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     loadActiveSession();
   }, []);
+
+  useEffect(() => {
+    if (activeSession) {
+      loadPendingCounts();
+      // Atualizar contadores a cada 30 segundos
+      const interval = setInterval(loadPendingCounts, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [activeSession]);
 
   const loadActiveSession = async () => {
     try {
@@ -78,6 +94,27 @@ export function CashSessionPage() {
       }
     } catch (error) {
       console.error('Erro ao carregar saldo:', error);
+    }
+  };
+
+  const loadPendingCounts = async () => {
+    try {
+      // Buscar comandas pendentes de pagamento
+      const commandsResponse = await api.get('/commands', {
+        params: { status: 'pending_payment' }
+      });
+      const pendingCommands = commandsResponse.data?.data || [];
+
+      // Buscar pedidos balcão pendentes
+      const counterOrdersResponse = await counterOrderService.getPendingPayment();
+      const pendingCounterOrders = counterOrdersResponse.data || [];
+
+      setPendingCounts({
+        commands: pendingCommands.length,
+        counterOrders: pendingCounterOrders.length
+      });
+    } catch (error) {
+      console.error('Erro ao carregar contadores de pendências:', error);
     }
   };
 
@@ -259,8 +296,15 @@ export function CashSessionPage() {
 
         <button
           onClick={() => navigate('/cash/pending-commands')}
-          className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow text-left border-2 border-yellow-200"
+          className={`bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow text-left border-2 relative ${
+            pendingCounts.commands > 0 ? 'border-yellow-400 ring-2 ring-yellow-200' : 'border-yellow-200'
+          }`}
         >
+          {pendingCounts.commands > 0 && (
+            <div className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm shadow-lg animate-pulse">
+              {pendingCounts.commands}
+            </div>
+          )}
           <div className="flex items-center">
             <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
               <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -276,8 +320,15 @@ export function CashSessionPage() {
 
         <button
           onClick={() => navigate('/cash/pending-counter-orders')}
-          className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow text-left border-2 border-blue-200"
+          className={`bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow text-left border-2 relative ${
+            pendingCounts.counterOrders > 0 ? 'border-blue-400 ring-2 ring-blue-200' : 'border-blue-200'
+          }`}
         >
+          {pendingCounts.counterOrders > 0 && (
+            <div className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm shadow-lg animate-pulse">
+              {pendingCounts.counterOrders}
+            </div>
+          )}
           <div className="flex items-center">
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
               <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
