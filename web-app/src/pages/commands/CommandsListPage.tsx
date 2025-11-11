@@ -9,6 +9,7 @@ export default function CommandsListPage() {
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'open' | 'closed'>('open');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadData();
@@ -67,43 +68,81 @@ export default function CommandsListPage() {
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="mb-6 flex gap-2">
-        <button
-          onClick={() => setFilter('open')}
-          className={`px-4 py-2 rounded-lg ${
-            filter === 'open'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          Abertas
-        </button>
-        <button
-          onClick={() => setFilter('closed')}
-          className={`px-4 py-2 rounded-lg ${
-            filter === 'closed'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          Fechadas
-        </button>
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-4 py-2 rounded-lg ${
-            filter === 'all'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          Todas
-        </button>
+      {/* Search and Filters */}
+      <div className="mb-6 space-y-4">
+        {/* Search Bar */}
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Buscar por código, mesa, cliente ou garçom..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <svg
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+
+        {/* Filters */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setFilter('open')}
+            className={`px-4 py-2 rounded-lg ${
+              filter === 'open'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Abertas
+          </button>
+          <button
+            onClick={() => setFilter('closed')}
+            className={`px-4 py-2 rounded-lg ${
+              filter === 'closed'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Fechadas
+          </button>
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-4 py-2 rounded-lg ${
+              filter === 'all'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Todas
+          </button>
+        </div>
       </div>
 
       {/* Commands Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {commands.map((command) => (
+        {commands
+          .filter((command) => {
+            if (!searchTerm) return true;
+            const search = searchTerm.toLowerCase();
+            return (
+              command.code.toLowerCase().includes(search) ||
+              command.table?.number.toString().includes(search) ||
+              command.customerName?.toLowerCase().includes(search) ||
+              command.waiter?.name.toLowerCase().includes(search)
+            );
+          })
+          .map((command) => (
           <div
             key={command.id}
             onClick={() => navigate(`/commands/${command.id}`)}
@@ -162,9 +201,20 @@ export default function CommandsListPage() {
         ))}
       </div>
 
-      {commands.length === 0 && (
+      {commands.filter((command) => {
+        if (!searchTerm) return true;
+        const search = searchTerm.toLowerCase();
+        return (
+          command.code.toLowerCase().includes(search) ||
+          command.table?.number.toString().includes(search) ||
+          command.customerName?.toLowerCase().includes(search) ||
+          command.waiter?.name.toLowerCase().includes(search)
+        );
+      }).length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500">Nenhuma comanda encontrada</p>
+          <p className="text-gray-500">
+            {searchTerm ? 'Nenhuma comanda encontrada com os critérios de busca' : 'Nenhuma comanda encontrada'}
+          </p>
         </div>
       )}
     </div>
