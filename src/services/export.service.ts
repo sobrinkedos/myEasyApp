@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { closureDocumentRepository } from '@/repositories/closure-document.repository';
-import { logger } from '@/utils/logger';
+import logger from '@/utils/logger';
 
 export class ExportService {
   async exportClosures(
