@@ -3,7 +3,7 @@ import { cashSessionRepository } from '@/repositories/cash-session.repository';
 import { cashTransactionRepository } from '@/repositories/cash-transaction.repository';
 import { cashCountRepository } from '@/repositories/cash-count.repository';
 import { ClosureSummary, ClosureDetails } from '@/models/closure-document.model';
-import { logger } from '@/utils/logger';
+import logger from '@/utils/logger';
 
 export interface ListClosuresFilters {
   startDate?: Date;
