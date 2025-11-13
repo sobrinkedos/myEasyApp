@@ -1,5 +1,5 @@
 import { Order } from './KanbanBoard';
-import { Clock, AlertCircle, User } from 'lucide-react';
+import { Clock, AlertCircle, User, Printer } from 'lucide-react';
 import { Badge } from '../../ui/Badge';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -8,9 +8,16 @@ interface OrderCardProps {
   order: Order;
   isDragging?: boolean;
   onClick?: () => void;
+  onPrint?: (order: Order) => void;
 }
 
-export const OrderCard = ({ order, isDragging = false, onClick }: OrderCardProps) => {
+export const OrderCard = ({ order, isDragging = false, onClick, onPrint }: OrderCardProps) => {
+  const handlePrint = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onPrint) {
+      onPrint(order);
+    }
+  };
   const getElapsedTime = () => {
     return formatDistanceToNow(new Date(order.createdAt), {
       addSuffix: true,
@@ -53,7 +60,7 @@ export const OrderCard = ({ order, isDragging = false, onClick }: OrderCardProps
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
-        <div>
+        <div className="flex-1">
           <h4 className="font-semibold text-neutral-900 dark:text-neutral-100">
             Pedido #{order.orderNumber}
           </h4>
@@ -64,11 +71,22 @@ export const OrderCard = ({ order, isDragging = false, onClick }: OrderCardProps
             </p>
           )}
         </div>
-        {order.priority && order.priority !== 'normal' && (
-          <Badge variant="soft" color={getPriorityColor()}>
-            {getPriorityLabel()}
-          </Badge>
-        )}
+        <div className="flex items-center gap-2">
+          {onPrint && (
+            <button
+              onClick={handlePrint}
+              className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+              title="Imprimir pedido"
+            >
+              <Printer className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
+            </button>
+          )}
+          {order.priority && order.priority !== 'normal' && (
+            <Badge variant="soft" color={getPriorityColor()}>
+              {getPriorityLabel()}
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Items */}

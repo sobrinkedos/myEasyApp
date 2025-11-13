@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Printer } from 'lucide-react';
 import { orderService, Order } from '../../services/order.service';
 import { counterOrderService, CounterOrder } from '../../services/counter-order.service';
 
@@ -79,6 +80,62 @@ export default function OrdersListPage() {
     return allOrders.filter(order => order.status === status);
   };
 
+  const handlePrintOrder = (order: Order | CounterOrder) => {
+    // Criar conteúdo HTML para impressão
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Pedido #${'orderNumber' in order ? order.orderNumber : ''}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { text-align: center; margin-bottom: 20px; }
+          .info { margin-bottom: 15px; }
+          .items { margin: 20px 0; }
+          .item { padding: 5px 0; border-bottom: 1px dashed #ccc; }
+          .total { font-size: 18px; font-weight: bold; margin-top: 20px; text-align: right; }
+          @media print {
+            body { padding: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Pedido #${'orderNumber' in order ? order.orderNumber : ''}</h1>
+        <div class="info">
+          <strong>Data:</strong> ${new Date(order.createdAt).toLocaleString('pt-BR')}<br>
+          ${'customerName' in order && order.customerName ? `<strong>Cliente:</strong> ${order.customerName}<br>` : ''}
+          ${'command' in order && order.command?.table ? `<strong>Mesa:</strong> ${order.command.table.number}<br>` : ''}
+        </div>
+        <div class="items">
+          <h3>Itens:</h3>
+          ${order.items.map(item => `
+            <div class="item">
+              <strong>${item.quantity}x</strong> ${'productName' in item ? item.productName : (item as any).product?.name || ''}
+              ${('notes' in item && item.notes) || ('observations' in item && (item as any).observations) ? 
+                `<br><small>Obs: ${('notes' in item ? item.notes : (item as any).observations) || ''}</small>` : ''}
+            </div>
+          `).join('')}
+        </div>
+        <div class="total">
+          Total: R$ ${'totalAmount' in order ? Number(order.totalAmount).toFixed(2) : Number((order as any).subtotal).toFixed(2)}
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Abrir janela de impressão
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
+    }
+  };
+
   const renderCounterOrderCard = (order: CounterOrder) => (
     <div key={order.id} className="bg-white rounded-lg shadow-sm border-2 border-green-300 p-4 mb-3 hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-3">
@@ -109,6 +166,13 @@ export default function OrdersListPage() {
       </div>
 
       <div className="flex gap-2">
+        <button
+          onClick={() => handlePrintOrder(order)}
+          className="bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm font-medium hover:bg-gray-200 flex items-center gap-1"
+          title="Imprimir pedido"
+        >
+          <Printer className="w-4 h-4" />
+        </button>
         {order.status === 'PENDENTE' && (
           <button
             onClick={() => handleUpdateCounterOrderStatus(order.id, 'PREPARANDO')}
@@ -167,6 +231,13 @@ export default function OrdersListPage() {
       </div>
 
       <div className="flex gap-2">
+        <button
+          onClick={() => handlePrintOrder(order)}
+          className="bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm font-medium hover:bg-gray-200 flex items-center gap-1"
+          title="Imprimir pedido"
+        >
+          <Printer className="w-4 h-4" />
+        </button>
         {order.status === 'pending' && (
           <button
             onClick={() => handleUpdateStatus(order.id, 'preparing')}

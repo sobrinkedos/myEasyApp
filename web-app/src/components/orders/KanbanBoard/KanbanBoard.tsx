@@ -37,6 +37,7 @@ interface KanbanBoardProps {
   orders: Order[];
   onOrderMove: (orderId: string, newStatus: OrderStatus) => void;
   onOrderClick?: (order: Order) => void;
+  onOrderPrint?: (order: Order) => void;
 }
 
 const COLUMNS: Array<{ id: OrderStatus; title: string; color: string }> = [
@@ -46,7 +47,7 @@ const COLUMNS: Array<{ id: OrderStatus; title: string; color: string }> = [
   { id: 'delivered', title: 'Entregue', color: 'bg-info/10 dark:bg-info/20' },
 ];
 
-export const KanbanBoard = ({ orders, onOrderMove, onOrderClick }: KanbanBoardProps) => {
+export const KanbanBoard = ({ orders, onOrderMove, onOrderClick, onOrderPrint }: KanbanBoardProps) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [localOrders, setLocalOrders] = useState(orders);
 
@@ -136,6 +137,7 @@ export const KanbanBoard = ({ orders, onOrderMove, onOrderClick }: KanbanBoardPr
             color={column.color}
             orders={getOrdersByStatus(column.id)}
             onOrderClick={onOrderClick}
+            onOrderPrint={onOrderPrint}
           />
         ))}
       </div>

@@ -6,9 +6,10 @@ import { OrderCard } from './OrderCard';
 interface SortableOrderCardProps {
   order: Order;
   onClick?: (order: Order) => void;
+  onPrint?: (order: Order) => void;
 }
 
-export const SortableOrderCard = ({ order, onClick }: SortableOrderCardProps) => {
+export const SortableOrderCard = ({ order, onClick, onPrint }: SortableOrderCardProps) => {
   const {
     attributes,
     listeners,
@@ -29,6 +30,7 @@ export const SortableOrderCard = ({ order, onClick }: SortableOrderCardProps) =>
         order={order}
         isDragging={isDragging}
         onClick={() => onClick?.(order)}
+        onPrint={onPrint}
       />
     </div>
   );

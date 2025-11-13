@@ -9,6 +9,7 @@ interface KanbanColumnProps {
   color: string;
   orders: Order[];
   onOrderClick?: (order: Order) => void;
+  onOrderPrint?: (order: Order) => void;
 }
 
 export const KanbanColumn = ({
@@ -17,6 +18,7 @@ export const KanbanColumn = ({
   color,
   orders,
   onOrderClick,
+  onOrderPrint,
 }: KanbanColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -59,6 +61,7 @@ export const KanbanColumn = ({
                 key={order.id}
                 order={order}
                 onClick={onOrderClick}
+                onPrint={onOrderPrint}
               />
             ))
           )}
