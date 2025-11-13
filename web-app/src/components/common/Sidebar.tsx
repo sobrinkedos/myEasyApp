@@ -46,8 +46,12 @@ const menuItems: MenuItem[] = [
       { icon: 'receipt', label: 'Comandas', path: '/commands' },
       { icon: 'shoppingCart', label: 'Pedidos', path: '/orders' },
       { icon: 'table', label: 'Mesas', path: '/tables' },
-      { icon: 'wallet', label: 'Caixa', path: '/cash' },
     ],
+  },
+  {
+    icon: 'wallet',
+    label: 'Caixa',
+    path: '/cash',
   },
   {
     icon: 'package',

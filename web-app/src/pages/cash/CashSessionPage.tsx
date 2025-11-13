@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '@/services/api';
 import { counterOrderService } from '@/services/counter-order.service';
 
@@ -45,14 +45,28 @@ interface PendingCounts {
 
 export function CashSessionPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeSession, setActiveSession] = useState<CashSession | null>(null);
   const [balance, setBalance] = useState<SessionBalance | null>(null);
   const [pendingCounts, setPendingCounts] = useState<PendingCounts>({ commands: 0, counterOrders: 0 });
+  const [showDocumentNotification, setShowDocumentNotification] = useState(false);
+  const [documentInfo, setDocumentInfo] = useState<{ id: string; number: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     loadActiveSession();
+    
+    // Check if there's a document notification from location state
+    if (location.state?.showDocumentLink && location.state?.documentId) {
+      setShowDocumentNotification(true);
+      setDocumentInfo({
+        id: location.state.documentId,
+        number: location.state.documentNumber,
+      });
+      // Clear the state
+      window.history.replaceState({}, document.title);
+    }
   }, []);
 
   useEffect(() => {
@@ -165,9 +179,17 @@ export function CashSessionPage() {
   if (!activeSession) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestão de Caixa</h1>
-          <p className="text-gray-600 mt-1">Controle de caixa e movimentações financeiras</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestão de Caixa</h1>
+            <p className="text-gray-600 mt-1">Controle de caixa e movimentações financeiras</p>
+          </div>
+          <button
+            onClick={() => navigate('/cash/closures')}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            📋 Histórico de Fechamentos
+          </button>
         </div>
 
         <div className="bg-white rounded-lg shadow p-8 text-center">
@@ -211,6 +233,62 @@ export function CashSessionPage() {
         </div>
       )}
 
+      {/* Document Notification */}
+      {showDocumentNotification && documentInfo && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex">
+              <svg className="w-5 h-5 text-green-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <h3 className="text-sm font-medium text-green-900">Documento de Fechamento Gerado</h3>
+                <p className="text-sm text-green-700 mt-1">
+                  O documento {documentInfo.number} foi gerado com sucesso.
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => navigate(`/cash/closures/${documentInfo.id}`)}
+                    className="text-sm font-medium text-green-700 hover:text-green-800 underline"
+                  >
+                    Ver Detalhes
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await api.get(`/cash/documents/${documentInfo.id}/download`, {
+                          responseType: 'blob',
+                        });
+                        const url = window.URL.createObjectURL(new Blob([response.data]));
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.setAttribute('download', `fechamento-${documentInfo.number}.pdf`);
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                      } catch (error) {
+                        console.error('Erro ao baixar documento:', error);
+                      }
+                    }}
+                    className="text-sm font-medium text-green-700 hover:text-green-800 underline"
+                  >
+                    Baixar Comprovante
+                  </button>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowDocumentNotification(false)}
+              className="text-green-400 hover:text-green-600"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -220,9 +298,17 @@ export function CashSessionPage() {
           </p>
         </div>
         
-        <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(activeSession.status)}`}>
-          {getStatusText(activeSession.status)}
-        </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/cash/closures')}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            📋 Histórico de Fechamentos
+          </button>
+          <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(activeSession.status)}`}>
+            {getStatusText(activeSession.status)}
+          </span>
+        </div>
       </div>
 
       {/* Balance Cards */}

@@ -82,6 +82,8 @@ import { WithdrawalPage } from '@/pages/cash/WithdrawalPage';
 import { SupplyPage } from '@/pages/cash/SupplyPage';
 import { CloseCashPage } from '@/pages/cash/CloseCashPage';
 import { CashTransactionsPage } from '@/pages/cash/CashTransactionsPage';
+import { ClosureHistoryPage } from '@/pages/cash/ClosureHistoryPage';
+import { ClosureDetailsPage } from '@/pages/cash/ClosureDetailsPage';
 import PendingCommandsPage from '@/pages/cash/PendingCommandsPage';
 import CommandPaymentPage from '@/pages/cash/CommandPaymentPage';
 import CounterOrderPaymentPage from '@/pages/cash/CounterOrderPaymentPage';
@@ -440,6 +442,14 @@ const router = createBrowserRouter([
           {
             path: 'sessions/:id/transactions',
             element: <CashTransactionsPage />,
+          },
+          {
+            path: 'closures',
+            element: <ClosureHistoryPage />,
+          },
+          {
+            path: 'closures/:id',
+            element: <ClosureDetailsPage />,
           },
         ],
       },

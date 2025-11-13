@@ -122,12 +122,27 @@ export function CloseCashPage() {
         countedAmount,
         counts: countsArray,
         notes: notes.trim() || undefined,
+      }, {
+        timeout: 30000, // 30 segundos para permitir geração do documento
       });
 
       if (response.data.success) {
-        navigate('/cash', {
-          state: { message: 'Caixa fechado com sucesso!' },
-        });
+        // Check if document was generated
+        const sessionData = response.data.data;
+        if (sessionData?.closureDocument) {
+          navigate('/cash', {
+            state: { 
+              message: 'Caixa fechado com sucesso!',
+              showDocumentLink: true,
+              documentId: sessionData.closureDocument.id,
+              documentNumber: sessionData.closureDocument.documentNumber,
+            },
+          });
+        } else {
+          navigate('/cash', {
+            state: { message: 'Caixa fechado com sucesso!' },
+          });
+        }
       }
     } catch (err: any) {
       console.error('Erro ao fechar caixa:', err);

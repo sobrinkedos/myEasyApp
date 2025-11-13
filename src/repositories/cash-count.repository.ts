@@ -32,4 +32,10 @@ export class CashCountRepository {
     const counts = await this.findBySession(sessionId);
     return counts.reduce((sum, count) => sum + Number(count.total), 0);
   }
+
+  async findBySessionId(sessionId: string): Promise<CashCount[]> {
+    return this.findBySession(sessionId);
+  }
 }
+
+export const cashCountRepository = new CashCountRepository();

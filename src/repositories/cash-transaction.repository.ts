@@ -57,6 +57,10 @@ export class CashTransactionRepository {
     });
   }
 
+  async findBySessionId(sessionId: string): Promise<CashTransaction[]> {
+    return this.findBySession(sessionId);
+  }
+
   async getSessionBalance(sessionId: string): Promise<SessionBalance> {
     const session = await prisma.cashSession.findUnique({
       where: { id: sessionId },
@@ -152,3 +156,5 @@ export class CashTransactionRepository {
     });
   }
 }
+
+export const cashTransactionRepository = new CashTransactionRepository();

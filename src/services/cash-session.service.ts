@@ -6,6 +6,7 @@ import { CashSession, CashSessionStatus, TransactionType } from '@prisma/client'
 import { cacheService } from '@/utils/cache';
 import logger from '@/utils/logger';
 import prisma from '@/config/database';
+import { documentGeneratorService } from '@/services/document-generator.service';
 
 const MIN_OPENING_AMOUNT = 50;
 const MAX_OPENING_AMOUNT = 500;

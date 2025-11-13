@@ -179,3 +179,5 @@ export class CashSessionRepository {
     };
   }
 }
+
+export const cashSessionRepository = new CashSessionRepository();

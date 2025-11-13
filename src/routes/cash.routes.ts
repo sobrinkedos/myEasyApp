@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { CashSessionController } from '@/controllers/cash-session.controller';
 import { CashTransactionController } from '@/controllers/cash-transaction.controller';
 import { CashTreasuryController } from '@/controllers/cash-treasury.controller';
+import { closureController } from '@/controllers/closure.controller';
 import { AuthMiddleware } from '@/middlewares/auth.middleware';
 import { requireCashOperator, requireSupervisor, requireTreasurer } from '@/middlewares/cash-auth.middleware';
 
@@ -449,5 +450,164 @@ router.post('/treasury/transfers/:id/confirm', requireTreasurer, treasuryControl
  *         description: Consolidação diária
  */
 router.get('/treasury/consolidation/daily', requireTreasurer, treasuryController.getDailyConsolidation);
+
+// ============================================
+// Closure Document Routes
+// ============================================
+
+/**
+ * @swagger
+ * /api/v1/cash/closures:
+ *   get:
+ *     summary: Listar fechamentos de caixa
+ *     tags: [Cash Management]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: operatorId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: cashRegisterId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [normal, warning, alert]
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Lista de fechamentos
+ */
+router.get('/closures', closureController.listClosures.bind(closureController));
+
+/**
+ * @swagger
+ * /api/v1/cash/closures/export:
+ *   get:
+ *     summary: Exportar fechamentos (Excel/CSV)
+ *     tags: [Cash Management]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: format
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [excel, csv]
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Arquivo de exportação
+ */
+router.get('/closures/export', closureController.exportClosures.bind(closureController));
+
+/**
+ * @swagger
+ * /api/v1/cash/closures/{id}:
+ *   get:
+ *     summary: Obter detalhes do fechamento
+ *     tags: [Cash Management]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Detalhes do fechamento
+ */
+router.get('/closures/:id', closureController.getClosureDetails.bind(closureController));
+
+/**
+ * @swagger
+ * /api/v1/cash/sessions/{sessionId}/generate-document:
+ *   post:
+ *     summary: Gerar documento de fechamento
+ *     tags: [Cash Management]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: sessionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Documento gerado com sucesso
+ */
+router.post('/sessions/:sessionId/generate-document', closureController.generateDocument.bind(closureController));
+
+/**
+ * @swagger
+ * /api/v1/cash/documents/{id}:
+ *   get:
+ *     summary: Obter metadados do documento
+ *     tags: [Cash Management]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Metadados do documento
+ */
+router.get('/documents/:id', closureController.getDocument.bind(closureController));
+
+/**
+ * @swagger
+ * /api/v1/cash/documents/{id}/download:
+ *   get:
+ *     summary: Baixar documento PDF
+ *     tags: [Cash Management]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Arquivo PDF
+ */
+router.get('/documents/:id/download', closureController.downloadDocument.bind(closureController));
 
 export default router;

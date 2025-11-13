@@ -59,6 +59,7 @@ model User {
   appraisalsCreated       StockAppraisal[]        @relation("AppraisalUser")
   appraisalsApproved      StockAppraisal[]        @relation("AppraisalApprover")
   counterOrders          CounterOrder[]
+  documentsGenerated     CashClosureDocument[]   @relation("DocumentGenerator")
 
   @@unique([email, establishmentId])
   @@index([email])
@@ -209,6 +210,7 @@ model CashSession {
   transactions      CashTransaction[]
   counts            CashCount[]
   transfer          CashTransfer?
+  closureDocument   CashClosureDocument?
 
   @@index([cashRegisterId])
   @@index([operatorId])
@@ -297,6 +299,28 @@ model CashTransfer {
   @@index([cashSessionId])
   @@index([transferredAt])
   @@map("cash_transfers")
+}
+
+model CashClosureDocument {
+  id              String   @id @default(uuid())
+  cashSessionId   String   @unique
+  documentNumber  String
+  generatedAt     DateTime @default(now())
+  generatedBy     String
+  pdfUrl          String
+  hash            String
+  metadata        Json
+  downloadCount   Int      @default(0)
+  lastDownloadAt  DateTime?
+
+  cashSession     CashSession @relation(fields: [cashSessionId], references: [id])
+  generator       User        @relation("DocumentGenerator", fields: [generatedBy], references: [id])
+
+  @@unique([documentNumber])
+  @@index([cashSessionId])
+  @@index([documentNumber])
+  @@index([generatedAt])
+  @@map("cash_closure_documents")
 }
 
 model Category {

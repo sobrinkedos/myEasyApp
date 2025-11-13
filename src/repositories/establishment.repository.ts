@@ -48,3 +48,5 @@ export class EstablishmentRepository {
     return prisma.establishment.count();
   }
 }
+
+export const establishmentRepository = new EstablishmentRepository();
