@@ -5,7 +5,7 @@ services:
     region: oregon
     plan: free
     buildCommand: npm install && npx prisma generate
-    startCommand: NODE_ENV=production ts-node -r tsconfig-paths/register src/server.ts
+    startCommand: NODE_ENV=production ts-node --transpile-only -r tsconfig-paths/register src/server.ts
     envVars:
       - key: NODE_ENV
         value: production
