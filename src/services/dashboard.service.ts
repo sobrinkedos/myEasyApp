@@ -119,16 +119,53 @@ export class DashboardService {
    */
   async getSalesChartData(establishmentId: string): Promise<SalesChartData[]> {
     const today = new Date();
-    const data: SalesChartData[] = [];
+    const sevenDaysAgo = subDays(today, 6);
 
+    // Buscar todos os pedidos dos últimos 7 dias de uma vez
+    const orders = await prisma.counterOrder.findMany({
+      where: {
+        establishmentId,
+        paidAt: {
+          gte: startOfDay(sevenDaysAgo),
+          lte: endOfDay(today),
+        },
+        status: { not: CounterOrderStatus.CANCELADO },
+      },
+      select: {
+        paidAt: true,
+        totalAmount: true,
+      },
+    });
+
+    // Agrupar por dia
+    const salesByDay = new Map<string, { total: number; count: number }>();
+    
+    // Inicializar todos os dias com zero
     for (let i = 6; i >= 0; i--) {
       const date = subDays(today, i);
-      const sales = await this.getSalesForPeriod(
-        establishmentId,
-        startOfDay(date),
-        endOfDay(date)
-      );
+      const dateKey = format(date, 'yyyy-MM-dd');
+      salesByDay.set(dateKey, { total: 0, count: 0 });
+    }
 
+    // Agregar vendas por dia
+    orders.forEach(order => {
+      if (order.paidAt) {
+        const dateKey = format(order.paidAt, 'yyyy-MM-dd');
+        const current = salesByDay.get(dateKey);
+        if (current) {
+          current.total += Number(order.totalAmount);
+          current.count += 1;
+        }
+      }
+    });
+
+    // Converter para array de resultado
+    const data: SalesChartData[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = subDays(today, i);
+      const dateKey = format(date, 'yyyy-MM-dd');
+      const sales = salesByDay.get(dateKey) || { total: 0, count: 0 };
+      
       data.push({
         date: format(date, 'dd/MM'),
         vendas: sales.total,
