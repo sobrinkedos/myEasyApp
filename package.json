@@ -13,6 +13,7 @@
     "test:watch": "jest --watch",
     "test:e2e": "jest --config jest.e2e.config.js",
     "db:generate": "prisma generate",
+    "postinstall": "echo 'Skipping build - using ts-node in production'",
     "db:studio": "prisma studio",
     "db:migrate": "node scripts/check-environment.js migrate && prisma migrate dev",
     "db:push": "node scripts/check-environment.js push && prisma db push",
