@@ -49,3 +49,4 @@ temp/
 
 # Docker
 .dockerignore
+.vercel
