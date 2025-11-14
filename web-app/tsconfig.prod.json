@@ -12,6 +12,11 @@
     "strictBindCallApply": false,
     "noImplicitThis": false,
     "skipLibCheck": true,
-    "noEmitOnError": false
+    "noEmitOnError": false,
+    "suppressImplicitAnyIndexErrors": true,
+    "noImplicitOverride": false,
+    "noPropertyAccessFromIndexSignature": false,
+    "allowUnreachableCode": true,
+    "allowUnusedLabels": true
   }
 }
