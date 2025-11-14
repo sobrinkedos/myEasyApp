@@ -1,6 +1,32 @@
 {
+  "version": 2,
+  "builds": [
+    {
+      "src": "web-app/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
+      "src": "src/server.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/src/server.ts"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/web-app/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
   "buildCommand": "cd web-app && npm install && npm run build",
   "outputDirectory": "web-app/dist",
-  "framework": "vite",
-  "installCommand": "cd web-app && npm install"
+  "framework": "vite"
 }
