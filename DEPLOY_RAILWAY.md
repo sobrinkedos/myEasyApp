@@ -54,10 +54,17 @@ RATE_LIMIT_MAX=100
 ### 4. Deploy Automático
 
 O Railway detecta automaticamente:
-- ✅ Node.js project
-- ✅ package.json
-- ✅ Build command
-- ✅ Start command
+- ✅ Node.js project (via package.json)
+- ✅ package-lock.json (para npm ci)
+- ✅ Build command (via railway.toml)
+- ✅ Start command (via railway.toml)
+
+**O que acontece:**
+1. Railway clona o repositório
+2. Executa `npm install`
+3. Executa `npx prisma generate`
+4. Executa `npm run build`
+5. Inicia com `npm run start:prod`
 
 Aguarde 2-3 minutos e pronto!
 
