@@ -2,6 +2,9 @@
 builder = "NIXPACKS"
 buildCommand = "npm install && npx prisma generate && npm run build"
 
+[nixpacks]
+nixpacksVersion = "1.21.0"
+
 [deploy]
 startCommand = "npm run start:prod"
 restartPolicyType = "ON_FAILURE"
