@@ -53,18 +53,21 @@ RATE_LIMIT_MAX=100
 
 ### 4. Deploy Automático
 
-O Railway detecta automaticamente:
-- ✅ Node.js project (via package.json)
-- ✅ package-lock.json (para npm ci)
-- ✅ Build command (via railway.toml)
-- ✅ Start command (via railway.toml)
+O Railway usa **Nixpacks** (não Docker):
+- ✅ Detecta Node.js automaticamente
+- ✅ Usa `npm install` (não precisa de npm ci)
+- ✅ Lê configuração do `railway.toml`
+- ✅ Build e start automáticos
 
 **O que acontece:**
 1. Railway clona o repositório
-2. Executa `npm install`
-3. Executa `npx prisma generate`
-4. Executa `npm run build`
-5. Inicia com `npm run start:prod`
+2. Nixpacks detecta Node.js
+3. Executa `npm install`
+4. Executa `npx prisma generate`
+5. Executa `npm run build`
+6. Inicia com `npm run start:prod`
+
+**Importante:** O Dockerfile foi desabilitado (renomeado para `.backup`) para que o Railway use Nixpacks, que é mais inteligente e confiável.
 
 Aguarde 2-3 minutos e pronto!
 
