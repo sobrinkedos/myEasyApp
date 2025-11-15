@@ -9,7 +9,7 @@
       }
     },
     {
-      "src": "api/**/*.ts",
+      "src": "api/index.ts",
       "use": "@vercel/node"
     }
   ],
@@ -19,17 +19,8 @@
       "dest": "/api/index.ts"
     },
     {
-      "handle": "filesystem"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/web-app/index.html"
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index.ts"
+      "dest": "/web-app/$1"
     }
   ]
 }

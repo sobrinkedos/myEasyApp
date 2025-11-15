@@ -1,7 +1,5 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import 'dotenv/config';
 import app from '../src/app';
 
 // Export the Express app as a Vercel serverless function
-export default async (req: VercelRequest, res: VercelResponse) => {
-  return app(req, res);
-};
+export default app;
