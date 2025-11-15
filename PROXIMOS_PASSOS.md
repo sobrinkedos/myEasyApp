@@ -3,7 +3,7 @@
 ## ✅ O que já está pronto:
 
 1. ✅ **Frontend na Vercel** - Deploy funcionando
-   - URL: https://vite-react-nu-one-62.vercel.app
+   - Projeto: https://vercel.com/rilton-oliveira-de-souzas-projects/my.easy.app
    - Status: Ready
    - Branch: master (atualizado)
 
@@ -33,7 +33,7 @@ REDIS_URL=rediss://default:AWwNAAIncDI1YTc0ZTI2YTY0MTU0ZTBmOWViZGEwNjIyMDQxYWM2Y
 JWT_SECRET=seu-secret-super-seguro-minimo-32-caracteres-aqui
 JWT_EXPIRES_IN=7d
 BCRYPT_ROUNDS=12
-CORS_ORIGIN=https://vite-react-nu-one-62.vercel.app
+CORS_ORIGIN=https://my-easy-app.vercel.app
 LOG_LEVEL=info
 MAX_FILE_SIZE=5242880
 RATE_LIMIT_WINDOW=60000
@@ -59,9 +59,9 @@ VITE_API_URL=/api/v1
 
 ### 3. Testar a Aplicação (5 minutos)
 
-1. Acesse: https://vite-react-nu-one-62.vercel.app
+1. Acesse a URL do seu projeto Vercel (ex: https://my-easy-app.vercel.app)
 2. Teste o frontend (deve carregar normalmente)
-3. Teste a API: https://vite-react-nu-one-62.vercel.app/api/v1/health
+3. Teste a API: https://sua-url.vercel.app/api/v1/health
 4. Tente fazer login
 5. Abra DevTools (F12) → Network para ver as chamadas
 

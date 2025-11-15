@@ -61,7 +61,7 @@ BCRYPT_ROUNDS=12
 
 #### CORS
 ```
-CORS_ORIGIN=https://vite-react-nu-one-62.vercel.app
+CORS_ORIGIN=https://my-easy-app.vercel.app
 ```
 
 #### Logs e Limites
@@ -100,11 +100,11 @@ Para **TODAS** as variáveis:
 ## ✅ Verificar se Funcionou
 
 ### Testar o Frontend
-1. Acesse: `https://vite-react-nu-one-62.vercel.app`
+1. Acesse a URL do seu projeto na Vercel
 2. Deve carregar normalmente
 
 ### Testar o Backend
-1. Acesse: `https://vite-react-nu-one-62.vercel.app/api/v1/health`
+1. Acesse: `https://sua-url.vercel.app/api/v1/health`
 2. Deve retornar JSON com status da API
 
 ### Testar Integração
