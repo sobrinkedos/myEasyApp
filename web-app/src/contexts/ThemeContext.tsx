@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { ThemeMode, themes, applyThemeVariables } from '../design-system/theme';
+
+type ThemeMode = 'light' | 'dark';
 
 interface ThemeContextType {
   theme: ThemeMode;
@@ -49,8 +50,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   // Aplicar tema quando mudar
   useEffect(() => {
-    const currentTheme = themes[theme];
-    applyThemeVariables(currentTheme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, [theme]);
 
   // Escutar mudanças na preferência do sistema
